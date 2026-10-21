@@ -8,6 +8,7 @@ fails loudly instead of silently falling back to a default.
 
 from __future__ import annotations
 
+import math
 import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -227,7 +228,8 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
     _keys(data["goods"], "goods", required={str(g) for g in GOODS})
     for name, g in data["goods"].items():
         _keys(g, f"goods.{name}", required={"base_price", "price_floor", "price_ceiling"})
-        floor, ceiling = float(g["price_floor"]), float(g["price_ceiling"])
+        floor = _number(g["price_floor"], f"goods.{name}.price_floor")
+        ceiling = _number(g["price_ceiling"], f"goods.{name}.price_ceiling")
         if not 0 < floor <= 1 <= ceiling:
             raise ConfigError(f"goods.{name}: need 0 < price_floor <= 1 <= price_ceiling")
         goods[Asset(name)] = GoodConfig(_pos_int(g["base_price"], f"goods.{name}"), floor, ceiling)
@@ -512,7 +514,10 @@ def _pos_int(value: Any, where: str) -> int:
 def _number(value: Any, where: str) -> float:
     if not isinstance(value, int | float) or isinstance(value, bool):
         raise ConfigError(f"{where}: expected a number, got {value!r}")
-    return float(value)
+    v = float(value)
+    if not math.isfinite(v):
+        raise ConfigError(f"{where}: must be finite, got {value!r}")
+    return v
 
 
 def _fraction(value: Any, where: str) -> float:

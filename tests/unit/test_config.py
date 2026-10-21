@@ -52,8 +52,17 @@ def _broken(raw: dict, mutate) -> dict:
             ),
             "need a site",
         ),
+        (lambda d: d["town"].update(market_tax=float("nan")), "must be finite"),
+        (lambda d: d["town"].update(market_tax=float("inf")), "must be finite"),
+        (lambda d: d["town"].update(market_tax=float("-inf")), "must be finite"),
     ],
 )
 def test_invalid_configs_fail_loudly(raw, mutate, message):
     with pytest.raises(ConfigError, match=message):
         parse_scenario(_broken(raw, mutate))
+
+
+@pytest.mark.parametrize("bad_val", [float("nan"), float("inf"), float("-inf")])
+def test_non_finite_numbers_raise_config_error(raw, bad_val):
+    with pytest.raises(ConfigError, match="must be finite"):
+        parse_scenario(_broken(raw, lambda d: d["goods"]["food"].update(price_floor=bad_val)))
