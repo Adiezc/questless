@@ -47,6 +47,8 @@ class TickStats:
     produced_by_site: dict[Site, Counter[Asset]] = field(default_factory=dict)
     idle_npcs: int = 0
     hungry_npcs: int = 0
+    # Per profession: "count", "idle", "hungry", "broken" (worked without usable equipment).
+    by_profession: dict[Profession, Counter[str]] = field(default_factory=dict)
     upkeep: int = 0
     wages_paid: int = 0
     wages_unpaid: int = 0
@@ -89,8 +91,15 @@ class World:
             stats.consumed.update(rec.consumed)
             stats.unmet.update(rec.unmet)
             stats.produced_by_site.setdefault(npc.site, Counter()).update(rec.produced)
+            hungry = npc.hunger > self.config.needs.hungry_after
             stats.idle_npcs += rec.idle
-            stats.hungry_npcs += npc.hunger > self.config.needs.hungry_after
+            stats.hungry_npcs += hungry
+            prof = stats.by_profession.setdefault(npc.profession, Counter())
+            prof["count"] += 1
+            prof["idle"] += rec.idle
+            prof["hungry"] += hungry
+            equipment = self.config.professions[npc.profession].equipment
+            prof["broken"] += equipment is not None and rec.unmet.get(equipment, 0) > 0
         stats.transport = ship(self)
         self._collect_upkeep(stats)
         self._pay_wages(stats)

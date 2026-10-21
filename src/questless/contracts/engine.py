@@ -18,6 +18,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from questless.contracts.causes import build_chain
 from questless.contracts.model import Contract, ContractKind, Status
 from questless.contracts.needs import TRANSPORT, NeedState
 from questless.contracts.provenance import Evidence, Provenance
@@ -67,6 +68,18 @@ class ContractBoard:
 
     def live_for(self, key: tuple[str, str, str]) -> Contract | None:
         return next((c for c in self.live() if c.dedup_key == key), None)
+
+    def ancestors(self, contract_id: str) -> list[str]:
+        """Quest lineage upwards: parent, grandparent, ... (oldest last)."""
+        out: list[str] = []
+        parent = self.contracts[contract_id].parent_id
+        while parent is not None and parent not in out:
+            out.append(parent)
+            parent = self.contracts[parent].parent_id
+        return out
+
+    def children(self, contract_id: str) -> list[str]:
+        return sorted(c.id for c in self.contracts.values() if c.parent_id == contract_id)
 
     def step(self, world: World) -> ContractTickReport:
         report = ContractTickReport()
@@ -183,7 +196,9 @@ class ContractBoard:
 
         cid = f"C-{self.next_id:04d}"
         self.next_id += 1
-        chain = _evidence(world, cand, funder, reward, cap, qty, wanted)
+        chain, parent = build_chain(
+            world, cand, _evidence(world, cand, funder, reward, cap, qty, wanted)
+        )
         contract = Contract(
             id=cid,
             kind=cand.kind,
@@ -197,8 +212,11 @@ class ContractBoard:
             created_tick=world.tick,
             deadline_tick=world.tick + max(cfg.deadline_days, cfg.caravan_days + 2),
             dedup_key=cand.key,
-            provenance=Provenance(chain=tuple(chain), world_hash=world.state_hash()),
+            provenance=Provenance(
+                chain=tuple(chain), world_hash=world.state_hash(), parent_contract=parent
+            ),
             reason=_reason(world, cand, qty),
+            parent_id=parent,
         )
         self.contracts[cid] = contract
         return contract
@@ -333,7 +351,7 @@ def _urgency(world: World, cand: Candidate) -> float:
     return min(1 + cfg.urgency_step * max(overdue, 0), cfg.max_urgency)
 
 
-# --- provenance (root causes are added in M6) ---------------------------------------------------
+# --- contract-level evidence (root causes are prepended by causes.build_chain) -------------------
 
 
 def _evidence(
