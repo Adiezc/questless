@@ -10,6 +10,9 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from questless.config import ScenarioConfig
+from questless.contracts.engine import ContractBoard, ContractTickReport
+from questless.contracts.needs import NeedTracker
+from questless.contracts.validation import check_board
 from questless.sim.entities import (
     ESCROW,
     MARKET,
@@ -51,6 +54,7 @@ class TickStats:
     transport: TransportReport | None = None
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
     guilds: dict[str, GuildReport] = field(default_factory=dict)
+    contracts: ContractTickReport | None = None
 
 
 @dataclass
@@ -63,6 +67,8 @@ class World:
     prices: dict[Asset, float] = field(default_factory=dict)  # settle at unit_price()
     modifiers: Modifiers = field(default_factory=Modifiers)
     stats: list[TickStats] = field(default_factory=list)
+    needs: NeedTracker = field(default_factory=NeedTracker)
+    contracts: ContractBoard = field(default_factory=ContractBoard)
     tick: int = 0
     check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
 
@@ -93,6 +99,8 @@ class World:
         stats.prices = dict(self.prices)
         stats.guilds = guild_reports(self, collect_dues(self, start_coin, relief), relief)
         self.stats.append(stats)
+        self.needs.update(self)
+        stats.contracts = self.contracts.step(self)
         if self.check_every_tick:
             self.check_invariants()
         self.tick += 1
@@ -131,6 +139,7 @@ class World:
 
     def check_invariants(self) -> None:
         self.ledger.check_conservation()
+        check_board(self, self.contracts)
         if self.ledger.holdings(MARKET):
             raise AssertionError(
                 f"market clearing account not empty: {self.ledger.holdings(MARKET)}"

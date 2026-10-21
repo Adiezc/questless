@@ -105,6 +105,23 @@ class TransportConfig:
 
 
 @dataclass(frozen=True)
+class ContractsConfig:
+    max_open: int  # global cap on OPEN + ACCEPTED contracts
+    max_new_per_tick: int
+    deadline_days: int
+    cooldown_days: int  # no new contract for the same key after one closes unfulfilled
+    resolve_days: int  # an OPEN contract is cancelled once its need is gone this many days
+    npc_premium: float  # reward multiplier over market value for contracts NPCs fund
+    urgency_step: float  # extra premium per day the need persists beyond patience
+    max_urgency: float
+    town_max_share: float  # most of the town treasury one contract may escrow
+    caravan_days: int  # days an import from outside takes; deadlines must allow for it
+    transport_backlog_days: float  # site backlog, in days of output, that signals a bottleneck
+    min_reward: int  # contracts worth less than this are not posted (board clutter)
+    town_emergency_threshold: float  # share of guards short of a good that triggers town supply
+
+
+@dataclass(frozen=True)
 class TownConfig:
     treasury: int
     guard_wage: int
@@ -126,6 +143,7 @@ class ScenarioConfig:
     needs: NeedsConfig
     market: MarketConfig
     transport: TransportConfig
+    contracts: ContractsConfig
     guilds: Mapping[str, GuildConfig]
     town: TownConfig
     player_wallet: int
@@ -169,6 +187,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "needs",
             "market",
             "transport",
+            "contracts",
             "guilds",
             "town",
             "player",
@@ -281,6 +300,32 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         fee_rate=_fraction(tr["fee_rate"], "transport.fee_rate"),
     )
 
+    c = data["contracts"]
+    fields = {
+        "max_open": _pos_int,
+        "max_new_per_tick": _pos_int,
+        "deadline_days": _pos_int,
+        "cooldown_days": _nonneg_int,
+        "resolve_days": _pos_int,
+        "caravan_days": _nonneg_int,
+        "min_reward": _pos_int,
+    }
+    floats = {
+        "npc_premium": 1.0,
+        "urgency_step": 0.0,
+        "max_urgency": 1.0,
+        "town_max_share": 0.0,
+        "transport_backlog_days": 0.0,
+        "town_emergency_threshold": 0.0,
+    }
+    _keys(c, "contracts", required=set(fields) | set(floats))
+    contracts = ContractsConfig(
+        **{k: f(c[k], f"contracts.{k}") for k, f in fields.items()},
+        **{k: _at_least(c[k], lo, f"contracts.{k}") for k, lo in floats.items()},
+    )
+    if contracts.town_max_share > 1:
+        raise ConfigError("contracts.town_max_share: must be between 0 and 1")
+
     shocks = []
     for i, sh in enumerate(data.get("shocks", [])):
         where = f"shocks[{i}]"
@@ -360,6 +405,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         needs=needs,
         market=market,
         transport=transport,
+        contracts=contracts,
         guilds=guilds,
         town=TownConfig(
             treasury=_nonneg_int(town["treasury"], "town.treasury"),

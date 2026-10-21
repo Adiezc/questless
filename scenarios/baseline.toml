@@ -109,6 +109,23 @@ effort = [0.6, 1.3]         # gatherer effort range: effort = price / base price
 capacity_per_merchant = 14  # units/day each merchant hauls from mine and farms to the market
 fee_rate = 0.2              # share of the goods' market value paid by the producer to carriers
 
+# Contract engine. An NPC escalates a need once it has gone unmet for `patience` days *and* the
+# market had nothing to sell it (scarcity, not poverty). Every contract is escrowed when posted.
+[contracts]
+max_open = 12                 # cap on open + accepted contracts
+max_new_per_tick = 3
+deadline_days = 10
+cooldown_days = 5             # quiet period for a need whose contract expired or was cancelled
+resolve_days = 3              # an untaken contract is withdrawn once its need is gone this long
+npc_premium = 1.2             # NPC-funded reward = market value x premium x urgency
+urgency_step = 0.1            # +10% per day the need persists beyond patience
+max_urgency = 2.0
+town_max_share = 0.2          # most of the town treasury one contract may escrow
+caravan_days = 3              # an import from outside takes this long; deadlines allow for it
+transport_backlog_days = 3.0  # site backlog (days of output) that signals a transport bottleneck
+min_reward = 15               # contracts worth less than this are not posted
+town_emergency_threshold = 0.4  # share of guards short of a good before the town pools their needs
+
 [traits]
 skill = [0.8, 1.2]       # production multiplier
 thrift = [0.1, 0.5]      # share of wallet kept as cash reserve
