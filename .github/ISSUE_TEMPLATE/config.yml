@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discuss an idea first
+    url: https://github.com/Adiezc/questless/discussions/categories/ideas
+    about: Open-ended ideas and questions are welcome in Discussions.
+  - name: Report a security vulnerability
+    url: https://github.com/Adiezc/questless/security/advisories/new
+    about: Please report security problems privately, not as public issues.
+  - name: Roadmap and build guide
+    url: https://github.com/Adiezc/questless/blob/main/docs/BUILD_GUIDE.md
+    about: Every milestone broken into issue-sized tasks.

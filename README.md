@@ -1,6 +1,6 @@
 # QUESTLESS
 
-**Emergent quests from living worlds.**
+**Emergent quests from living worlds, and an open blueprint for the next generation of MMOs.**
 
 QUESTLESS is an open-source, deterministic **quest-economy engine for MMO-style worlds**. A settlement
 of 100 rule-based NPCs farms, mines, forges, hauls and trades. When the economy leaves needs unmet,
@@ -10,7 +10,42 @@ chain can be re-measured to prove it.
 
 ![The QUESTLESS dashboard: a settlement map, a quest board, and the causal chain behind the selected contract](docs/images/dashboard.png)
 
-> A research prototype, not a game. Built in two days as a systems-design study. MIT licensed.
+## What this is, honestly
+
+QUESTLESS has two halves:
+
+| | What it is | Status |
+|---|---|---|
+| **The engine** | A small, tested Python engine (one settlement, 100 NPCs, 4 goods) with a dashboard, API and CLI. Coin and goods are conserved every simulated day, every quest is funded and explains itself, and every run replays exactly. | **Working today** (v0.1.0, 153 tests) |
+| **The blueprint** | A public [roadmap](docs/ROADMAP.md) and [build guide](docs/BUILD_GUIDE.md) for the systems a 2030s megaserver MMO would need: futures and central banks, courts, elections, diplomacy, ecology, fair automation instead of bots, privacy by design, AI steward NPCs, and real-world skills taught through play. | **Planned and open for contributors** (v0.2 to v0.5, about 40 milestones) |
+
+It is **not a game**: there's no 3D client, no combat and no multiplayer server. It's the
+groundwork: working proofs of the hard systems at small scale, and a detailed plan for the rest.
+Built as a systems-design study by one person with AI-assisted development; MIT licensed.
+
+## Why: a second age of MMOs
+
+The late 1990s and early 2000s were a golden era for massively multiplayer games. *Ultima Online*,
+*EverQuest*, *Star Wars Galaxies*, *EVE Online* and *World of Warcraft* gave millions of people
+persistent shared worlds with player-driven economies, guilds and politics, and friendships that
+lasted years. Economists studied their markets; EVE still runs a single shared world for all its
+players.
+
+Since then, very large new MMOs have become rare: they're expensive and risky to build, hard to
+balance, and easy to break with bots, inflation and exploits. Many of the problems that sank them
+are the ones QUESTLESS works on:
+
+| 2000s problem | What the 2030s make possible | Where QUESTLESS works on it |
+|---|---|---|
+| Economies balanced by patch notes, after the damage | Simulate and test balance before release, on every change | Deterministic replay; economy checks on pull requests (M23) |
+| Hand-written quests that ignore the world | Quests caused by the world, that explain themselves | The engine today |
+| Bots, gold farmers, multiboxing | Fair automation for everyone, economic detection, privacy-respecting identity | M31, M37, [privacy design](docs/PRIVACY_AND_IDENTITY.md) |
+| Servers split by size and language | One megaserver with regions and simulation level of detail; live translation | [Blueprint](docs/BLUEPRINT.md), M34, M43 |
+| NPCs as vending machines | AI steward NPCs that keep the world fun and push players together | M44 |
+| Games as pure escapism | Worlds where players also learn economics, law, politics and data literacy | [Skill tracks](docs/SKILLS.md), M26, M47 |
+
+The settings are interchangeable: the same systems are designed to run a fantasy continent or a
+science-fiction galaxy (M33).
 
 ## In 30 seconds
 
@@ -38,7 +73,7 @@ That food contract is linked to the earlier ore contract as its parent.
 Requires [uv](https://docs.astral.sh/uv/), which installs the pinned Python (3.12) for you.
 
 ```bash
-git clone {{GITHUB_REPO_URL}} questless && cd questless
+git clone https://github.com/Adiezc/questless.git && cd questless
 uv sync --extra demo
 uv run questless demo
 ```
@@ -151,6 +186,23 @@ Python API.
 **What it is not:** a game client, multiplayer, an LLM agent system, or production-ready engine
 integration.
 
+**What's next:** the [roadmap](docs/ROADMAP.md) runs from v0.2 to v0.5:
+- **v0.2:** relief and loan quests, futures, smuggling, a central bank, run reports, a clearer
+  dashboard.
+- **v0.3:** economy checks on every pull request, an AI-agent training environment, a self-writing
+  world wiki with developer-only private pages, lessons drawn from each run, bug reports that
+  replay themselves, courts, a tamper-evident log, anti-multiboxing safeguards, elections and a
+  campaign-finance register.
+- **v0.4, megaserver foundations:** fantasy and sci-fi themes, regions with simulation level of
+  detail, a map and ecology shaped by the economy, standing orders instead of bots,
+  player-posted quests, treaties and embargoes.
+- **v0.5, people, privacy and learning:** privacy as code, a language bridge with English as the
+  common language, steward NPCs, a skills passport and eleven skill tracks.
+
+Background reading: [blueprint](docs/BLUEPRINT.md) ·
+[crypto and blockchain assessment](docs/BLOCKCHAIN.md) (why there are no tokens or NFTs) ·
+[privacy and identity](docs/PRIVACY_AND_IDENTITY.md) · [real-world skills](docs/SKILLS.md).
+
 **Known limitations:**
 - Producers in the same trade pause in sync when unsold stock builds up.
 - Feedback loops (ore, then tools, then ore) appear in a chain but aren't drawn as loops.
@@ -171,11 +223,25 @@ contracts that must be funded, validated and explained from data.
 
 Links and notes are in [docs/EVALUATION.md](docs/EVALUATION.md#6-comparable-work-verified-sources).
 
-## Creator and contact
+## Contribute
 
-Created by **Adrian Diez Cuadrado**. Studios interested in collaboration, integration, consulting
-or employment: see [CONTACT.md](CONTACT.md). Contributions are welcome:
-[CONTRIBUTING.md](CONTRIBUTING.md). To cite this work, see [CITATION.cff](CITATION.cff).
+Most of the roadmap is unbuilt, and it's designed to be built in the open.
+- **Start here:** [CONTRIBUTING.md](CONTRIBUTING.md) explains what gets merged, the checks every
+  pull request must pass (tests, lint, security scans), and how contributors are credited.
+- **Pick a task:** [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) breaks every milestone into
+  issue-sized tasks with the files to touch, tests to write and pitfalls; look for
+  **good first issue**.
+- **Not a programmer?** Economists, lawyers, teachers and political scientists can write lessons
+  and skill tracks without touching the engine.
+- **Have an idea?** Suggest it in [Discussions](https://github.com/Adiezc/questless/discussions/categories/ideas)
+  or with the **Suggest an idea** issue template.
+- **Security issues:** report privately, see [SECURITY.md](SECURITY.md).
+
+## Creator
+
+Created by **Adrian Diez Cuadrado**. The fastest way to get in touch is
+[LinkedIn](https://www.linkedin.com/in/adriandiez10/). To cite this work, see
+[CITATION.cff](CITATION.cff).
 
 Built with AI-assisted development (Claude); design decisions and responsibility rest with the
 creator.

@@ -3,6 +3,20 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Public roadmap from v0.2 to v0.5 (docs/ROADMAP.md) and a build guide that splits every milestone
+  into issue-sized tasks (docs/BUILD_GUIDE.md).
+- Design documents: megaserver blueprint, crypto and blockchain assessment, privacy and identity,
+  real-world skills, and the v0.1 stress-test review.
+- Contributor guide, security policy, code of conduct, pull request and issue templates, and a
+  security CI workflow (bandit, pip-audit, gitleaks) with Dependabot.
+
+### Security
+- Upgraded Pillow (a dependency of the dashboard and chart extras) from 12.3.0 to 13.0.0 to fix
+  known vulnerabilities.
+
 ## [0.1.0] - 2026-10-21
 
 First public prototype.

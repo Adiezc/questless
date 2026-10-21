@@ -546,6 +546,8 @@ uv run questless demo
 
 ## I. Roadmap
 
+> Superseded for the next release by [ROADMAP.md](ROADMAP.md) (v0.2 build path: fixes, intuitive UI, relief and loans, futures, smuggling, run reports).
+
 | Horizon | Feature | Notes |
 |---|---|---|
 | **2 days (this plan)** | Engine, 2 scenarios, dashboard, tests, experiment, README | — |

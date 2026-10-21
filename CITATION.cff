@@ -17,4 +17,4 @@ keywords:
   - quest generation
   - agent-based simulation
   - game economy
-# repository-code: "{{GITHUB_REPO_URL}}"   # add once the repository is public
+repository-code: "https://github.com/Adiezc/questless"

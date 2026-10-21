@@ -1,0 +1,28 @@
+name: Bug report
+description: Something in the engine, CLI or dashboard doesn't work as documented.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: >-
+        Runs replay exactly, so a save file is the best reproduction. Save with
+        `uv run questless run <scenario> --save bug.json` (or `sim.save(...)`) and attach it, plus
+        the commands you ran.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: QUESTLESS version or commit
+  - type: input
+    id: env
+    attributes:
+      label: OS and Python version

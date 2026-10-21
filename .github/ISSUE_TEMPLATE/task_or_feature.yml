@@ -1,0 +1,23 @@
+name: Roadmap task or feature proposal
+description: Claim a build-guide task, or propose a new mechanic or idea.
+labels: ["proposal"]
+body:
+  - type: input
+    id: task
+    attributes:
+      label: Task id or idea name
+      description: For example "M13.1 Reject NaN and infinity in config", or a backlog idea.
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Short design
+      description: What you'll change, which files, and how you'll test it. Keep it brief.
+    validations:
+      required: true
+  - type: textarea
+    id: guarantees
+    attributes:
+      label: Guarantees
+      description: How does this keep conservation, escrow, provenance, determinism and replay?
