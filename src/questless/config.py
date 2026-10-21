@@ -11,6 +11,7 @@ from __future__ import annotations
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,35 @@ class ProfessionConfig:
     wallet: IntRange
     inventory: Mapping[Asset, int]
     tool_condition: FloatRange
+    equipment: Asset | None  # good that wears out and must be replaced (tools / weapons)
+    wear: float  # equipment condition lost per working day
+    no_tool_factor: float  # productivity multiplier while equipment is broken
+    output: Mapping[Asset, float]  # gatherers: base units per day
+    crafts_per_day: int  # crafters: base crafts per day
+    recipes: Mapping[Asset, Mapping[Asset, int]]  # crafted good -> inputs for one unit
+
+
+@dataclass(frozen=True)
+class NeedsConfig:
+    food_per_day: int
+    equipment_threshold: float  # replace equipment when condition drops below this
+    hungry_after: int  # days without food before productivity drops
+    hungry_productivity: float
+
+
+class ShockEffect(StrEnum):
+    SITE_OUTPUT = "site_output"
+    TRANSPORT_CAPACITY = "transport_capacity"
+
+
+@dataclass(frozen=True)
+class ShockConfig:
+    name: str
+    effect: ShockEffect
+    start: int
+    duration: int
+    factor: float
+    site: Site | None = None
 
 
 @dataclass(frozen=True)
@@ -76,10 +106,12 @@ class ScenarioConfig:
     goods: Mapping[Asset, GoodConfig]
     professions: Mapping[Profession, ProfessionConfig]
     traits: TraitRanges
+    needs: NeedsConfig
     guilds: Mapping[str, GuildConfig]
     town: TownConfig
     player_wallet: int
     outside: Mapping[Asset, int]
+    shocks: tuple[ShockConfig, ...] = ()
 
     @property
     def population(self) -> int:
@@ -110,8 +142,17 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
     _keys(
         data,
         "scenario",
-        required={"scenario", "goods", "professions", "traits", "guilds", "town", "player"},
-        optional={"outside"},
+        required={
+            "scenario",
+            "goods",
+            "professions",
+            "traits",
+            "needs",
+            "guilds",
+            "town",
+            "player",
+        },
+        optional={"outside", "shocks"},
     )
 
     sc = data["scenario"]
@@ -134,15 +175,42 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             p,
             where,
             required={"count", "site", "wallet", "tool_condition"},
-            optional={"inventory"},
+            optional={
+                "inventory",
+                "equipment",
+                "wear",
+                "no_tool_factor",
+                "output",
+                "crafts_per_day",
+                "recipes",
+            },
         )
+        equipment = p.get("equipment")
+        output = p.get("output", {})
+        recipes = p.get("recipes", {})
+        if not isinstance(output, Mapping) or not isinstance(recipes, Mapping):
+            raise ConfigError(f"{where}: output and recipes must be tables")
         professions[Profession(name)] = ProfessionConfig(
             count=_nonneg_int(p["count"], f"{where}.count"),
             site=_enum(Site, p["site"], f"{where}.site"),
             wallet=_int_range(p["wallet"], f"{where}.wallet"),
             inventory=_holdings(p.get("inventory", {}), f"{where}.inventory"),
             tool_condition=_float_range(p["tool_condition"], f"{where}.tool_condition", 0, 1),
+            equipment=None if equipment is None else _good(equipment, f"{where}.equipment"),
+            wear=_fraction(p.get("wear", 0.0), f"{where}.wear"),
+            no_tool_factor=_fraction(p.get("no_tool_factor", 1.0), f"{where}.no_tool_factor"),
+            output={
+                _good(g, f"{where}.output"): _at_least(q, 0.0, f"{where}.output.{g}")
+                for g, q in output.items()
+            },
+            crafts_per_day=_nonneg_int(p.get("crafts_per_day", 0), f"{where}.crafts_per_day"),
+            recipes={
+                _good(g, f"{where}.recipes"): _holdings(inputs, f"{where}.recipes.{g}")
+                for g, inputs in recipes.items()
+            },
         )
+        if professions[Profession(name)].crafts_per_day and not recipes:
+            raise ConfigError(f"{where}: crafts_per_day set but no recipes")
 
     t = data["traits"]
     _keys(t, "traits", required={"skill", "thrift", "stock_days", "patience"})
@@ -152,6 +220,37 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         stock_days=_int_range(t["stock_days"], "traits.stock_days", 1),
         patience=_int_range(t["patience"], "traits.patience", 1),
     )
+
+    n = data["needs"]
+    _keys(
+        n,
+        "needs",
+        required={"food_per_day", "equipment_threshold", "hungry_after", "hungry_productivity"},
+    )
+    needs = NeedsConfig(
+        food_per_day=_nonneg_int(n["food_per_day"], "needs.food_per_day"),
+        equipment_threshold=_fraction(n["equipment_threshold"], "needs.equipment_threshold"),
+        hungry_after=_nonneg_int(n["hungry_after"], "needs.hungry_after"),
+        hungry_productivity=_fraction(n["hungry_productivity"], "needs.hungry_productivity"),
+    )
+
+    shocks = []
+    for i, sh in enumerate(data.get("shocks", [])):
+        where = f"shocks[{i}]"
+        _keys(
+            sh, where, required={"name", "effect", "start", "duration", "factor"}, optional={"site"}
+        )
+        shock = ShockConfig(
+            name=str(sh["name"]),
+            effect=_enum(ShockEffect, sh["effect"], f"{where}.effect"),
+            start=_nonneg_int(sh["start"], f"{where}.start"),
+            duration=_pos_int(sh["duration"], f"{where}.duration"),
+            factor=_at_least(sh["factor"], 0.0, f"{where}.factor"),
+            site=None if "site" not in sh else _enum(Site, sh["site"], f"{where}.site"),
+        )
+        if shock.effect is ShockEffect.SITE_OUTPUT and shock.site is None:
+            raise ConfigError(f"{where}: site_output shocks need a site")
+        shocks.append(shock)
 
     guilds = {}
     claimed: dict[Profession, str] = {}
@@ -195,6 +294,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         goods=goods,
         professions=professions,
         traits=traits,
+        needs=needs,
         guilds=guilds,
         town=TownConfig(
             treasury=_nonneg_int(town["treasury"], "town.treasury"),
@@ -203,6 +303,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
         outside=_holdings(data.get("outside", {}), "outside"),
+        shocks=tuple(shocks),
     )
     if cfg.population <= 0:
         raise ConfigError("population is zero")
@@ -233,6 +334,13 @@ def _enum(enum: type, value: Any, where: str) -> Any:
     except ValueError:
         options = ", ".join(e.value for e in enum)
         raise ConfigError(f"{where}: {value!r} is not one of: {options}") from None
+
+
+def _good(value: Any, where: str) -> Asset:
+    asset = _enum(Asset, value, where)
+    if asset is Asset.COIN:
+        raise ConfigError(f"{where}: coin is not a good")
+    return asset
 
 
 def _int(value: Any, where: str) -> int:

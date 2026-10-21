@@ -42,6 +42,16 @@ def _broken(raw: dict, mutate) -> dict:
         (lambda d: d["goods"]["food"].update(price_floor=2.0), "price_floor"),
         (lambda d: d["town"].update(market_tax=1.5), "between 0 and 1"),
         (lambda d: d.pop("traits"), "missing"),
+        (lambda d: d["professions"]["guard"].update(equipment="coin"), "coin is not a good"),
+        (lambda d: d["professions"]["blacksmith"].update(recipes={}), "no recipes"),
+        (
+            lambda d: d.update(
+                shocks=[
+                    {"name": "x", "effect": "site_output", "start": 0, "duration": 1, "factor": 0.5}
+                ]
+            ),
+            "need a site",
+        ),
     ],
 )
 def test_invalid_configs_fail_loudly(raw, mutate, message):

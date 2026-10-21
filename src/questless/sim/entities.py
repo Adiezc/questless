@@ -40,11 +40,6 @@ class NPCState(StrEnum):
     WAITING_ON_CONTRACT = "waiting_on_contract"
 
 
-def site_account(site: Site) -> str:
-    """Stockpile at a production site, waiting for transport to the market."""
-    return f"site:{site}"
-
-
 def guild_account(guild_id: str) -> str:
     return f"guild:{guild_id}"
 
@@ -65,6 +60,7 @@ class DailyRecord:
     bought: dict[Asset, int] = field(default_factory=dict)
     sold: dict[Asset, int] = field(default_factory=dict)
     unmet: dict[Asset, int] = field(default_factory=dict)
+    idle: bool = False  # could not work at all for lack of inputs
 
 
 @dataclass(slots=True)
@@ -78,11 +74,21 @@ class NPC:
     tool_condition: float = 1.0  # tools for workers, weapons for guards
     hunger: int = 0
     state: NPCState = NPCState.WORKING
+    # Fractional production carried to the next day, so integer goods stay unbiased.
+    carry: dict[str, float] = field(default_factory=dict)
+    # Consecutive days each good has been needed but not obtained.
+    unmet_streak: dict[Asset, int] = field(default_factory=dict)
     history: deque[DailyRecord] = field(default_factory=lambda: deque(maxlen=HISTORY_DAYS))
 
     @property
     def account(self) -> str:
+        """Goods and coin the NPC holds at the market (and personal items such as food, tools)."""
         return self.id
+
+    @property
+    def site_account(self) -> str:
+        """Where production lands. Off-market output waits here until transported."""
+        return self.id if self.site is Site.MARKET else f"{self.id}@{self.site}"
 
 
 @dataclass(frozen=True, slots=True)

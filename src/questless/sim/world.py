@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Adrian Diez Cuadrado
-"""World state and its construction from a scenario. The tick loop is added in milestone M2."""
+"""World state, its construction from a scenario, and the tick loop."""
 
 from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from dataclasses import dataclass, field
 
 from questless.config import ScenarioConfig
@@ -19,14 +20,26 @@ from questless.sim.entities import (
     Profession,
     Site,
     Traits,
-    site_account,
 )
 from questless.sim.ledger import Asset, Ledger
 from questless.sim.names import make_name
 from questless.sim.rng import RngStreams
+from questless.sim.shocks import Modifiers, Shock
 
-# Sites whose output waits in a stockpile for transport. Market-site producers sell directly.
-STOCKPILE_SITES: tuple[Site, ...] = (Site.MINE, Site.FARMS)
+
+@dataclass
+class TickStats:
+    """World-level totals for one tick; the raw material for metrics and provenance."""
+
+    tick: int
+    produced: Counter[Asset] = field(default_factory=Counter)
+    consumed: Counter[Asset] = field(default_factory=Counter)
+    unmet: Counter[Asset] = field(default_factory=Counter)
+    produced_by_site: dict[Site, Counter[Asset]] = field(default_factory=dict)
+    idle_npcs: int = 0
+    hungry_npcs: int = 0
+    wages_paid: int = 0
+    wages_unpaid: int = 0
 
 
 @dataclass
@@ -37,7 +50,43 @@ class World:
     npcs: dict[str, NPC]
     guilds: dict[str, Guild] = field(default_factory=dict)
     prices: dict[Asset, int] = field(default_factory=dict)
+    modifiers: Modifiers = field(default_factory=Modifiers)
+    stats: list[TickStats] = field(default_factory=list)
     tick: int = 0
+    check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
+
+    def step(self, days: int = 1) -> None:
+        for _ in range(days):
+            self._tick()
+
+    def _tick(self) -> None:
+        from questless.sim.behaviour import run_npc_day  # behaviour imports World for typing
+
+        stats = TickStats(tick=self.tick)
+        for npc in self.npcs_in_order():
+            rec = run_npc_day(self, npc)
+            stats.produced.update(rec.produced)
+            stats.consumed.update(rec.consumed)
+            stats.unmet.update(rec.unmet)
+            stats.produced_by_site.setdefault(npc.site, Counter()).update(rec.produced)
+            stats.idle_npcs += rec.idle
+            stats.hungry_npcs += npc.hunger > self.config.needs.hungry_after
+        self._pay_wages(stats)
+        self.stats.append(stats)
+        if self.check_every_tick:
+            self.check_invariants()
+        self.tick += 1
+
+    def _pay_wages(self, stats: TickStats) -> None:
+        wage = self.config.town.guard_wage
+        for guard in self.npcs_by_profession(Profession.GUARD):
+            if self.ledger.balance(TOWN, Asset.COIN) >= wage:
+                self.ledger.transfer(
+                    TOWN, guard.account, Asset.COIN, wage, tick=self.tick, reason="guard wage"
+                )
+                stats.wages_paid += wage
+            else:
+                stats.wages_unpaid += wage
 
     def npcs_in_order(self) -> list[NPC]:
         return [self.npcs[k] for k in sorted(self.npcs)]
@@ -60,9 +109,12 @@ class World:
                     "tool_condition": round(n.tool_condition, 9),
                     "hunger": n.hunger,
                     "state": str(n.state),
+                    "carry": dict(sorted(n.carry.items())),
+                    "unmet_streak": {str(a): d for a, d in sorted(n.unmet_streak.items())},
                 }
                 for n in self.npcs_in_order()
             },
+            "shocks": self.modifiers.state(),
             "rng": repr(self.rng.getstate()),
         }
 
@@ -103,6 +155,8 @@ def build_world(config: ScenarioConfig) -> World:
             )
             wallet = trait_rng.randint(*pc.wallet)
             ledger.open_account(npc.account, {Asset.COIN: wallet, **pc.inventory})
+            if npc.site_account != npc.account:
+                ledger.open_account(npc.site_account)
             npcs[npc_id] = npc
 
     guilds: dict[str, Guild] = {}
@@ -121,8 +175,6 @@ def build_world(config: ScenarioConfig) -> World:
     ledger.open_account(PLAYER, {Asset.COIN: config.player_wallet})
     ledger.open_account(ESCROW)
     ledger.open_account(OUTSIDE, dict(config.outside))
-    for site in STOCKPILE_SITES:
-        ledger.open_account(site_account(site))
     ledger.seal()
 
     world = World(
@@ -132,6 +184,7 @@ def build_world(config: ScenarioConfig) -> World:
         npcs=npcs,
         guilds=guilds,
         prices={asset: gc.base_price for asset, gc in config.goods.items()},
+        modifiers=Modifiers([Shock.from_config(s) for s in config.shocks]),
     )
     world.check_invariants()
     return world
