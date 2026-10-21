@@ -31,6 +31,9 @@ demo = [
     "plotly>=7.1.0",
     "streamlit>=1.66.0",
 ]
+experiments = [
+    "matplotlib>=3.11.2",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]

@@ -23,11 +23,11 @@ failed only for lack of money is recorded separately as ``unaffordable``: povert
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from questless.sim.alloc import allocate, ration
-from questless.sim.entities import MARKET, NPC, TOWN
+from questless.sim.entities import MARKET, NPC, OUTSIDE, TOWN
 from questless.sim.ledger import GOODS, Asset
 
 if TYPE_CHECKING:
@@ -44,6 +44,7 @@ class MarketReport:
     unfilled: int  # affordable demand left unmet: scarcity
     unaffordable: int  # wanted but not affordable: poverty
     tax: int
+    exported: int = 0  # bought by outside traders after the market cleared
 
 
 def stock_target(world: World, npc: NPC, good: Asset) -> int:
@@ -92,7 +93,41 @@ def clear(
     """Clear every market, then move prices using today's production and consumption flows."""
     reports = {good: _clear_good(world, good) for good in GOODS}
     _update_prices(world, reports, produced, consumed)
-    return reports
+    exported = _export(world)
+    return {g: replace(r, exported=exported.get(g, 0)) for g, r in reports.items()}
+
+
+def _export(world: World) -> dict[Asset, int]:
+    """Traders from outside spend part of the coin they hold (from caravan sales) on the town's
+    unsold surplus. Imports are thus paid for by exports instead of draining the town's money."""
+    budget = int(world.ledger.balance(OUTSIDE, Asset.COIN) * world.config.market.export_share)
+    exported: dict[Asset, int] = {}
+    rng = world.rng.stream("export")
+    for good in GOODS:
+        price = world.unit_price(good)
+        if budget < price:
+            break
+        asks = []
+        for npc in world.npcs_in_order():
+            surplus = world.ledger.balance(npc.account, good) - stock_target(world, npc, good)
+            if surplus > 0:
+                asks.append((npc.id, surplus))
+        units = min(sum(q for _, q in asks), budget // price)
+        for seller, qty in sorted(allocate(units, asks, rng).items()):
+            if not qty:
+                continue
+            value = qty * price
+            world.ledger.transfer(seller, OUTSIDE, good, qty, tick=world.tick, reason="export")
+            world.ledger.transfer(
+                OUTSIDE, seller, Asset.COIN, value, tick=world.tick, reason="export"
+            )
+            tax = int(value * world.config.town.market_tax)
+            world.ledger.transfer(
+                seller, TOWN, Asset.COIN, tax, tick=world.tick, reason="market tax"
+            )
+            budget -= value
+            exported[good] = exported.get(good, 0) + qty
+    return exported
 
 
 def _clear_good(world: World, good: Asset) -> MarketReport:

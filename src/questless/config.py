@@ -96,6 +96,7 @@ class MarketConfig:
     target_cover_days: float  # stock-to-demand ratio at which prices hold steady
     stock_weight: float  # weight of the stock (cover) term vs the flow term in price changes
     effort: FloatRange  # gatherer effort multiplier range, driven by price / base price
+    export_share: float  # share of the outside's coin it spends on the town's surplus each day
 
 
 @dataclass(frozen=True)
@@ -309,13 +310,20 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
     _keys(
         m,
         "market",
-        required={"price_adjustment", "target_cover_days", "stock_weight", "effort"},
+        required={
+            "price_adjustment",
+            "target_cover_days",
+            "stock_weight",
+            "effort",
+            "export_share",
+        },
     )
     market = MarketConfig(
         price_adjustment=_fraction(m["price_adjustment"], "market.price_adjustment"),
         target_cover_days=_at_least(m["target_cover_days"], 0.1, "market.target_cover_days"),
         stock_weight=_fraction(m["stock_weight"], "market.stock_weight"),
         effort=_float_range(m["effort"], "market.effort", 0.0, 5.0),
+        export_share=_fraction(m["export_share"], "market.export_share"),
     )
     tr = data["transport"]
     _keys(tr, "transport", required={"capacity_per_merchant", "fee_rate"})

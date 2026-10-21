@@ -104,6 +104,7 @@ price_adjustment = 0.05     # max relative price change per day
 target_cover_days = 3.0     # stock on offer that the market treats as "normal", in days of demand
 stock_weight = 0.5          # weight of the stock term relative to the production/consumption term
 effort = [0.6, 1.3]         # gatherer effort range: effort = price / base price, clamped
+export_share = 0.2          # traders from outside spend this share of their coin on surplus daily
 
 [transport]
 capacity_per_merchant = 14  # units/day each merchant hauls from mine and farms to the market
