@@ -21,7 +21,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: QUESTLESS version or commit
+      label: Questless version or commit
   - type: input
     id: env
     attributes:

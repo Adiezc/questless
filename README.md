@@ -1,18 +1,18 @@
-# QUESTLESS
+# Questless
 
 **Emergent quests from living worlds, and an open blueprint for the next generation of MMOs.**
 
-QUESTLESS is an open-source, deterministic **quest-economy engine for MMO-style worlds**. A settlement
+Questless is an open-source, deterministic **quest-economy engine for MMO-style worlds**. A settlement
 of 100 rule-based NPCs farms, mines, forges, hauls and trades. When the economy leaves needs unmet,
 NPCs, guilds and the town post **funded** player contracts. Every contract can answer the question
 *"Why does this quest exist?"* with a causal chain built from recorded data, and each number in that
 chain can be re-measured to prove it.
 
-![The QUESTLESS dashboard: a settlement map, a quest board, and the causal chain behind the selected contract](docs/images/dashboard.png)
+![The Questless dashboard: a settlement map, a quest board, and the causal chain behind the selected contract](docs/images/dashboard.png)
 
 ## What this is, honestly
 
-QUESTLESS has two halves:
+Questless has two halves:
 
 | | What it is | Status |
 |---|---|---|
@@ -33,9 +33,9 @@ players.
 
 Since then, very large new MMOs have become rare: they're expensive and risky to build, hard to
 balance, and easy to break with bots, inflation and exploits. Many of the problems that sank them
-are the ones QUESTLESS works on:
+are the ones Questless works on:
 
-| 2000s problem | What the 2030s make possible | Where QUESTLESS works on it |
+| 2000s problem | What the 2030s make possible | Where Questless works on it |
 |---|---|---|
 | Economies balanced by patch notes, after the damage | Simulate and test balance before release, on every change | Deterministic replay; economy checks on pull requests (M23) |
 | Hand-written quests that ignore the world | Quests caused by the world, that explain themselves | The engine today |
@@ -211,7 +211,7 @@ Background reading: [blueprint](docs/BLUEPRINT.md) ·
 
 ## Prior art
 
-Quests from NPC needs and NPC-driven economies both exist already. QUESTLESS combines them, with
+Quests from NPC needs and NPC-driven economies both exist already. Questless combines them, with
 contracts that must be funded, validated and explained from data.
 
 - **Economies:** J. Doran & I. Parberry, *Emergent Economies for Role Playing Games*. L. Doucet,
@@ -248,6 +248,6 @@ creator.
 
 ## Licence
 
-[MIT](LICENSE) © 2026 Adrian Diez Cuadrado. You may use, modify and distribute QUESTLESS, including
+[MIT](LICENSE) © 2026 Adrian Diez Cuadrado. You may use, modify and distribute Questless, including
 commercially, provided the copyright and permission notice is kept in copies or substantial portions
 of the software. A credit or a short note if you use it is appreciated, but not required.

@@ -317,7 +317,7 @@ non-deterministic change fails the check.
 
 ## M24: AI-agent training environment (7 h)
 
-**Goal:** QUESTLESS as a standard reinforcement-learning and LLM-agent environment, scored by
+**Goal:** Questless as a standard reinforcement-learning and LLM-agent environment, scored by
 real impact rather than coin.
 
 **Design:**
@@ -417,7 +417,7 @@ in the spirit of real research on game economies:
    moment; the lesson explains it and asks the player to act. Each has a question, a lever and a
    measured answer from the chain, so lessons can be graded automatically.
 
-| Lesson | Real-world concept | Where it shows up in QUESTLESS |
+| Lesson | Real-world concept | Where it shows up in Questless |
 |---|---|---|
 | Why prices spiked | Supply shocks, elasticity | Mine collapse → ore price chart |
 | Starving next to full shops | Amartya Sen's entitlement theory of famine (*Poverty and Famines*, 1981): hunger from lost purchasing power, not lack of food | Mine Disaster poverty trap (REVIEW B3) |
@@ -698,7 +698,7 @@ limit 5 actions per day
 
 **Goal:** test, honestly, whether a learned model can fast-forward dormant regions.
 - Train a simple model (start with linear regression in `experiments/`, with numpy as an extra)
-  on QUESTLESS runs to predict a region's next-day aggregates from today's.
+  on Questless runs to predict a region's next-day aggregates from today's.
 - Measure its error against the full simulation over 30, 90 and 365 days, with and without
   shocks.
 - Design the safety net: the ledger still enforces conservation, so the surrogate predicts
@@ -919,7 +919,7 @@ Scores are how likely a 2030s studio would ship each idea (1-10), followed by a 
 
 ## Vision: what a 2030s MMO needs that a 2000s MMO didn't
 
-| 2000s MMO | 2030s MMO | What QUESTLESS can own |
+| 2000s MMO | 2030s MMO | What Questless can own |
 |---|---|---|
 | Hand-written quest text | Quests caused by a simulated world | Funded, validated, explained contracts (v0.1) |
 | Opaque economies, balanced by patch notes | Glass-box economies, balanced *before* release | Exact replay, `verify()`, economy tests on every change |
@@ -934,7 +934,7 @@ Scores are how likely a 2030s studio would ship each idea (1-10), followed by a 
 |---|---|---|---|
 | **Economy CI for pull requests** (now **M23**) | A GitHub Action that runs the scenario suite on every change to a scenario or the engine, and comments on the pull request with an economy-impact diff (inflation, quest volume, hunger, recovery, against `main`). Balance changes get reviewed like code. | 10 | 1 day |
 | **Daily Crisis** | A daily seed and shock that everyone plays. Determinism makes it fair; scores come from the impact ledger; replays are shareable proof. A Wordle-style ritual for economy players and streamers. | 9 | 1 day |
-| **AI-agent gym** (now **M24**) | A Gymnasium-compatible environment (observation = board + chains, actions = player actions, reward = impact score), with baseline agents and a leaderboard. QUESTLESS becomes a benchmark for AI agents that must *reason about causes*, not just optimise numbers. | 9 | 1 day |
+| **AI-agent gym** (now **M24**) | A Gymnasium-compatible environment (observation = board + chains, actions = player actions, reward = impact score), with baseline agents and a leaderboard. Questless becomes a benchmark for AI agents that must *reason about causes*, not just optimise numbers. | 9 | 1 day |
 | **Open Quest Protocol** | A versioned JSON Schema for contracts, evidence and outcomes, plus a validator and example clients (Godot, Unity C# and a web widget). Any game can consume or emit explainable quests; the repo becomes the reference implementation. | 9 | 1 day |
 | **Audience-driven world** | Viewers vote on the next shock (and players can bribe or counter-campaign); the world's explanations make the outcome readable on stream. The crowd acts as the weather. | 8 | 1 day |
 | **Self-writing world wiki** (now **M25**) | A static site generated from a run: pages for every NPC, guild, shock and quest, cross-linked through provenance and lineage. The world documents itself. | 8 | 1 day |
@@ -1001,7 +1001,7 @@ Scores are how likely a 2030s studio would ship each idea (1-10), followed by a 
 
 2000s MMOs froze time: characters never aged, the map never changed, players' choices reset every
 patch, and anything automated was cheating. The ideas below drop each of those assumptions. Each
-one builds on things QUESTLESS already guarantees (replay, provenance, escrow, tiers).
+one builds on things Questless already guarantees (replay, provenance, escrow, tiers).
 
 **A world with real time**
 

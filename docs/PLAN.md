@@ -1,4 +1,4 @@
-# QUESTLESS — Project Plan (A–I)
+# Questless — Project Plan (A–I)
 
 > Emergent quests from living worlds.
 > Status: **implemented as v0.1.0** (2026-10-21). This is the original plan, kept for the record; what was actually built, and where it differs, is in [SIMULATION_SPEC.md](SIMULATION_SPEC.md) and [RESULTS.md](RESULTS.md). · Creator: Adrian Diez Cuadrado
@@ -10,9 +10,9 @@ Contents: [A. Brief](#a-executive-brief) · [B. Architecture](#b-technical-archi
 
 ## A. Executive brief
 
-**What it is.** QUESTLESS is a small, deterministic Python engine. It simulates a settlement of 100 rule-based NPCs who produce, trade and consume goods, and it turns their *unmet economic needs* into funded, validated player contracts. Every contract carries a machine-checked explanation of why it exists.
+**What it is.** Questless is a small, deterministic Python engine. It simulates a settlement of 100 rule-based NPCs who produce, trade and consume goods, and it turns their *unmet economic needs* into funded, validated player contracts. Every contract carries a machine-checked explanation of why it exists.
 
-**Technical novelty.** NPC economies (Doran & Parberry; BazaarBot) and quests generated from NPC needs (CONAN; KCI 2015) both exist already. QUESTLESS combines them, with three properties that are uncommon together:
+**Technical novelty.** NPC economies (Doran & Parberry; BazaarBot) and quests generated from NPC needs (CONAN; KCI 2015) both exist already. Questless combines them, with three properties that are uncommon together:
 1. **Funded contracts.** Rewards are escrowed from a real NPC, guild or town budget. No budget means no quest.
 2. **Validated contracts.** Deduplication, cooldowns, caps, feasibility checks and coin/goods conservation are tested invariants.
 3. **Evidence-based provenance.** "Why does this quest exist?" is answered with recorded metrics and thresholds, and a counterfactual run (same seed, no shock) produces no such quest.
@@ -412,7 +412,7 @@ Estimated total ≈ 19 h of focused AI-assisted work, plus a 1 h buffer. Tests a
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│ ⚔ QUESTLESS   Scenario [Iron Shortage ▾]  Seed [42]   Day 23   ▶ +1  ▶▶ +7  ⏩ +30  ↺ Reset │
+│ ⚔ Questless   Scenario [Iron Shortage ▾]  Seed [42]   Day 23   ▶ +1  ▶▶ +7  ⏩ +30  ↺ Reset │
 │ Shocks: [⛏ Mine collapse] [☀ Drought] [💎 New deposit]   Player: 412 coin · Rep ⛏+10 ⚒+25 │
 ├──────────────────────────┬────────────────────────────────────┬──────────────────────────┤
 │ LIVING WORLD             │ QUEST BOARD (parchment cards)      │ WHY DOES THIS QUEST EXIST?│

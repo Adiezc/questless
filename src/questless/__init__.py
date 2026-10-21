@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Adrian Diez Cuadrado
-"""QUESTLESS: emergent quests from living worlds."""
+"""Questless: emergent quests from living worlds."""
 
 from importlib.metadata import PackageNotFoundError, version
 

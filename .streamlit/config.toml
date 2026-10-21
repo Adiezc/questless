@@ -1,4 +1,4 @@
-# Streamlit theme for the QUESTLESS demo (app/streamlit_app.py).
+# Streamlit theme for the Questless demo (app/streamlit_app.py).
 [theme]
 base = "dark"
 primaryColor = "#e0a33c"            # quest gold: the single UI accent

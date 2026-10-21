@@ -1,4 +1,4 @@
-/* QUESTLESS demo theme. Dark strategy-tooling look: one accent (quest gold), one radius (8px),
+/* Questless demo theme. Dark strategy-tooling look: one accent (quest gold), one radius (8px),
    hairline borders, Geist for text and Geist Mono for numbers. */
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 
@@ -29,7 +29,7 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 
 /* Brand line */
 .ql-brand { display: flex; align-items: baseline; gap: 0.9rem; margin: 0 0 0.2rem 0; }
-.ql-brand h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.12em; margin: 0; padding: 0; color: var(--ink); }
+.ql-brand h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.01em; margin: 0; padding: 0; color: var(--ink); }
 .ql-brand span { color: var(--ink-2); font-size: 0.95rem; }
 .ql-lede { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.6rem 0; max-width: 80ch; }
 

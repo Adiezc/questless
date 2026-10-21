@@ -2,7 +2,7 @@
 
 Status: design, 2026-10-21.
 
-A QUESTLESS-style world is a simplified economy, legal system and society that runs on real
+A Questless-style world is a simplified economy, legal system and society that runs on real
 rules. Playing it well, or building it, exercises skills that transfer outside the game. This
 page lists them and how the project can make the learning deliberate rather than accidental.
 

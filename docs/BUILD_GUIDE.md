@@ -511,7 +511,7 @@ advice.
 
 **Real legal concepts and how each maps onto the engine:**
 
-| Concept | Real-world idea | In QUESTLESS |
+| Concept | Real-world idea | In Questless |
 |---|---|---|
 | Offer, acceptance, consideration | A contract needs an offer, its acceptance and something of value exchanged | Posting, `accept`, and the escrowed reward. Already there; M29 makes the terms explicit. |
 | Security | A creditor holds collateral so the debt gets paid | Escrow, and a new **performance bond** the player posts on accepting large contracts |

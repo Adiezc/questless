@@ -1,4 +1,4 @@
-# QUESTLESS — Critical Evaluation (planning phase)
+# Questless — Critical Evaluation (planning phase)
 
 Status: pre-implementation evaluation (approved) · 2026-10-21 · Author: Adrian Diez Cuadrado (planning assisted by Claude)
 
@@ -87,18 +87,18 @@ Not very impressive on their own: agent count, visual flourish, any use of the w
 
 ## 6. Comparable work (verified sources)
 
-| Work | What it does | Relation to QUESTLESS |
+| Work | What it does | Relation to Questless |
 |---|---|---|
-| Doran & Parberry, *Emergent Economies for Role Playing Games* ([PDF](https://ianparberry.com/pubs/econ.pdf)) | Agent-based market where prices emerge from agents' bids and asks and their price beliefs. | Closest prior art for the economy layer. QUESTLESS uses a simpler clearing rule but should cite it. |
+| Doran & Parberry, *Emergent Economies for Role Playing Games* ([PDF](https://ianparberry.com/pubs/econ.pdf)) | Agent-based market where prices emerge from agents' bids and asks and their price beliefs. | Closest prior art for the economy layer. Questless uses a simpler clearing rule but should cite it. |
 | BazaarBot, Lars Doucet ([write-up](https://www.gamedeveloper.com/design/bazaarbot-an-open-source-economics-engine), [repo](https://github.com/larsiusprime/bazaarBot)) | Open-source Haxe implementation of the paper above. Ports exist in Java and Raku. | Economy only, no quests. A good reference for price-belief updating. Licence not verified (the repo has a LICENSE.txt). |
-| Breault et al., *Let CONAN tell you a story: Procedural quest generation* ([arXiv 1808.06217](https://arxiv.org/pdf/1808.06217)) | NPCs plan toward goals, and steps they can't do themselves become player quests (e.g. a baker needs wheat). | **Closest prior art for the core idea.** CONAN is planning-based without an economy; QUESTLESS is economy-driven with funding constraints and evidence-based provenance. |
+| Breault et al., *Let CONAN tell you a story: Procedural quest generation* ([arXiv 1808.06217](https://arxiv.org/pdf/1808.06217)) | NPCs plan toward goals, and steps they can't do themselves become player quests (e.g. a baker needs wheat). | **Closest prior art for the core idea.** CONAN is planning-based without an economy; Questless is economy-driven with funding constraints and evidence-based provenance. |
 | Doran & Parberry, analysis of 750+ MMORPG quests ([PCG 2011](https://ianparberry.com/pubs/pcg2011.pdf)) and server-side quest execution ([2015](https://ianparberry.com/pubs/DoranParberryQuests2015.pdf)) | Quest structure taxonomy driven by NPC motivations; a runtime framework. | Use the taxonomy to name contract types credibly. |
 | "Procedural Quest Generation by NPC in MMORPG", Journal of Korea Game Society ([KCI](https://db.koreascholar.com/Article/Detail/268882)) | NPC desire model + resource management decides when to generate quests. | Very close in spirit. Cite it honestly. |
-| Kybartas & Bidarra, survey of story generation (IEEE TCIAIG 2017, [PDF](https://pure.tudelft.nl/ws/files/44107261/10021770_Survey.pdf)) | Taxonomy of plot and space generation by degree of automation. | Use it to position QUESTLESS in the case study. |
+| Kybartas & Bidarra, survey of story generation (IEEE TCIAIG 2017, [PDF](https://pure.tudelft.nl/ws/files/44107261/10021770_Survey.pdf)) | Taxonomy of plot and space generation by degree of automation. | Use it to position Questless in the case study. |
 | Ryan, *Talk of the Town* / *Curating Simulated Storyworlds* ([overview](https://emshort.blog/2019/05/28/curating-simulated-storyworlds-james-ryan-ch-6f/)); *Neighborly* ([CoG 2022](https://www.kmjn.org/publications/Neighborly_CoG22-abstract.html)) | Simulation-first emergent narrative, plus the problem of *curating* what the simulation produced. | Provenance is a form of curation. Cite this as the conceptual lineage. |
 | Oblivion's Radiant AI ([GamesBeat](https://gamesbeat.com/dimming-the-radiant-ai-in-oblivion/)) and Ultima Online's ecology ([Raph Koster](https://www.raphkoster.com/?p=46439)) | Commercial attempts at needs-driven NPCs and simulated ecology. Both were scaled back after unpredictable or player-broken results (Koster disputes parts of the popular UO story). | Cautionary tales. They justify the caps, cooldowns, escrow and determinism in this design. |
 
-**Honest novelty statement:** quests from NPC needs (CONAN, KCI paper) and emergent NPC economies (Doran & Parberry, BazaarBot) both exist. QUESTLESS's contribution is the *combination*: an economic simulation where contracts must be **funded** (by individuals or pooled guild treasuries), are **validated** against conservation, deduplication and feasibility rules, and carry **machine-checkable provenance**, packaged as a small deterministic engine with reproducible experiments.
+**Honest novelty statement:** quests from NPC needs (CONAN, KCI paper) and emergent NPC economies (Doran & Parberry, BazaarBot) both exist. Questless's contribution is the *combination*: an economic simulation where contracts must be **funded** (by individuals or pooled guild treasuries), are **validated** against conservation, deduplication and feasibility rules, and carry **machine-checkable provenance**, packaged as a small deterministic engine with reproducible experiments.
 
 ## 7. Initial two-day plan (summary; full version in PLAN §E)
 

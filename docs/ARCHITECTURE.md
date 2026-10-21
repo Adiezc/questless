@@ -1,6 +1,6 @@
 # Architecture
 
-QUESTLESS is one Python package with no third-party runtime dependencies, plus two optional front
+Questless is one Python package with no third-party runtime dependencies, plus two optional front
 ends. The engine never imports the UI.
 
 ```

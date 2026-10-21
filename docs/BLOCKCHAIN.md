@@ -13,7 +13,7 @@ named here before quoting them.
 signatures and commit-reveal schemes give players real guarantees (history can't be rewritten,
 crises weren't rigged, my balance is what you say it is). Tradable tokens and NFTs work *against*
 every one of the goals above: they turn play into income, and income attracts bots, farmers and
-multiboxers. QUESTLESS builds the useful half as milestone M30, with no chain, no tokens and no
+multiboxers. Questless builds the useful half as milestone M30, with no chain, no tokens and no
 wallets.
 
 ## 1. What a blockchain actually provides
@@ -30,7 +30,7 @@ there's a trusted operator anyway.
 
 ## 2. Each goal, and what serves it best
 
-| Goal | Does blockchain help? | Better tool | In QUESTLESS |
+| Goal | Does blockchain help? | Better tool | In Questless |
 |---|---|---|---|
 | Players can trust the economy isn't rigged | Partly: a public record proves history wasn't changed | Hash-chained logs plus commit-reveal, optionally anchored somewhere public | M30 |
 | History can't be quietly rewritten | Yes, but a hash chain with published roots gives the same tamper evidence | Daily roots, like Certificate Transparency logs | M30 |
@@ -39,7 +39,7 @@ there's a trusted operator anyway.
 | One player per character, no bots | **Harmful:** earning tokens makes running many accounts and bots profitable | Paid subscriptions per character, payment and device checks, economic detection | M31 |
 | Balance changes and fixes | **Harmful:** immutable assets resist rebalancing; "my NFT got nerfed" becomes a financial grievance | Normal patches, checked by economy CI | M23 |
 | Players' right to have data deleted | **Conflicts:** data written to a public chain can't be erased (GDPR's right to erasure) | Keep personal data off any public record; publish only hashes | M25 tiers |
-| The world survives if the studio closes | Weakly: tokens survive, but the game that gives them meaning doesn't | Publish the engine and save archives (QUESTLESS is MIT and replayable) | Persistence |
+| The world survives if the studio closes | Weakly: tokens survive, but the game that gives them meaning doesn't | Publish the engine and save archives (Questless is MIT and replayable) | Persistence |
 
 ## 3. Where blockchain-style technology genuinely helps
 
@@ -107,15 +107,15 @@ No single check works on its own. The layers below reinforce each other.
 | **Price** | One subscription per character makes each extra account cost real money every month. | Studio billing |
 | **Identity at sign-up** | One active subscription per verified payment method and household rules; passkeys and device attestation make mass account creation expensive. | Account platform |
 | **Proof of personhood (optional)** | 2030s "unique human" schemes exist, but they raise privacy concerns (biometrics are special-category data under GDPR) and exclude people. Offer at most as an opt-in, never as a requirement. | Account platform |
-| **Economic detection** | The ledger shows value funnelled from alts to a main, circular trades and off-market prices; each flag carries an evidence chain a human reviewer can check. | **QUESTLESS M31** |
-| **Behaviour detection** | Timing that's too regular, identical action sequences across accounts, concurrent sessions; deterministic replay lets reviewers re-watch exactly what happened. | **QUESTLESS M31 and M28** |
-| **Design that removes the payoff** | Caps per verified person rather than per character; rewards that can't be transferred; diminishing returns on repeated identical jobs; quests that need decisions, not repetition. | **QUESTLESS M31.5** |
-| **Due process** | False positives happen. A flagged player sees the evidence and can appeal; the court system (M29) and replays make that cheap. | **QUESTLESS M29** |
+| **Economic detection** | The ledger shows value funnelled from alts to a main, circular trades and off-market prices; each flag carries an evidence chain a human reviewer can check. | **Questless M31** |
+| **Behaviour detection** | Timing that's too regular, identical action sequences across accounts, concurrent sessions; deterministic replay lets reviewers re-watch exactly what happened. | **Questless M31 and M28** |
+| **Design that removes the payoff** | Caps per verified person rather than per character; rewards that can't be transferred; diminishing returns on repeated identical jobs; quests that need decisions, not repetition. | **Questless M31.5** |
+| **Due process** | False positives happen. A flagged player sees the evidence and can appeal; the court system (M29) and replays make that cheap. | **Questless M29** |
 
 The design goal: a person running five characters should earn no more than one attentive player,
 and should be easy to spot if they try.
 
-## 7. What QUESTLESS will build
+## 7. What Questless will build
 
 - **M30, tamper-evident world log (4 h):** hash-chained journal, Merkle proofs, commit-reveal for
   shocks, `questless audit`, and an optional anchor interface with no chain dependency.

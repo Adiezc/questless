@@ -3,7 +3,7 @@
 Status: vision document, 2026-10-21. Technology forecasts are informed guesses, labelled by how
 far along each technology is today (mid-2026).
 
-QUESTLESS has two halves:
+Questless has two halves:
 - **The engine (real).** A small, tested, deterministic economy you can run today. Each milestone
   adds a working piece that proves an idea at small scale.
 - **The blueprint (vision).** How those pieces would fit together in a commercial MMO of the
@@ -43,7 +43,7 @@ megaserver needs. The difference is distribution.
    worker.
 2. **Messages between regions.** Anything leaving a region (a caravan, a freighter, a migrant,
    a payment) becomes a message delivered at a later tick, held meanwhile on a transit ledger.
-   Global conservation = the sum of region ledgers + the transit ledger. QUESTLESS's
+   Global conservation = the sum of region ledgers + the transit ledger. Questless's
    `in_transit` account for caravans is the small-scale version of this.
 3. **Simulation level of detail.** Regions with players run every NPC as an agent. Busy regions
    without players run on aggregates (production and consumption per profession, not per NPC).
@@ -89,9 +89,9 @@ better; **emerging** = early, plausible by the 2030s; **speculative** = not plan
 
 ### Simulation and scale
 
-| Technology | Readiness | What it enables | Stepping stone in QUESTLESS |
+| Technology | Readiness | What it enables | Stepping stone in Questless |
 |---|---|---|---|
-| **Learned surrogate simulators** (neural networks trained to imitate a slow simulation, already used in weather forecasting) | maturing | Fast-forward millions of dormant regions in milliseconds, checked against the full simulation on samples and replaced by it when it drifts | **M40:** train a surrogate on QUESTLESS runs and measure its error honestly |
+| **Learned surrogate simulators** (neural networks trained to imitate a slow simulation, already used in weather forecasting) | maturing | Fast-forward millions of dormant regions in milliseconds, checked against the full simulation on samples and replaced by it when it drifts | **M40:** train a surrogate on Questless runs and measure its error honestly |
 | **WebAssembly sandboxes** | now | Run player-written rules and community mods safely and deterministically, with fixed fuel budgets | **M37** starts with a tiny interpreted rule language; Wasm is the scale-up path |
 | **Data-oriented engines** (entity-component systems) | now | Millions of agents per server | The engine's per-NPC rules port directly to component systems |
 | **Edge data centres and low-orbit satellite internet** | maturing | Lower latency worldwide, so one megaserver is fair to players everywhere | Regions hosted near their players (blueprint) |
@@ -131,7 +131,7 @@ better; **emerging** = early, plausible by the 2030s; **speculative** = not plan
 
 ## 5. What the engine will prove, and what stays on paper
 
-| Idea | Real in QUESTLESS | Blueprint only |
+| Idea | Real in Questless | Blueprint only |
 |---|---|---|
 | Conservation across a distributed world | Region ledgers + transit (M34) | Thousands of workers, failover |
 | Simulation level of detail | Full ↔ aggregate ↔ dormant regions with conservation (M34) | Automatic placement on servers |

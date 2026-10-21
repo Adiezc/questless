@@ -1,12 +1,12 @@
 name: Suggest an idea
-description: An idea that would benefit QUESTLESS, big or small. No design needed.
+description: An idea that would benefit Questless, big or small. No design needed.
 labels: ["idea"]
 body:
   - type: textarea
     id: idea
     attributes:
       label: The idea
-      description: What should QUESTLESS do, teach or simulate?
+      description: What should Questless do, teach or simulate?
     validations:
       required: true
   - type: textarea

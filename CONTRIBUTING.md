@@ -1,6 +1,6 @@
-# Contributing to QUESTLESS
+# Contributing to Questless
 
-QUESTLESS is a small, working engine plus a large public roadmap for the systems a 2030s
+Questless is a small, working engine plus a large public roadmap for the systems a 2030s
 massively multiplayer world would need: explainable economies, courts, diplomacy, ecology, fair
 automation, privacy by design, and real-world skills taught through play. Most of the roadmap is
 unbuilt, and it's meant to be built in the open.
@@ -21,7 +21,7 @@ unbuilt, and it's meant to be built in the open.
 
 ## Suggest ideas
 
-You don't have to write code to shape the project. Ideas that would benefit QUESTLESS are welcome:
+You don't have to write code to shape the project. Ideas that would benefit Questless are welcome:
 new mechanics, skill tracks, research it should draw on, or things that confused you. Post them in
 [Discussions → Ideas](https://github.com/Adiezc/questless/discussions/categories/ideas) or open an
 issue with the **Suggest an idea** template. Good ideas get added to the [roadmap](docs/ROADMAP.md)

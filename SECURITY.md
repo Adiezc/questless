@@ -12,7 +12,7 @@ project, so please allow reasonable time for a fix before disclosing publicly.
 
 ## Scope
 
-QUESTLESS is a research prototype that runs locally. Relevant reports include:
+Questless is a research prototype that runs locally. Relevant reports include:
 - code execution or file access from a crafted scenario (TOML) or save file (JSON);
 - ways to break the engine's guarantees (creating coin or goods, bypassing escrow, forging
   evidence that `verify()` accepts, replays that diverge);

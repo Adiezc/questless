@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use QUESTLESS in research or a project, please cite it as below."
-title: "QUESTLESS: Emergent quests from living worlds"
+message: "If you use Questless in research or a project, please cite it as below."
+title: "Questless: Emergent quests from living worlds"
 type: software
 authors:
   - family-names: "Diez Cuadrado"

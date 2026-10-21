@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Adrian Diez Cuadrado
-"""QUESTLESS interactive demo.
+"""Questless interactive demo.
 
     uv run questless demo        (or: uv run streamlit run app/streamlit_app.py)
 
@@ -59,7 +59,7 @@ EVIDENCE_GROUP = {
     "funding_decision": ("decision", "Funding"),
 }
 
-st.set_page_config(page_title="QUESTLESS", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Questless", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(
     f"<style>{(Path(__file__).parent / 'theme.css').read_text()}</style>", unsafe_allow_html=True
 )
@@ -149,7 +149,7 @@ def kind_label(c) -> tuple[str, str]:
 # --- header --------------------------------------------------------------------------------------
 
 st.markdown(
-    '<div class="ql-brand"><h1>QUESTLESS</h1><span>Emergent quests from living worlds</span></div>'
+    '<div class="ql-brand"><h1>Questless</h1><span>Emergent quests from living worlds</span></div>'
     '<p class="ql-lede">100 rule-based NPCs farm, mine, forge, haul and trade. When the economy '
     "leaves needs unmet, guilds and townsfolk post funded contracts. Every quest below was caused "
     "by the simulation, and can show you why.</p>",

@@ -71,7 +71,7 @@ def _run(args: argparse.Namespace) -> int:
         return 0
 
     cfg = sim.config
-    print(f"QUESTLESS · {cfg.name} · seed {cfg.seed} · {days} days in {elapsed:.2f}s")
+    print(f"Questless · {cfg.name} · seed {cfg.seed} · {days} days in {elapsed:.2f}s")
     if cfg.description:
         print(cfg.description)
     for shock in sim.world.modifiers.shocks:
