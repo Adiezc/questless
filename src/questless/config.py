@@ -8,6 +8,7 @@ fails loudly instead of silently falling back to a default.
 
 from __future__ import annotations
 
+import math
 import tomllib
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -510,9 +511,15 @@ def _pos_int(value: Any, where: str) -> int:
 
 
 def _number(value: Any, where: str) -> float:
-    if not isinstance(value, int | float) or isinstance(value, bool):
+    if not isinstance(value, int | float) or isinstance(value, bool):  # bool before finiteness
         raise ConfigError(f"{where}: expected a number, got {value!r}")
-    return float(value)
+    try:
+        number = float(value)  # an int too large for a float overflows here
+    except OverflowError:
+        raise ConfigError(f"{where}: must be a finite number") from None
+    if not math.isfinite(number):  # TOML accepts nan, inf and -inf as floats
+        raise ConfigError(f"{where}: must be a finite number")
+    return number
 
 
 def _fraction(value: Any, where: str) -> float:
