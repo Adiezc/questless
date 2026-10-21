@@ -30,6 +30,7 @@ from questless import persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts.model import Contract, Status
 from questless.contracts.provenance import verify
+from questless.metrics import timeseries
 from questless.player import apply_action
 from questless.sim.entities import PLAYER
 from questless.sim.ledger import GOODS, Asset
@@ -182,6 +183,10 @@ class Simulation:
             "reserve": g.policy.reserve,
             "reputation": dict(g.reputation),
         }
+
+    def timeseries(self) -> dict[str, Any]:
+        """Per-day series (prices, production, unfilled demand, hunger, treasuries...)."""
+        return timeseries(self.world)
 
     def summary(self) -> dict[str, Any]:
         """Headline indicators for the run so far."""

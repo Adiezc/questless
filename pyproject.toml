@@ -26,6 +26,12 @@ classifiers = [
 [project.scripts]
 questless = "questless.cli:main"
 
+[project.optional-dependencies]
+demo = [
+    "plotly>=7.1.0",
+    "streamlit>=1.66.0",
+]
+
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
 

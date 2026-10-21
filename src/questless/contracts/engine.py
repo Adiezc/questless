@@ -420,13 +420,25 @@ def _evidence(
     good = cand.good
     market = world.stats[-1].market[good]
     chain: list[Evidence] = [
-        Evidence(t, "unfilled_demand", f"market:{good}", "unfilled_units", market.unfilled, 0)
+        Evidence(
+            t,
+            "unfilled_demand",
+            f"market:{good}",
+            "unfilled_units",
+            market.unfilled,
+            0,
+            measure=(("unfilled", str(good)), t),
+        )
     ]
     if cand.kind is ContractKind.TRANSPORT:
         backlog = sum(cand.beneficiaries.values())
         chain.append(Evidence(t, "transport_backlog", f"sites:{good}", "units_waiting", backlog))
     else:
-        longest = max(cand.needs, key=lambda s: (s.days, s.subject))
+        # Cite the member whose patience ran out (the trigger), longest streak first.
+        def overdue(s: NeedState) -> tuple[bool, int, str]:
+            return (s.days >= world.npcs[s.subject].traits.patience, s.days, s.subject)
+
+        longest = max(cand.needs, key=overdue)
         patience = world.npcs[longest.subject].traits.patience
         chain.append(
             Evidence(

@@ -6,6 +6,7 @@ questless run scenarios/iron_shortage.toml            # contracts and why they e
 questless run scenarios/drought.toml --days 60 --json
 questless run scenarios/baseline.toml --save saves/base.json
 questless replay saves/base.json                      # rebuild and verify a save
+questless demo                                        # open the interactive dashboard
 """
 
 from __future__ import annotations
@@ -38,6 +39,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     rep = sub.add_parser("replay", help="replay a save file and verify it reproduces exactly")
     rep.add_argument("save")
+
+    demo = sub.add_parser("demo", help="open the interactive dashboard (needs the demo extra)")
+    demo.add_argument("--port", type=int, default=8501)
     return parser
 
 
@@ -48,6 +52,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run(args)
     if args.command == "replay":
         return _replay(args)
+    if args.command == "demo":
+        return _demo(args)
     parser.print_help()
     return 0
 
@@ -89,6 +95,22 @@ def _run(args: argparse.Namespace) -> int:
     if args.save:
         print("saved:", args.save)
     return 0
+
+
+def _demo(args: argparse.Namespace) -> int:
+    import importlib.util
+    import subprocess
+    from pathlib import Path
+
+    if importlib.util.find_spec("streamlit") is None:
+        print("The demo needs Streamlit: uv sync --extra demo", file=sys.stderr)
+        return 1
+    app = Path(__file__).resolve().parents[2] / "app" / "streamlit_app.py"
+    if not app.exists():
+        print(f"Dashboard not found at {app}; run from a source checkout.", file=sys.stderr)
+        return 1
+    cmd = [sys.executable, "-m", "streamlit", "run", str(app), "--server.port", str(args.port)]
+    return subprocess.call(cmd, cwd=app.parents[1])
 
 
 def _replay(args: argparse.Namespace) -> int:
