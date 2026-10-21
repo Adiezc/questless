@@ -5,7 +5,8 @@
 1. Asks: every NPC offers what it holds above its stock target.
 2. Bids: every NPC asks for what it lacks below its target, capped by its budget for that good
    (see ``budget``). Crafters only buy inputs while crafting with them is profitable.
-3. The short side is filled in full; the long side pro rata (largest remainder, ties by id).
+3. The short side is filled in full. Excess supply is split across sellers pro rata; excess
+   demand is *rationed* equally across buyers (see ``alloc.ration``).
 4. Trades settle at today's integer unit price via a clearing account; sellers pay market tax
    to the town.
 5. Prices adjust to two signals: a *flow* term (today's consumption vs today's production) and a
@@ -25,7 +26,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from questless.sim.alloc import allocate
+from questless.sim.alloc import allocate, ration
 from questless.sim.entities import MARKET, NPC, TOWN
 from questless.sim.ledger import GOODS, Asset
 
@@ -118,7 +119,7 @@ def _clear_good(world: World, good: Asset) -> MarketReport:
     demand = sum(q for _, q in bids)
     rng = world.rng.stream("market")
     sold = allocate(demand, asks, rng)
-    bought = allocate(supply, bids, rng)
+    bought = ration(supply, bids, rng)  # equal shares in a shortage, not wealth-weighted
     traded = sum(sold.values())
     assert traded == sum(bought.values())
 

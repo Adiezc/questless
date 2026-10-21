@@ -53,9 +53,13 @@ def test_t4_counterfactual_no_shock_no_iron_guild_contract(baseline):
 
 
 def test_baseline_year_posts_few_contracts(baseline):
+    """Plan target (G.3): at most about one contract a week without shocks."""
     world = build_world(baseline)
     world.step(365)
-    assert len(world.contracts.contracts) <= 12
+    assert len(world.contracts.contracts) <= 52
+    assert not [
+        c for c in world.contracts.contracts.values() if c.kind is ContractKind.GUILD_SUPPLY
+    ]
 
 
 def test_t3_guild_without_funds_cannot_post_and_escrow_is_untouched(baseline):
@@ -150,3 +154,15 @@ def _fake_need(world, npc_id):
     from questless.contracts.needs import NeedState
 
     return NeedState(npc_id, Asset.IRON_ORE, since=world.tick, days=5, unmet=4, unfilled=4)
+
+
+def test_reputation_scales_guild_rewards_within_ten_percent(baseline):
+    def first_guild_reward(rep: int) -> int:
+        world = build_world(with_shocks(baseline, mine_collapse(start=20)))
+        world.guilds["blacksmiths"].reputation["player"] = rep
+        world.step(40)
+        guild = [c for c in world.contracts.contracts.values() if c.funder == "guild:blacksmiths"]
+        return min(guild, key=lambda c: c.created_tick).reward
+
+    neutral, trusted = first_guild_reward(0), first_guild_reward(100)
+    assert neutral < trusted <= round(neutral * 1.1) + 1

@@ -9,7 +9,7 @@ import statistics
 import pytest
 
 from questless.sim.entities import OUTSIDE
-from questless.sim.guilds import collect_dues, provide_relief
+from questless.sim.guilds import collect_dues, provide_relief, working_capital
 from questless.sim.ledger import Asset
 from questless.sim.world import build_world
 
@@ -72,10 +72,14 @@ def test_relief_is_not_charged_dues(world):
     assert collect_dues(world, start, relief)["miners"] == 0
 
 
-def test_relief_tops_broke_members_up_to_food_money_poorest_first(world):
+def test_relief_tops_broke_members_up_to_working_capital_poorest_first(world):
     guild = world.guilds["blacksmiths"]
-    floor = guild.policy.relief_days * world.unit_price(Asset.FOOD)
     poorest, poor = guild.members[0], guild.members[1]
+    floor = working_capital(world, poorest, guild.policy.relief_days)
+    assert floor == working_capital(world, poor, guild.policy.relief_days)
+    # food for relief_days plus the cheapest craft's inputs (both smiths still have tools)
+    cheapest_craft = 2 * world.unit_price(Asset.IRON_ORE)
+    assert floor == guild.policy.relief_days * world.unit_price(Asset.FOOD) + cheapest_craft
     _set_coin(world, poorest, 0)
     _set_coin(world, poor, floor - 2)
     paid = provide_relief(world)["blacksmiths"]
@@ -106,11 +110,17 @@ def test_guilds_disabled_never_touch_guild_accounts(baseline):
     assert all(s.guilds == {} for s in world.stats)
 
 
-def test_guild_relief_reduces_hunger(baseline):
+def test_guild_relief_reduces_hunger_on_average(baseline):
+    """A statistical claim, so it is tested over several seeds (one seed can go either way)."""
+
     def mean_hungry(enabled: bool) -> float:
-        world = build_world(dataclasses.replace(baseline, guilds_enabled=enabled))
-        world.step(365)
-        return statistics.mean(s.hungry_npcs for s in world.stats[100:])
+        runs = []
+        for seed in (1, 2, 3, 4):
+            cfg = dataclasses.replace(baseline, guilds_enabled=enabled, seed=seed)
+            world = build_world(cfg)
+            world.step(365)
+            runs.append(statistics.mean(s.hungry_npcs for s in world.stats[100:]))
+        return statistics.mean(runs)
 
     assert mean_hungry(True) < mean_hungry(False)
 

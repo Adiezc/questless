@@ -1,6 +1,8 @@
-# Scenario A: iron shortage. A collapse at the mine cuts ore output to a fifth for 30 days.
-# Expect: smiths run out of ore, the Blacksmiths Guild pools funds for an iron contract, and the
-# shortage cascades into tools and then food as farmers' tools wear out.
+# Scenario A: iron shortage. A collapse at the mine cuts ore output to 20% for 30 days.
+# Expect: smiths run out of ore, the Blacksmiths Guild pools funds for an iron contract, tools
+# get scarce, and the economy recovers on its own within weeks of the mine reopening.
+# For a deeper cascade (into food) and a slump the economy cannot escape alone, see
+# mine_disaster.toml.
 # SPDX-License-Identifier: MIT
 
 [scenario]

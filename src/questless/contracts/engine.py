@@ -24,7 +24,7 @@ from questless.contracts.needs import TRANSPORT, NeedState
 from questless.contracts.provenance import Evidence, Provenance
 from questless.contracts.validation import obtainable, site_backlog
 from questless.sim.alloc import allocate
-from questless.sim.entities import ESCROW, TOWN, Profession, guild_account
+from questless.sim.entities import ESCROW, PLAYER, TOWN, Profession, guild_account
 from questless.sim.ledger import Asset
 from questless.sim.market import budget, stock_target
 
@@ -234,6 +234,10 @@ class ContractBoard:
             report.suppressed["unfunded"] += 1
             return None
         funder, premium, cap, qty = funding
+        if funder.startswith("guild:"):
+            # Guilds pay a trusted player up to 10% more and a distrusted one up to 10% less.
+            rep = world.guilds[funder.removeprefix("guild:")].reputation.get(PLAYER, 0)
+            premium = max(premium * (1 + rep / 1000), 1.0)
         # Premium and urgency are >= 1, so the reward always covers at least market value.
         reward = max(min(round(qty * unit_value * premium * _urgency(world, cand)), cap), 1)
         if reward < cfg.min_reward:
@@ -287,7 +291,8 @@ def _candidates(world: World, board: ContractBoard) -> list[Candidate]:
             states = world.needs.active_for(members, good)
             for state in states:
                 covered[(state.subject, good)] = (account, str(kind), str(good))
-            if len(states) / len(members) >= threshold:
+            # Share among members who use the good at all (farmers, not merchants, need tools).
+            if len(states) / max(len(_users(world, members, good)), 1) >= threshold:
                 pooled_cands.append(
                     Candidate(
                         kind,
@@ -325,6 +330,10 @@ def _candidates(world: World, board: ContractBoard) -> list[Candidate]:
     ]
     individual.sort(key=lambda c: (-c.needs[0].days * c.needs[0].unmet, c.requester, c.good))
     return pooled_cands + transport_cands + individual
+
+
+def _users(world: World, members: list[str], good: Asset) -> list[str]:
+    return [m for m in members if stock_target(world, world.npcs[m], good) > 0]
 
 
 def _pooling_bodies(world: World) -> list[tuple[ContractKind, str, list[str], float, str | None]]:
@@ -439,8 +448,8 @@ def _evidence(
                 t,
                 "guild_emergency" if cand.kind is ContractKind.GUILD_SUPPLY else "town_emergency",
                 account,
-                "share_of_members_affected",
-                round(len(cand.needs) / len(members), 3),
+                f"share_of_{cand.good}_users_affected",
+                round(len(cand.needs) / len(_users(world, members, cand.good)), 3),
                 threshold=threshold,
                 caused_by=(1,),
             )
@@ -476,8 +485,9 @@ def _reason(world: World, cand: Candidate, qty: int) -> str:
     good = str(cand.good).replace("_", " ")
     if cand.kind is ContractKind.GUILD_SUPPLY:
         guild = world.guilds[cand.guild_id]
+        users = len(_users(world, guild.members, cand.good))
         return (
-            f"{guild.name}: {len(cand.needs)} of {len(guild.members)} members cannot get {good}; "
+            f"{guild.name}: {len(cand.needs)} of {users} members who use {good} cannot get it; "
             f"deliver {qty} {good}."
         )
     if cand.kind is ContractKind.TOWN_SUPPLY:

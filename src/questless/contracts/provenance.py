@@ -56,6 +56,7 @@ class Evidence:
             threshold=_num(self.threshold) if self.threshold is not None else "?",
             pct=_pct(self.value),
             base_pct=_pct(self.baseline) if self.baseline is not None else "?",
+            thr_pct=_pct(self.threshold) if self.threshold is not None else "?",
         )
 
 
@@ -84,8 +85,8 @@ TEMPLATES = {
     "price_spike": "{subject} price rose to {value} (was {baseline}).",
     "unfilled_demand": "{subject}: {value} units wanted by buyers who could pay went unsold.",
     "need_persisted": "{subject} went {value} {metric} (patience {threshold} days).",
-    "guild_emergency": "{subject}: {pct} of members affected (emergency at {threshold}).",
-    "town_emergency": "{subject}: {pct} of guards affected (emergency at {threshold}).",
+    "guild_emergency": "{subject}: {pct} of members who use it are short (emergency at {thr_pct}).",
+    "town_emergency": "{subject}: {pct} of guards are short (emergency at {thr_pct}).",
     "transport_backlog": "{subject}: {value} units waiting at production sites.",
     "partial_funding": "{subject} could fund {value} of the {threshold} units needed.",
     "funding_decision": "{subject} escrowed {value} coin (had {baseline}, limit {threshold}).",

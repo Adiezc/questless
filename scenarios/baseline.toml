@@ -123,7 +123,7 @@ max_urgency = 2.0
 town_max_share = 0.2          # most of the town treasury one contract may escrow
 caravan_days = 3              # an import from outside takes this long; deadlines allow for it
 transport_backlog_days = 3.0  # site backlog (days of output) that signals a transport bottleneck
-min_reward = 15               # contracts worth less than this are not posted
+min_reward = 60               # smaller jobs are not posted; pooled guild contracts cover them
 town_emergency_threshold = 0.4  # share of guards short of a good before the town pools their needs
 
 [traits]
@@ -199,6 +199,8 @@ caravan_markup = 1.25    # caravan imports cost base price x this and take contr
 [outside]
 food = 100000
 iron_ore = 100000
+tools = 2000      # traders from the next town; caravans can bring crafted goods too
+weapons = 1000
 
 # Scheduled shocks. The baseline has none; see iron_shortage.toml and drought.toml.
 # [[shocks]]

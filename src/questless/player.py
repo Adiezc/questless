@@ -7,7 +7,7 @@ log reproduces the world exactly.
 The player has no goods of their own: to deliver, they must *source* them.
 - ``buy``: from NPC sellers at today's market price. Real trades, so buying up scarce goods leaves
   less for everyone else and pushes the price up.
-- ``caravan``: import food or ore from outside the map at a markup; arrives after
+- ``caravan``: import goods from outside the map (the next town) at a markup; arrives after
   ``caravan_days``. Imports come out of the finite ``outside`` stock and the coin goes there, so
   nothing is created.
 """

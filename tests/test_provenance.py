@@ -14,7 +14,7 @@ from questless.sim.world import build_world
 from tests.conftest import bandits, drought, mine_collapse, with_shocks
 
 SCENARIOS = {
-    "mine_collapse": (mine_collapse(),),
+    "mine_collapse": (mine_collapse(factor=0.1, duration=40),),  # deep enough to reach food
     "drought": (drought(),),
     "bandits": (bandits(),),
 }

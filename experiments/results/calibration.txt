@@ -1,0 +1,61 @@
+
+== baseline (10 seeds, 120 days)
+  contracts            median 0.0  range 0-1
+  hungry NPCs (avg)    median 1.1  range 0-2
+  unpaid wage days     median 0.0  range 0-0
+  price CV food        median 0.02  max 0.03
+  price CV iron_ore    median 0.12  max 0.17
+  price CV tools       median 0.18  max 0.32
+  ms per tick          median 1.5  range 2-2
+
+== iron_shortage (10 seeds, 120 days)
+  contracts            median 32.5  range 21-57
+  hungry NPCs (avg)    median 0.0  range 0-1
+  unpaid wage days     median 0.0  range 0-0
+  price CV food        median 0.16  max 0.21
+  price CV iron_ore    median 0.23  max 0.26
+  price CV tools       median 0.28  max 0.35
+  first contract delay median 12.0  range 11-14
+  shortage days        median 47.0  range 34-61
+  recovery after shock median 19.5  range 2-50  (not recovered: 0)
+  contracts by kind    {'guild_supply': 21, 'procurement': 307}
+  ms per tick          median 1.8  range 2-2
+
+== mine_disaster (10 seeds, 120 days)
+  contracts            median 67.5  range 49-102
+  hungry NPCs (avg)    median 7.4  range 2-14
+  unpaid wage days     median 0.0  range 0-0
+  price CV food        median 0.36  max 0.52
+  price CV iron_ore    median 0.42  max 0.55
+  price CV tools       median 0.46  max 0.49
+  first contract delay median 11.0  range 10-13
+  shortage days        median 40.0  range 37-77
+  recovery after shock n/a  (not recovered: 10)
+  contracts by kind    {'guild_supply': 60, 'procurement': 639, 'town_supply': 14}
+  ms per tick          median 2.1  range 2-2
+
+== drought (10 seeds, 120 days)
+  contracts            median 19.0  range 8-57
+  hungry NPCs (avg)    median 4.6  range 4-5
+  unpaid wage days     median 0.0  range 0-0
+  price CV food        median 0.32  max 0.33
+  price CV iron_ore    median 0.36  max 0.45
+  price CV tools       median 0.28  max 0.54
+  first contract delay median 7.0  range 6-8
+  shortage days        median 28.0  range 24-48
+  recovery after shock median 1.0  range 1-1  (not recovered: 0)
+  contracts by kind    {'guild_supply': 37, 'town_supply': 20, 'procurement': 185}
+  ms per tick          median 1.7  range 2-2
+
+== bandits (10 seeds, 120 days)
+  contracts            median 13.0  range 7-14
+  hungry NPCs (avg)    median 7.6  range 7-9
+  unpaid wage days     median 0.0  range 0-0
+  price CV food        median 0.21  max 0.22
+  price CV iron_ore    median 0.17  max 0.23
+  price CV tools       median 0.21  max 0.25
+  first contract delay median 7.0  range 6-7
+  shortage days        median 20.5  range 20-22
+  recovery after shock median 3.0  range 3-4  (not recovered: 0)
+  contracts by kind    {'transport': 29, 'town_supply': 10, 'guild_supply': 26, 'procurement': 51}
+  ms per tick          median 1.7  range 2-2

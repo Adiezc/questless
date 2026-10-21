@@ -89,7 +89,7 @@ def test_caravan_draws_on_finite_outside_stock(sim):
     sim.caravan("iron_ore", 5)
     assert sim.world.ledger.balance(OUTSIDE, Asset.IRON_ORE) == outside - 5
     with pytest.raises(ActionError):
-        sim.caravan("tools", 1)  # nobody imports crafted goods
+        sim.caravan("tools", 10**6)  # more than the next town has
 
 
 @pytest.mark.parametrize(

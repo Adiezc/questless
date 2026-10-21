@@ -4,10 +4,11 @@
 
 - **Dues:** each member pays ``dues_rate`` of their net coin gain for the day (relief excluded),
   with fractions carried over so small incomes are not rounded away.
-- **Relief:** members who cannot afford ``relief_days`` of food are topped up from the treasury,
-  poorest first, until the day's relief budget (``max_daily_relief_share`` of the treasury) runs
-  out, and never below the guild's ``reserve``. This is a safety net, not a wage: it only ever
-  covers food money.
+- **Relief:** members who cannot afford to keep working are topped up from the treasury, poorest
+  first, until the day's relief budget (``max_daily_relief_share`` of the treasury) runs out, and
+  never below the guild's ``reserve``. "Able to work" means ``relief_days`` of food, a replacement
+  for broken equipment, and inputs for one craft (see ``working_capital``). It is working
+  capital, not a wage: a member who is not short of these gets nothing.
 
 With guilds disabled no guild accounts exist and none of this runs.
 """
@@ -35,16 +36,13 @@ class GuildReport:
 
 
 def provide_relief(world: World) -> dict[str, dict[str, int]]:
-    """Top up broke members. Returns ``{guild_id: {npc_id: amount}}``."""
-    food_per_day = world.config.needs.food_per_day
-    food_price = world.unit_price(Asset.FOOD)
+    """Top up broke members to ``working_capital``. Returns ``{guild_id: {npc_id: amount}}``."""
     paid: dict[str, dict[str, int]] = {}
     for gid, guild in sorted(world.guilds.items()):
         paid[gid] = {}
         days = guild.policy.relief_days
         if not days:
             continue
-        floor = days * food_per_day * food_price
         treasury = world.ledger.balance(guild.account, Asset.COIN)
         budget = min(
             int(treasury * guild.policy.max_daily_relief_share),
@@ -52,7 +50,7 @@ def provide_relief(world: World) -> dict[str, dict[str, int]]:
         )
         wallets = {m: world.ledger.balance(m, Asset.COIN) for m in guild.members}
         for member in sorted(guild.members, key=lambda m: (wallets[m], m)):  # poorest first
-            top_up = min(floor - wallets[member], budget)
+            top_up = min(working_capital(world, member, days) - wallets[member], budget)
             if top_up <= 0:
                 continue
             world.ledger.transfer(
@@ -61,6 +59,23 @@ def provide_relief(world: World) -> dict[str, dict[str, int]]:
             paid[gid][member] = top_up
             budget -= top_up
     return paid
+
+
+def working_capital(world: World, npc_id: str, food_days: int) -> int:
+    """Coin a member needs to keep working: ``food_days`` of food, a replacement for broken
+    equipment it has no spare of, and inputs for one craft."""
+    npc = world.npcs[npc_id]
+    pc = world.config.professions[npc.profession]
+    need = food_days * world.config.needs.food_per_day * world.unit_price(Asset.FOOD)
+    broken = npc.tool_condition < world.config.needs.equipment_threshold
+    if pc.equipment is not None and broken and not world.ledger.balance(npc_id, pc.equipment):
+        need += world.unit_price(pc.equipment)
+    if pc.recipes:
+        need += min(
+            sum(world.unit_price(a) * q for a, q in inputs.items())
+            for inputs in pc.recipes.values()
+        )
+    return need
 
 
 def collect_dues(

@@ -5,7 +5,7 @@ from collections import Counter
 
 import pytest
 
-from questless.sim.alloc import allocate, split
+from questless.sim.alloc import allocate, ration, split
 
 
 def test_full_claims_when_total_suffices():
@@ -39,3 +39,18 @@ def test_repeated_small_splits_are_fair_over_time():
     for _ in range(4000):
         wins.update({k: v for k, v in allocate(2, claims, rng).items() if v})
     assert min(wins.values()) > 0.8 * max(wins.values())
+
+
+def test_ration_shares_scarce_goods_equally_not_by_bid_size():
+    """Regression: pro-rata by bid size let the richest smith take most of the ore."""
+    out = ration(12, [("rich", 30), ("poor_a", 2), ("poor_b", 6), ("poor_c", 6)])
+    assert out["poor_a"] == 2  # small claims are met in full
+    assert sorted([out["poor_b"], out["poor_c"], out["rich"]]) == [3, 3, 4]  # the rest shared
+
+
+@pytest.mark.parametrize("total", [0, 1, 7, 50])
+def test_ration_never_exceeds_total_or_claims(total):
+    claims = [("a", 5), ("b", 1), ("c", 9)]
+    out = ration(total, claims, random.Random(3))
+    assert sum(out.values()) == min(total, 15)
+    assert all(out[k] <= q for k, q in claims)

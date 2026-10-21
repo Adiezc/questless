@@ -486,6 +486,28 @@ Estimated total ≈ 19 h of focused AI-assisted work, plus a 1 h buffer. Tests a
 | Price volatility | stdev / mean per good | Baseline stability check |
 | Runtime | ms per tick | Performance claim |
 
+### G.3b Calibration results (M9, implemented)
+
+Run `uv run python experiments/calibrate.py` (10 seeds, 120 days); the output is saved in `experiments/results/calibration.txt`.
+
+| Scenario | First contract after shock | Recovers after shock ends | Avg hungry NPCs |
+|---|---|---|---|
+| Baseline | 0–1 contracts / 120 days | n/a | 1.1 |
+| Iron shortage (ore x0.2, 30 days) | 10–14 days | 10/10 seeds, median 19.5 days | 0.0 |
+| Mine disaster (ore x0.1, 40 days) | 10–13 days | 0/10 (economic trap) | 7.4 |
+| Drought (food x0.4, 25 days) | 6–8 days | 10/10, 1 day | 4.6 |
+| Bandits (transport x0.3, 20 days) | 6–7 days | 10/10, 3 days | 7.6 |
+
+Changes made during calibration:
+- **Equal rationing.** Buyers in a shortage get equal shares, not shares proportional to their bids, which had let one smith take all the ore and bankrupt the rest.
+- **Working-capital relief.** Guild relief covers a replacement tool and one craft's inputs, not only food.
+- **Imports of crafted goods.** Caravans can bring tools and weapons, so a tools shortage becomes a quest the player can complete.
+- **Pooling among users only.** Emergency shares are counted among members who use the good.
+- **Minimum reward of 60.** Single-unit jobs are left to pooled contracts.
+- **Reputation.** Guild rewards move by up to ±10% with the player's reputation.
+
+The mine-disaster trap is a finding, not a bug: broke miners cannot afford tools, and without tools they cannot mine. M11 tests whether player contracts get the economy out of it.
+
 ### G.4 Reproducible demonstration experiment
 
 `uv run python experiments/shock_vs_baseline.py --seeds 10` runs four arms over 120 days: **baseline**, **shock, no player**, **shock + scripted player** (accepts and fulfils every feasible contract), and **shock + player, guilds off**. It outputs `results/summary.csv` plus two charts: ore and tools output over time with the shock window shaded, and shortage duration per arm with seed spread. The README quotes the medians.

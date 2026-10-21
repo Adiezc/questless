@@ -44,3 +44,35 @@ def allocate(
     if total >= sum(q for _, q in claims):
         return dict(claims)
     return split(total, claims, rng)
+
+
+def ration(
+    total: int, claims: Iterable[tuple[str, int]], rng: random.Random | None = None
+) -> dict[str, int]:
+    """Share a scarce ``total`` *equally* across claimants (water-filling): small claims are met
+    in full, everyone else gets the same amount. Leftover single units go by seeded draw.
+
+    Used for buyers in a shortage: pro-rata by bid size would hand most of the goods to whoever
+    can afford the biggest bid, which compounds wealth into monopoly."""
+    claims = sorted(((k, q) for k, q in claims if q > 0), key=lambda kq: (kq[1], kq[0]))
+    if total >= sum(q for _, q in claims):
+        return dict(claims)
+    out: dict[str, int] = {}
+    remaining, left = total, len(claims)
+    for i, (k, q) in enumerate(claims):
+        level = remaining // left
+        if q <= level:
+            out[k] = q
+            remaining -= q
+            left -= 1
+            continue
+        # Every remaining claim exceeds the level: give each the level, spread the rest.
+        rest = claims[i:]
+        for k2, _ in rest:
+            out[k2] = level
+        extra = remaining - level * len(rest)
+        order = sorted(rest, key=lambda kq: ((rng.random() if rng else 0.0), kq[0]))
+        for k2, _ in order[:extra]:
+            out[k2] += 1
+        break
+    return out

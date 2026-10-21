@@ -1,0 +1,19 @@
+# Scenario A+: mine disaster. Ore output falls to 10% for 40 days.
+# Expect the full cascade: ore -> idle smiths -> tools -> farmers without tools -> food, with
+# contracts linked into a lineage. The economy can fall into a slump it does not leave on its own
+# (broke miners cannot afford tools; without tools they cannot mine): player action matters.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "baseline.toml"
+name = "Mine Disaster"
+description = "A disaster at the mine cuts iron ore output to 10% for 40 days from day 15."
+days = 150
+
+[[shocks]]
+name = "Mine disaster"
+effect = "site_output"
+site = "mine"
+start = 15
+duration = 40
+factor = 0.1
