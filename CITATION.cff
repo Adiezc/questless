@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use QUESTLESS in research or a project, please cite it as below."
+title: "QUESTLESS: Emergent quests from living worlds"
+type: software
+authors:
+  - family-names: "Diez Cuadrado"
+    given-names: "Adrian"
+version: "0.1.0.dev0"
+license: MIT
+abstract: >-
+  A deterministic quest-economy engine for MMO-style worlds. Rule-based NPCs produce, trade and
+  consume goods; unmet economic needs become funded, validated player contracts with
+  evidence-based provenance.
+keywords:
+  - procedural content generation
+  - quest generation
+  - agent-based simulation
+  - game economy
+# repository-code: "{{GITHUB_REPO_URL}}"   # add once the repository is public
