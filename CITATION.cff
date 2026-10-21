@@ -5,8 +5,9 @@ type: software
 authors:
   - family-names: "Diez Cuadrado"
     given-names: "Adrian"
-version: "0.1.0.dev0"
+version: "0.1.0"
 license: MIT
+date-released: "2026-10-21"
 abstract: >-
   A deterministic quest-economy engine for MMO-style worlds. Rule-based NPCs produce, trade and
   consume goods; unmet economic needs become funded, validated player contracts with

@@ -1,7 +1,7 @@
 # QUESTLESS — Project Plan (A–I)
 
 > Emergent quests from living worlds.
-> Status: **awaiting approval** · 2026-10-21 · Creator: Adrian Diez Cuadrado
+> Status: **implemented as v0.1.0** (2026-10-21). This is the original plan, kept for the record; what was actually built, and where it differs, is in [SIMULATION_SPEC.md](SIMULATION_SPEC.md) and [RESULTS.md](RESULTS.md). · Creator: Adrian Diez Cuadrado
 > Companion doc: [EVALUATION.md](EVALUATION.md) (risks, prior art, scope rationale)
 
 Contents: [A. Brief](#a-executive-brief) · [B. Architecture](#b-technical-architecture) · [C. Simulation spec](#c-simulation-specification) · [D. Repository](#d-repository-structure) · [E. 2-day plan](#e-two-day-implementation-plan) · [F. Demo design](#f-interactive-demo-design) · [G. Testing](#g-testing-and-validation) · [H. Release](#h-release-and-presentation) · [I. Roadmap](#i-roadmap)

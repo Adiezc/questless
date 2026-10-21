@@ -1,6 +1,6 @@
 [project]
 name = "questless"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Emergent quests from living worlds: a deterministic quest-economy engine for MMO-style worlds."
 readme = "README.md"
 license = "MIT"
