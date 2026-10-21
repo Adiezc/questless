@@ -22,6 +22,8 @@ from questless.sim.entities import (
     Site,
     Traits,
 )
+from questless.sim.guilds import GuildReport, collect_dues, provide_relief
+from questless.sim.guilds import reports as guild_reports
 from questless.sim.ledger import Asset, Ledger
 from questless.sim.market import MarketReport
 from questless.sim.market import clear as clear_market
@@ -48,6 +50,7 @@ class TickStats:
     market: dict[Asset, MarketReport] = field(default_factory=dict)
     transport: TransportReport | None = None
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
+    guilds: dict[str, GuildReport] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,6 +74,9 @@ class World:
         from questless.sim.behaviour import run_npc_day  # behaviour imports World for typing
 
         stats = TickStats(tick=self.tick)
+        start_coin = {
+            n.id: self.ledger.balance(n.account, Asset.COIN) for n in self.npcs_in_order()
+        }
         for npc in self.npcs_in_order():
             rec = run_npc_day(self, npc)
             stats.produced.update(rec.produced)
@@ -82,8 +88,10 @@ class World:
         stats.transport = ship(self)
         self._collect_upkeep(stats)
         self._pay_wages(stats)
+        relief = provide_relief(self)  # before the market, so relief buys food today
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
+        stats.guilds = guild_reports(self, collect_dues(self, start_coin, relief), relief)
         self.stats.append(stats)
         if self.check_every_tick:
             self.check_invariants()

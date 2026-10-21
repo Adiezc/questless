@@ -1,0 +1,121 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Adrian Diez Cuadrado
+"""M4 acceptance: dues move coin member -> guild; relief tops up broke members within budget and
+reserve; with guilds disabled no guild account is ever touched."""
+
+import dataclasses
+import statistics
+
+import pytest
+
+from questless.sim.entities import OUTSIDE
+from questless.sim.guilds import collect_dues, provide_relief
+from questless.sim.ledger import Asset
+from questless.sim.world import build_world
+
+
+@pytest.fixture
+def world(baseline):
+    return build_world(baseline)
+
+
+def _coin(world, account):
+    return world.ledger.balance(account, Asset.COIN)
+
+
+def _set_coin(world, account, amount):
+    current = _coin(world, account)
+    if current > amount:
+        world.ledger.transfer(account, OUTSIDE, Asset.COIN, current - amount, tick=0, reason="test")
+    elif current < amount:
+        world.ledger.transfer(OUTSIDE, account, Asset.COIN, amount - current, tick=0, reason="test")
+
+
+def _fund_outside(world, amount=100_000):
+    world.ledger._balances[OUTSIDE][Asset.COIN] += amount  # test-only top-up
+    world.ledger._genesis[Asset.COIN] += amount
+
+
+def test_dues_are_a_share_of_net_gain(world):
+    guild = world.guilds["blacksmiths"]
+    member = guild.members[0]
+    start = {n: _coin(world, n) for n in world.npcs}
+    _fund_outside(world)
+    world.ledger.transfer(OUTSIDE, member, Asset.COIN, 100, tick=0, reason="test income")
+    treasury = _coin(world, guild.account)
+    collected = collect_dues(world, start, relief={})
+    assert collected["blacksmiths"] == int(100 * guild.dues_rate)
+    assert _coin(world, guild.account) - treasury == collected["blacksmiths"]
+    world.check_invariants()
+
+
+def test_small_incomes_still_pay_dues_over_time(world):
+    guild = world.guilds["miners"]
+    member = guild.members[0]
+    _fund_outside(world)
+    total = 0
+    for _ in range(20):
+        start = {n: _coin(world, n) for n in world.npcs}
+        world.ledger.transfer(OUTSIDE, member, Asset.COIN, 4, tick=0, reason="test income")
+        total += collect_dues(world, start, relief={})["miners"]
+    assert total == int(20 * 4 * guild.dues_rate)  # 0.2/day would round to 0 without carry
+
+
+def test_relief_is_not_charged_dues(world):
+    guild = world.guilds["miners"]
+    member = guild.members[0]
+    start = {n: _coin(world, n) for n in world.npcs}
+    _set_coin(world, member, 0)
+    start[member] = 0
+    relief = provide_relief(world)
+    assert relief["miners"][member] > 0
+    assert collect_dues(world, start, relief)["miners"] == 0
+
+
+def test_relief_tops_broke_members_up_to_food_money_poorest_first(world):
+    guild = world.guilds["blacksmiths"]
+    floor = guild.policy.relief_days * world.unit_price(Asset.FOOD)
+    poorest, poor = guild.members[0], guild.members[1]
+    _set_coin(world, poorest, 0)
+    _set_coin(world, poor, floor - 2)
+    paid = provide_relief(world)["blacksmiths"]
+    assert paid[poorest] == floor and paid[poor] == 2
+    assert _coin(world, poorest) == _coin(world, poor) == floor
+    assert list(paid)[0] == poorest
+
+
+def test_relief_respects_daily_budget_and_reserve(world):
+    guild = world.guilds["blacksmiths"]
+    for member in guild.members:
+        _set_coin(world, member, 0)
+    _set_coin(world, guild.account, guild.policy.reserve + 3)
+    paid = provide_relief(world)["blacksmiths"]
+    assert sum(paid.values()) <= 3
+    assert _coin(world, guild.account) >= guild.policy.reserve
+
+
+def test_guilds_disabled_never_touch_guild_accounts(baseline):
+    world = build_world(dataclasses.replace(baseline, guilds_enabled=False))
+    world.step(60)
+    touched = [
+        e
+        for e in world.ledger.journal
+        if (e.src or "").startswith("guild:") or (e.dst or "").startswith("guild:")
+    ]
+    assert touched == []
+    assert all(s.guilds == {} for s in world.stats)
+
+
+def test_guild_relief_reduces_hunger(baseline):
+    def mean_hungry(enabled: bool) -> float:
+        world = build_world(dataclasses.replace(baseline, guilds_enabled=enabled))
+        world.step(365)
+        return statistics.mean(s.hungry_npcs for s in world.stats[100:])
+
+    assert mean_hungry(True) < mean_hungry(False)
+
+
+def test_year_with_guilds_conserves_everything(world):
+    world.step(365)  # invariants are checked every tick
+    for report in world.stats[-1].guilds.values():
+        assert report.treasury >= 0

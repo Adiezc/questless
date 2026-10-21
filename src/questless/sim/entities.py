@@ -101,6 +101,9 @@ class GuildPolicy:
     emergency_threshold: float  # share of members sharing a need that triggers a guild contract
     max_contract_share: float  # max share of treasury one contract may escrow
     reward_premium: float  # multiplier over market value for guild-funded contracts
+    relief_days: int  # food a broke member is topped up to, in days (0 disables relief)
+    max_daily_relief_share: float  # cap on total relief per day, as a share of treasury
+    reserve: int  # coin relief may never touch; kept for emergencies and contracts
 
 
 @dataclass(slots=True)

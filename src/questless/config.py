@@ -313,7 +313,14 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         _keys(
             pol,
             f"{where}.policy",
-            required={"emergency_threshold", "max_contract_share", "reward_premium"},
+            required={
+                "emergency_threshold",
+                "max_contract_share",
+                "reward_premium",
+                "relief_days",
+                "max_daily_relief_share",
+                "reserve",
+            },
         )
         guilds[gid] = GuildConfig(
             name=str(g["name"]),
@@ -324,6 +331,11 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
                 emergency_threshold=_fraction(pol["emergency_threshold"], f"{where}.policy"),
                 max_contract_share=_fraction(pol["max_contract_share"], f"{where}.policy"),
                 reward_premium=_at_least(pol["reward_premium"], 1.0, f"{where}.policy"),
+                relief_days=_nonneg_int(pol["relief_days"], f"{where}.policy.relief_days"),
+                max_daily_relief_share=_fraction(
+                    pol["max_daily_relief_share"], f"{where}.policy.max_daily_relief_share"
+                ),
+                reserve=_nonneg_int(pol["reserve"], f"{where}.policy.reserve"),
             ),
         )
 

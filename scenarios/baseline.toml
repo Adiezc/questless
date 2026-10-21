@@ -115,26 +115,56 @@ thrift = [0.1, 0.5]      # share of wallet kept as cash reserve
 stock_days = [2, 5]      # days of food and inputs an NPC tries to hold
 patience = [2, 5]        # days a need stays unmet before it is escalated
 
+# Guilds collect dues (a share of each member's daily income), keep a treasury, and use it for
+# (a) relief: topping broke members up to `relief_days` of food money, and (b) funding contracts
+# when many members share a need (milestone M5). Policy fields:
+#   emergency_threshold     share of members with the same need that triggers a guild contract
+#   max_contract_share      most of the treasury one contract may escrow
+#   reward_premium          contract reward multiplier over market value
+#   relief_days             food money a broke member is topped up to, in days (0 = no relief)
+#   max_daily_relief_share  most of the treasury spent on relief per day
+#   reserve                 coin relief never touches; kept for emergencies and contracts
 [guilds.miners]
 name = "Miners Guild"
 professions = ["miner"]
 treasury = 600
 dues_rate = 0.05
-policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[guilds.miners.policy]
+emergency_threshold = 0.6
+max_contract_share = 0.4
+reward_premium = 1.3
+relief_days = 2
+max_daily_relief_share = 0.05
+reserve = 500
 
 [guilds.merchants]
 name = "Merchants Guild"
 professions = ["merchant", "farmer"]
 treasury = 800
 dues_rate = 0.05
-policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[guilds.merchants.policy]
+emergency_threshold = 0.6
+max_contract_share = 0.4
+reward_premium = 1.3
+relief_days = 2
+max_daily_relief_share = 0.05
+reserve = 500
 
 [guilds.blacksmiths]
 name = "Blacksmiths Guild"
 professions = ["blacksmith"]
 treasury = 1000
 dues_rate = 0.05
-policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[guilds.blacksmiths.policy]
+emergency_threshold = 0.6
+max_contract_share = 0.4
+reward_premium = 1.3
+relief_days = 2
+max_daily_relief_share = 0.05
+reserve = 500
 
 [town]
 treasury = 5000
