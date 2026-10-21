@@ -29,7 +29,8 @@ PORT = 9333
 
 
 async def _capture() -> None:
-    targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json"))
+    # Fixed http://127.0.0.1 URL to the local headless Chrome; no user input reaches it.
+    targets = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json"))  # nosec B310
     page = next(t for t in targets if t["type"] == "page")
     async with websockets.connect(page["webSocketDebuggerUrl"], max_size=2**26) as ws:
         msg_id = 0
@@ -85,7 +86,7 @@ def main() -> None:
         try:
             for _ in range(50):
                 try:
-                    urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/version")
+                    urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/version")  # nosec B310
                     break
                 except OSError:
                     time.sleep(0.2)

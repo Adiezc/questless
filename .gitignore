@@ -9,3 +9,6 @@ build/
 .DS_Store
 saves/
 experiments/results/*.tmp
+
+# Local tool settings (machine-specific)
+.claude/
