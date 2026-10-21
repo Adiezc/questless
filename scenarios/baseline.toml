@@ -191,7 +191,8 @@ upkeep_rate = 0.03       # daily levy on each NPC's coin above upkeep_exempt
 upkeep_exempt = 60
 
 [player]
-wallet = 300
+wallet = 600
+caravan_markup = 1.25    # caravan imports cost base price x this and take contracts.caravan_days
 
 # Goods available to import from beyond the map (player caravans). Coin paid for imports
 # moves to the "outside" account, so total coin stays constant.

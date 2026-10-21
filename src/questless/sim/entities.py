@@ -18,6 +18,7 @@ ESCROW = "escrow"
 PLAYER = "player"
 OUTSIDE = "outside"  # the world beyond the map: source of caravan imports, sink for their coin
 MARKET = "market"  # clearing account; always empty between trades
+IN_TRANSIT = "in_transit"  # caravan goods paid for but not yet arrived
 
 
 class Profession(StrEnum):

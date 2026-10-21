@@ -1,0 +1,18 @@
+# Scenario A: iron shortage. A collapse at the mine cuts ore output to a fifth for 30 days.
+# Expect: smiths run out of ore, the Blacksmiths Guild pools funds for an iron contract, and the
+# shortage cascades into tools and then food as farmers' tools wear out.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "baseline.toml"
+name = "Iron Shortage"
+description = "A collapse at the mine cuts iron ore output to 20% for 30 days from day 15."
+days = 120
+
+[[shocks]]
+name = "Mine collapse"
+effect = "site_output"
+site = "mine"
+start = 15
+duration = 30
+factor = 0.2

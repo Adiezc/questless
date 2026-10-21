@@ -1,0 +1,17 @@
+# Bonus scenario: bandits on the road. Transport capacity falls to 30% for 20 days.
+# Expect: food and ore pile up at the farms and the mine while the market runs short; guilds post
+# transport contracts to haul stranded goods.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "baseline.toml"
+name = "Bandits on the Road"
+description = "Bandit raids cut transport capacity to 30% for 20 days from day 15."
+days = 120
+
+[[shocks]]
+name = "Bandits on the road"
+effect = "transport_capacity"
+start = 15
+duration = 20
+factor = 0.3

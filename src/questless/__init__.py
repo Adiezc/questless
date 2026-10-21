@@ -9,4 +9,6 @@ try:
 except PackageNotFoundError:  # running from a source tree without install
     __version__ = "0.0.0+unknown"
 
-__all__ = ["__version__"]
+from questless.api import Simulation  # noqa: E402  (needs __version__ defined first)
+
+__all__ = ["Simulation", "__version__"]

@@ -1,0 +1,187 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Adrian Diez Cuadrado
+"""Player actions. Every action goes through ``apply_action``, which validates it, applies it
+through the ledger, and appends it to the world's action log. Replaying the scenario with the same
+log reproduces the world exactly.
+
+The player has no goods of their own: to deliver, they must *source* them.
+- ``buy``: from NPC sellers at today's market price. Real trades, so buying up scarce goods leaves
+  less for everyone else and pushes the price up.
+- ``caravan``: import food or ore from outside the map at a markup; arrives after
+  ``caravan_days``. Imports come out of the finite ``outside`` stock and the coin goes there, so
+  nothing is created.
+"""
+
+from __future__ import annotations
+
+import math
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
+
+from questless.config import ShockEffect
+from questless.contracts.engine import adjust_reputation
+from questless.contracts.model import Status
+from questless.sim.alloc import allocate
+from questless.sim.entities import IN_TRANSIT, OUTSIDE, PLAYER, TOWN, Site
+from questless.sim.ledger import GOODS, Asset
+from questless.sim.market import stock_target
+from questless.sim.shocks import Shock
+
+if TYPE_CHECKING:
+    from questless.sim.world import World
+
+
+class ActionError(ValueError):
+    """The action is not allowed in the current state. Nothing was changed."""
+
+
+def apply_action(world: World, action: str, **args: Any) -> Any:
+    handler = ACTIONS.get(action)
+    if handler is None:
+        raise ActionError(f"unknown action {action!r}; known: {', '.join(sorted(ACTIONS))}")
+    result = handler(world, **args)
+    world.actions.append({"tick": world.tick, "action": action, "args": args})
+    return result
+
+
+def accept(world: World, contract_id: str) -> str:
+    c = _contract(world, contract_id)
+    if c.status is not Status.OPEN:
+        raise ActionError(f"{contract_id} is {c.status}, not open")
+    world.contracts.accept(world, contract_id, PLAYER)
+    return contract_id
+
+
+def buy(world: World, good: str, qty: int) -> int:
+    """Buy up to ``qty`` from NPCs holding more than they need. Returns units bought."""
+    asset = _good(good)
+    qty = _positive(qty)
+    price = world.unit_price(asset)
+    affordable = world.ledger.balance(PLAYER, Asset.COIN) // price
+    asks = []
+    for npc in world.npcs_in_order():
+        surplus = world.ledger.balance(npc.account, asset) - stock_target(world, npc, asset)
+        if surplus > 0:
+            asks.append((npc.id, surplus))
+    want = min(qty, affordable)
+    if not asks or want <= 0:
+        raise ActionError(f"nobody is selling {good} (or you cannot afford it at {price})")
+    sold = allocate(want, asks, world.rng.stream("player"))
+    tax_rate = world.config.town.market_tax
+    for seller, units in sorted(sold.items()):
+        if not units:
+            continue
+        value = units * price
+        world.ledger.transfer(
+            seller, PLAYER, asset, units, tick=world.tick, reason="sale to player"
+        )
+        world.ledger.transfer(
+            PLAYER, seller, Asset.COIN, value, tick=world.tick, reason="player pays"
+        )
+        world.ledger.transfer(
+            seller, TOWN, Asset.COIN, int(value * tax_rate), tick=world.tick, reason="market tax"
+        )
+    return sum(sold.values())
+
+
+def caravan(world: World, good: str, qty: int) -> int:
+    """Order goods from outside. Returns the arrival tick."""
+    asset = _good(good)
+    qty = _positive(qty)
+    if world.ledger.balance(OUTSIDE, asset) < qty:
+        raise ActionError(f"no caravan carries {good} (outside stock too low)")
+    cost = math.ceil(qty * world.config.goods[asset].base_price * world.config.caravan_markup)
+    if world.ledger.balance(PLAYER, Asset.COIN) < cost:
+        raise ActionError(f"a caravan of {qty} {good} costs {cost} coin")
+    world.ledger.transfer(PLAYER, OUTSIDE, Asset.COIN, cost, tick=world.tick, reason="caravan")
+    # Reserve the goods now so two caravans cannot sell the same stock.
+    world.ledger.transfer(OUTSIDE, IN_TRANSIT, asset, qty, tick=world.tick, reason="caravan")
+    arrival = world.tick + world.config.contracts.caravan_days
+    world.pending_caravans.append((arrival, str(asset), qty))
+    return arrival
+
+
+def deliver(world: World, contract_id: str) -> str:
+    c = _contract(world, contract_id)
+    if c.status is not Status.ACCEPTED:
+        raise ActionError(f"accept {contract_id} before delivering it")
+    if c.kind.value != "transport" and world.ledger.balance(PLAYER, c.good) < c.qty:
+        have = world.ledger.balance(PLAYER, c.good)
+        raise ActionError(f"{contract_id} needs {c.qty} {c.good}; you have {have}")
+    world.contracts.fulfil(world, contract_id, PLAYER)
+    adjust_reputation(world, c, +c.rep_reward)
+    return contract_id
+
+
+def abandon(world: World, contract_id: str) -> str:
+    """Give an accepted contract back. It reopens for the rest of its time; reputation suffers."""
+    c = _contract(world, contract_id)
+    if c.status is not Status.ACCEPTED:
+        raise ActionError(f"{contract_id} is not accepted")
+    adjust_reputation(world, c, -c.rep_reward)  # needs accepted_by, so before clearing it
+    c.status = Status.OPEN
+    c.accepted_by = None
+    return contract_id
+
+
+def shock(
+    world: World, effect: str, factor: float, duration: int, name: str, site: str | None = None
+) -> str:
+    """Introduce an economic shock starting today."""
+    try:
+        eff = ShockEffect(effect)
+        where = Site(site) if site else None
+    except ValueError as exc:
+        raise ActionError(str(exc)) from None
+    if eff is ShockEffect.SITE_OUTPUT and where is None:
+        raise ActionError("site_output shocks need a site")
+    _positive(duration)
+    if factor < 0:
+        raise ActionError("factor must be >= 0")
+    world.modifiers.add(Shock(name, eff, world.tick, world.tick + duration, factor, where, "user"))
+    return name
+
+
+ACTIONS: dict[str, Callable[..., Any]] = {
+    "accept": accept,
+    "buy": buy,
+    "caravan": caravan,
+    "deliver": deliver,
+    "abandon": abandon,
+    "shock": shock,
+}
+
+
+def receive_caravans(world: World) -> None:
+    """Called at the start of each tick: caravans due today unload into the player's stock."""
+    due = [c for c in world.pending_caravans if c[0] <= world.tick]
+    world.pending_caravans = [c for c in world.pending_caravans if c[0] > world.tick]
+    for _, good, qty in sorted(due):
+        world.ledger.transfer(
+            IN_TRANSIT, PLAYER, Asset(good), qty, tick=world.tick, reason="caravan"
+        )
+
+
+def _contract(world: World, contract_id: str):
+    c = world.contracts.contracts.get(contract_id)
+    if c is None:
+        raise ActionError(f"no contract {contract_id}")
+    if world.tick >= c.deadline_tick:
+        raise ActionError(f"{contract_id} has passed its deadline")
+    return c
+
+
+def _good(name: str) -> Asset:
+    try:
+        asset = Asset(name)
+    except ValueError:
+        raise ActionError(f"unknown good {name!r}") from None
+    if asset not in GOODS:
+        raise ActionError("coin is not a good")
+    return asset
+
+
+def _positive(qty: int) -> int:
+    if not isinstance(qty, int) or isinstance(qty, bool) or qty <= 0:
+        raise ActionError(f"quantity must be a positive integer, got {qty!r}")
+    return qty

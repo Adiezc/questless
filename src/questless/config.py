@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import tomllib
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -147,6 +147,7 @@ class ScenarioConfig:
     guilds: Mapping[str, GuildConfig]
     town: TownConfig
     player_wallet: int
+    caravan_markup: float  # imports cost base price x this
     outside: Mapping[Asset, int]
     shocks: tuple[ShockConfig, ...] = ()
 
@@ -159,13 +160,36 @@ class ScenarioConfig:
 
 
 def load_scenario(path: str | Path) -> ScenarioConfig:
-    path = Path(path)
+    """Load a scenario file. ``[scenario] extends = "other.toml"`` deep-merges this file over
+    another (tables merge key by key; arrays such as ``shocks`` replace)."""
+    return parse_scenario(load_raw(path), source=str(path))
+
+
+def load_raw(path: str | Path, _seen: tuple[Path, ...] = ()) -> dict[str, Any]:
+    path = Path(path).resolve()
+    if path in _seen:
+        raise ConfigError(f"{path}: circular 'extends'")
     try:
         with path.open("rb") as fh:
             data = tomllib.load(fh)
     except tomllib.TOMLDecodeError as exc:
         raise ConfigError(f"{path}: invalid TOML: {exc}") from exc
-    return parse_scenario(data, source=str(path))
+    except FileNotFoundError:
+        raise ConfigError(f"{path}: file not found") from None
+    parent = data.get("scenario", {}).pop("extends", None)
+    if parent is None:
+        return data
+    return _deep_merge(load_raw(path.parent / parent, (*_seen, path)), data)
+
+
+def _deep_merge(base: dict[str, Any], override: Mapping[str, Any]) -> dict[str, Any]:
+    out = dict(base)
+    for key, value in override.items():
+        if isinstance(value, Mapping) and isinstance(out.get(key), Mapping):
+            out[key] = _deep_merge(dict(out[key]), value)
+        else:
+            out[key] = value
+    return out
 
 
 def parse_scenario(data: Mapping[str, Any], source: str = "<scenario>") -> ScenarioConfig:
@@ -391,7 +415,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         required={"treasury", "guard_wage", "market_tax", "upkeep_rate", "upkeep_exempt"},
     )
     player = data["player"]
-    _keys(player, "player", required={"wallet"})
+    _keys(player, "player", required={"wallet", "caravan_markup"})
 
     cfg = ScenarioConfig(
         name=str(sc["name"]),
@@ -415,6 +439,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             upkeep_exempt=_nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt"),
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
+        caravan_markup=_at_least(player["caravan_markup"], 1.0, "player.caravan_markup"),
         outside=_holdings(data.get("outside", {}), "outside"),
         shocks=tuple(shocks),
     )
@@ -526,3 +551,81 @@ def _holdings(table: Any, where: str) -> dict[Asset, int]:
             raise ConfigError(f"{where}: coin is set via wallet/treasury, not inventory")
         out[asset] = _nonneg_int(qty, f"{where}.{name}")
     return out
+
+
+# --- export --------------------------------------------------------------------------------------
+
+
+def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
+    """The TOML-shaped dict for ``cfg``: ``parse_scenario(to_dict(cfg)) == cfg``. Used by saves,
+    so a save file carries the exact scenario it was played on."""
+
+    def holdings(m: Mapping[Asset, Any]) -> dict[str, Any]:
+        return {str(k): v for k, v in m.items()}
+
+    professions = {}
+    for prof, pc in cfg.professions.items():
+        d: dict[str, Any] = {
+            "count": pc.count,
+            "site": str(pc.site),
+            "wallet": list(pc.wallet),
+            "tool_condition": list(pc.tool_condition),
+            "inventory": holdings(pc.inventory),
+            "wear": pc.wear,
+            "no_tool_factor": pc.no_tool_factor,
+            "output": holdings(pc.output),
+            "crafts_per_day": pc.crafts_per_day,
+            "recipes": {str(g): holdings(ins) for g, ins in pc.recipes.items()},
+        }
+        if pc.equipment is not None:
+            d["equipment"] = str(pc.equipment)
+        professions[str(prof)] = d
+    shocks = []
+    for sh in cfg.shocks:
+        d = {
+            "name": sh.name,
+            "effect": str(sh.effect),
+            "start": sh.start,
+            "duration": sh.duration,
+            "factor": sh.factor,
+        }
+        if sh.site is not None:
+            d["site"] = str(sh.site)
+        shocks.append(d)
+    return {
+        "scenario": {
+            "name": cfg.name,
+            "description": cfg.description,
+            "seed": cfg.seed,
+            "days": cfg.days,
+            "guilds": cfg.guilds_enabled,
+        },
+        "goods": {
+            str(g): {
+                "base_price": gc.base_price,
+                "price_floor": gc.price_floor,
+                "price_ceiling": gc.price_ceiling,
+            }
+            for g, gc in cfg.goods.items()
+        },
+        "professions": professions,
+        "traits": {k: list(v) for k, v in asdict(cfg.traits).items()},
+        "needs": asdict(cfg.needs),
+        "market": {**asdict(cfg.market), "effort": list(cfg.market.effort)},
+        "transport": asdict(cfg.transport),
+        "contracts": asdict(cfg.contracts),
+        "guilds": {
+            gid: {
+                "name": gc.name,
+                "professions": [str(p) for p in gc.professions],
+                "treasury": gc.treasury,
+                "dues_rate": gc.dues_rate,
+                "policy": asdict(gc.policy),
+            }
+            for gid, gc in cfg.guilds.items()
+        },
+        "town": asdict(cfg.town),
+        "player": {"wallet": cfg.player_wallet, "caravan_markup": cfg.caravan_markup},
+        "outside": holdings(cfg.outside),
+        "shocks": shocks,
+    }

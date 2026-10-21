@@ -15,6 +15,7 @@ from questless.contracts.needs import NeedTracker
 from questless.contracts.validation import check_board
 from questless.sim.entities import (
     ESCROW,
+    IN_TRANSIT,
     MARKET,
     NPC,
     OUTSIDE,
@@ -71,6 +72,8 @@ class World:
     stats: list[TickStats] = field(default_factory=list)
     needs: NeedTracker = field(default_factory=NeedTracker)
     contracts: ContractBoard = field(default_factory=ContractBoard)
+    actions: list[dict] = field(default_factory=list)  # player action log, for replay
+    pending_caravans: list[tuple[int, str, int]] = field(default_factory=list)
     tick: int = 0
     check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
 
@@ -79,7 +82,8 @@ class World:
             self._tick()
 
     def _tick(self) -> None:
-        from questless.sim.behaviour import run_npc_day  # behaviour imports World for typing
+        from questless.player import receive_caravans  # player imports World for typing
+        from questless.sim.behaviour import run_npc_day
 
         stats = TickStats(tick=self.tick)
         start_coin = {
@@ -110,9 +114,11 @@ class World:
         self.stats.append(stats)
         self.needs.update(self)
         stats.contracts = self.contracts.step(self)
+        self.tick += 1
+        # Caravans due on the new day unload now, so the player can use them that day.
+        receive_caravans(self)
         if self.check_every_tick:
             self.check_invariants()
-        self.tick += 1
 
     def _collect_upkeep(self, stats: TickStats) -> None:
         """Town levy on idle coin. Closes the money loop: coin that pools with one profession
@@ -172,6 +178,17 @@ class World:
                 for n in self.npcs_in_order()
             },
             "shocks": self.modifiers.state(),
+            "contracts": {
+                c.id: [str(c.status), c.reward, c.qty, sorted(c.beneficiaries.items()), c.funder]
+                for c in self.contracts.contracts.values()
+            },
+            "cooldowns": sorted([list(k), v] for k, v in self.contracts.cooldowns.items()),
+            "needs": sorted(
+                [s.subject, str(s.good), s.days, s.calm_days] for s in self.needs.states.values()
+            ),
+            "reputation": {g.id: dict(sorted(g.reputation.items())) for g in self.guilds.values()},
+            "caravans": sorted(self.pending_caravans),
+            "actions": len(self.actions),
             "rng": repr(self.rng.getstate()),
         }
 
@@ -232,6 +249,7 @@ def build_world(config: ScenarioConfig) -> World:
     ledger.open_account(PLAYER, {Asset.COIN: config.player_wallet})
     ledger.open_account(ESCROW)
     ledger.open_account(MARKET)
+    ledger.open_account(IN_TRANSIT)
     ledger.open_account(OUTSIDE, dict(config.outside))
     ledger.seal()
 

@@ -1,0 +1,18 @@
+# Scenario B: drought. Farm output falls to 40% for 25 days.
+# Expect: food prices climb, the Town Watch and guilds pool funds for emergency food supply, and
+# individual households ask for help.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "baseline.toml"
+name = "Drought"
+description = "A drought cuts farm output to 40% for 25 days from day 15."
+days = 120
+
+[[shocks]]
+name = "Drought"
+effect = "site_output"
+site = "farms"
+start = 15
+duration = 25
+factor = 0.4

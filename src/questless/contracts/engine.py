@@ -32,6 +32,42 @@ if TYPE_CHECKING:
     from questless.sim.world import World
 
 
+OUTCOME_DAYS = 7
+
+
+def _outcome_snapshot(world: World, c: Contract) -> dict:
+    """Beneficiaries' last ``OUTCOME_DAYS``: units produced, idle days, days short of the good;
+    plus the market's unfilled demand for the good."""
+    produced = idle = short = 0
+    for npc_id in c.beneficiaries:
+        for rec in list(world.npcs[npc_id].history)[-OUTCOME_DAYS:]:
+            produced += sum(rec.produced.values())
+            idle += rec.idle
+            short += rec.unmet.get(c.good, 0) > 0
+    window = world.stats[-OUTCOME_DAYS:]
+    return {
+        "tick": world.tick,
+        "produced": produced,
+        "idle_days": idle,
+        "days_short": short,
+        "market_unfilled": sum(s.market[c.good].unfilled for s in window if c.good in s.market),
+    }
+
+
+def adjust_reputation(world: World, c: Contract, delta: int) -> None:
+    """Reputation with the guild behind the contract (the requester's guild), clamped to +-100."""
+    if c.requester.startswith("guild:"):
+        gid = c.requester.removeprefix("guild:")
+    elif c.requester in world.npcs:
+        gid = world.npcs[c.requester].guild_id
+    else:
+        gid = None
+    guild = world.guilds.get(gid) if gid else None
+    if guild is not None and c.accepted_by:
+        rep = guild.reputation.get(c.accepted_by, 0) + delta
+        guild.reputation[c.accepted_by] = max(-100, min(100, rep))
+
+
 @dataclass(slots=True)
 class Candidate:
     kind: ContractKind
@@ -85,6 +121,7 @@ class ContractBoard:
         report = ContractTickReport()
         self.expire_and_cancel(world, report)
         self.generate(world, report)
+        self.measure_outcomes(world)
         report.live = len(self.live())
         return report
 
@@ -102,6 +139,8 @@ class ContractBoard:
         world.ledger.transfer(
             ESCROW, c.funder, Asset.COIN, c.reward, tick=world.tick, reason=f"refund {c.id}"
         )
+        if c.status is Status.ACCEPTED:  # the player took it and let it lapse
+            adjust_reputation(world, c, -c.rep_reward)
         c.status = status
         c.closed_tick = world.tick
         self.cooldowns[c.dedup_key] = world.tick + world.config.contracts.cooldown_days
@@ -137,7 +176,18 @@ class ContractBoard:
         world.ledger.transfer(ESCROW, player, Asset.COIN, c.reward, tick=world.tick, reason=c.id)
         c.status = Status.FULFILLED
         c.closed_tick = world.tick
+        c.outcome = {"before": _outcome_snapshot(world, c), "after": None}
         return c
+
+    def measure_outcomes(self, world: World) -> None:
+        """``OUTCOME_DAYS`` after delivery, record what changed for the beneficiaries."""
+        for c in self.contracts.values():
+            if (
+                c.status is Status.FULFILLED
+                and c.outcome.get("after") is None
+                and world.tick - c.closed_tick + 1 >= OUTCOME_DAYS  # days simulated since
+            ):
+                c.outcome["after"] = _outcome_snapshot(world, c)
 
     # --- generation -----------------------------------------------------------------------------
 
