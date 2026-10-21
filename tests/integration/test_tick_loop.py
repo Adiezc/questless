@@ -44,10 +44,12 @@ def test_thirty_ticks_conserve_everything_every_tick(baseline):
 
 
 def test_mine_shock_scales_ore_output_by_its_factor(baseline):
+    """Same day, same prices: output scales exactly by the shock factor. (Over longer runs the
+    market responds, since scarce ore costs more and miners work harder, which is intended.)"""
     normal = build_world(baseline)
     shocked = build_world(_with_shock(baseline, factor=0.3))
-    normal.step(20)
-    shocked.step(20)
+    normal.step()
+    shocked.step()
     ratio = _effective_ore(shocked) / _effective_ore(normal)
     assert ratio == pytest.approx(0.3, rel=0.05)
 

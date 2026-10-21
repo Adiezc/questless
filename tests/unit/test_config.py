@@ -20,7 +20,7 @@ def raw() -> dict:
 def test_baseline_loads_with_100_npcs(baseline):
     assert baseline.population == 100
     assert baseline.professions[Profession.MINER].site is Site.MINE
-    assert baseline.goods[Asset.TOOLS].base_price == 30
+    assert baseline.goods[Asset.TOOLS].base_price == 24
     assert set(baseline.guilds) == {"miners", "merchants", "blacksmiths"}
 
 

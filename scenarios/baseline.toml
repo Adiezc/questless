@@ -10,85 +10,104 @@ days = 365
 guilds = true                     # set false for the guilds on/off experiment
 
 # Prices are integers in coin. Floor and ceiling are multiples of base_price.
+# Base prices are set so every profession roughly breaks even at average skill (per day):
+#   miner  1.4 ore x 8 x 0.8 (after haulage)   = 9.0  vs food 4 + tool wear 2.4
+#   farmer 2.3 food x 4 x 0.8                  = 7.4  vs tool wear 2.4
+#   smith  (tools 24-16, weapons 40-24 margin) ~ 13.6 vs food 4 + tool wear 2.4
+#   guard  wage 7                                     vs food 4 + weapon wear 2
 [goods.food]
 base_price = 4
 price_floor = 0.25
 price_ceiling = 4.0
 
 [goods.iron_ore]
-base_price = 6
+base_price = 8
 price_floor = 0.25
 price_ceiling = 4.0
 
 [goods.tools]
-base_price = 30
+base_price = 24
 price_floor = 0.25
 price_ceiling = 4.0
 
 [goods.weapons]
-base_price = 45
+base_price = 40
 price_floor = 0.25
 price_ceiling = 4.0
 
-# Population: 34 + 20 + 12 + 10 + 24 = 100 NPCs.
+# Population: 34 + 16 + 8 + 14 + 28 = 100 NPCs. Rough daily balance at average skill:
+#   food:  34 farmers x 3.3 = 112 produced vs 100 eaten
+#   tools: wear uses ~6.5/day (13 ore); weapons ~1.4/day (4.2 ore); miners 16 x 1.4 = 22 ore
+#   smiths: 8 x 2 = 16 crafts/day of capacity for ~11 needed
+#   transport: 14 merchants x 14 = 196 units/day for ~135 units of farm + mine output
 # wallet and tool_condition are [low, high] ranges drawn per NPC from the seed.
 # Gatherers have `output`; crafters have `crafts_per_day` + `recipes` (inputs per unit).
-# Merchants carry goods (transport, milestone M3); guards consume weapons.
 [professions.farmer]
 count = 34
 site = "farms"
 wallet = [60, 100]
-tool_condition = [0.5, 1.0]
+tool_condition = [0.3, 1.0]
 inventory = { food = 5, tools = 1 }
 equipment = "tools"
-wear = 0.02
+wear = 0.1                    # condition lost per day; a tool lasts ~8 days
 no_tool_factor = 0.5
-output = { food = 5.0 }       # base units per day, x skill x modifiers
+output = { food = 3.3 }       # base units per day, x skill x modifiers
 
 [professions.miner]
-count = 20
+count = 16
 site = "mine"
 wallet = [60, 100]
-tool_condition = [0.5, 1.0]
+tool_condition = [0.3, 1.0]
 inventory = { food = 5, tools = 1 }
 equipment = "tools"
-wear = 0.05
+wear = 0.1
 no_tool_factor = 0.3
-output = { iron_ore = 3.0 }
+output = { iron_ore = 1.4 }
 
 [professions.blacksmith]
-count = 12
+count = 8
 site = "market"
 wallet = [120, 180]
-tool_condition = [0.5, 1.0]
-inventory = { food = 5, iron_ore = 6, tools = 1 }
+tool_condition = [0.3, 1.0]
+inventory = { food = 5, iron_ore = 12, tools = 2 }
 equipment = "tools"
-wear = 0.03
+wear = 0.1
 no_tool_factor = 0.5
 crafts_per_day = 2
 recipes = { tools = { iron_ore = 2 }, weapons = { iron_ore = 3 } }
 
 [professions.merchant]
-count = 10
+count = 14
 site = "market"
 wallet = [150, 250]
-tool_condition = [0.5, 1.0]
+tool_condition = [0.3, 1.0]
 inventory = { food = 5 }
 
 [professions.guard]
-count = 24
+count = 28
 site = "market"
 wallet = [40, 80]
-tool_condition = [0.5, 1.0]     # weapon condition for guards
+tool_condition = [0.3, 1.0]   # weapon condition for guards
 inventory = { food = 5, weapons = 1 }
 equipment = "weapons"
-wear = 0.04
+wear = 0.05
 
 [needs]
 food_per_day = 1
 equipment_threshold = 0.2   # replace tools/weapons below this condition
 hungry_after = 2            # days without food before productivity drops
 hungry_productivity = 0.5
+max_unsold_days = 6         # producers pause once unsold stock exceeds this many days of recent sales
+
+[market]
+price_adjustment = 0.05     # max relative price change per day
+target_cover_days = 3.0     # stock on offer that the market treats as "normal", in days of demand
+stock_weight = 0.5          # weight of the stock term relative to the production/consumption term
+effort = [0.6, 1.3]         # gatherer effort range: effort = price / base price, clamped
+
+[transport]
+capacity_per_merchant = 14  # units/day each merchant hauls from mine and farms to the market
+fee_rate = 0.2              # share of the goods' market value paid by the producer to carriers
 
 [traits]
 skill = [0.8, 1.2]       # production multiplier
@@ -118,9 +137,11 @@ dues_rate = 0.05
 policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
 
 [town]
-treasury = 3000
-guard_wage = 6           # coin per guard per day, paid by the town
-market_tax = 0.03        # share of each trade's value paid to the town
+treasury = 5000
+guard_wage = 7           # coin per guard per day, paid by the town
+market_tax = 0.05        # share of each trade's value paid to the town
+upkeep_rate = 0.03       # daily levy on each NPC's coin above upkeep_exempt
+upkeep_exempt = 60
 
 [player]
 wallet = 300

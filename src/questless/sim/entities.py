@@ -17,6 +17,7 @@ TOWN = "town"
 ESCROW = "escrow"
 PLAYER = "player"
 OUTSIDE = "outside"  # the world beyond the map: source of caravan imports, sink for their coin
+MARKET = "market"  # clearing account; always empty between trades
 
 
 class Profession(StrEnum):
@@ -36,6 +37,7 @@ class Site(StrEnum):
 class NPCState(StrEnum):
     WORKING = "working"
     IDLE_NO_INPUT = "idle_no_input"
+    IDLE_NO_DEMAND = "idle_no_demand"  # holding too much unsold output to keep producing
     HUNGRY = "hungry"
     WAITING_ON_CONTRACT = "waiting_on_contract"
 
@@ -59,8 +61,11 @@ class DailyRecord:
     consumed: dict[Asset, int] = field(default_factory=dict)
     bought: dict[Asset, int] = field(default_factory=dict)
     sold: dict[Asset, int] = field(default_factory=dict)
-    unmet: dict[Asset, int] = field(default_factory=dict)
+    unmet: dict[Asset, int] = field(default_factory=dict)  # needed today but not on hand
+    unfilled: dict[Asset, int] = field(default_factory=dict)  # bid at market, no supply
+    unaffordable: dict[Asset, int] = field(default_factory=dict)  # wanted, could not pay
     idle: bool = False  # could not work at all for lack of inputs
+    slack: bool = False  # held back some production because output is piling up unsold
 
 
 @dataclass(slots=True)

@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Adrian Diez Cuadrado
+import dataclasses
+
 import pytest
 
 from questless.sim.behaviour import eat, maintain, run_npc_day
@@ -68,7 +70,8 @@ def test_broken_equipment_without_spare_is_an_unmet_need_and_slows_work(world):
     npc.carry.clear()
     rec = run_npc_day(world, npc)
     assert rec.unmet[Asset.TOOLS] == 1
-    expected = 3.0 * npc.traits.skill * 0.3  # base output x skill x no_tool_factor
+    pc = world.config.professions[Profession.MINER]
+    expected = pc.output[Asset.IRON_ORE] * npc.traits.skill * pc.no_tool_factor  # effort is 1.0
     assert rec.produced.get(Asset.IRON_ORE, 0) + npc.carry["iron_ore"] == pytest.approx(expected)
 
 
@@ -101,12 +104,17 @@ def test_crafting_never_uses_inputs_the_smith_does_not_have(world):
     smith = _first(world, Profession.BLACKSMITH)
     _remove_all(world, smith.account, Asset.IRON_ORE)
     world.ledger.transfer(OUTSIDE, smith.account, Asset.IRON_ORE, 3, tick=0, reason="test")
+    world.prices[Asset.WEAPONS] = 1.0  # make tools (2 ore) the preferred recipe
     rec = run_npc_day(world, smith)
     assert rec.produced == {Asset.TOOLS: 1}  # 3 ore: one tools craft (2 ore), 1 left over
     assert world.ledger.balance(smith.account, Asset.IRON_ORE) == 1
 
 
-def test_town_pays_guards_until_its_treasury_runs_out(world):
+def test_town_pays_guards_until_its_treasury_runs_out(baseline):
+    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0)
+    world = build_world(dataclasses.replace(baseline, town=no_upkeep))
+    wage = baseline.town.guard_wage
+    guards = baseline.professions[Profession.GUARD].count
     world.ledger.transfer(
         TOWN,
         OUTSIDE,
@@ -117,6 +125,7 @@ def test_town_pays_guards_until_its_treasury_runs_out(world):
     )
     world.step()
     stats = world.stats[-1]
-    assert stats.wages_paid == 30  # five guards paid 6 each
-    assert stats.wages_unpaid == (24 - 5) * 6
-    assert world.ledger.balance(TOWN, Asset.COIN) == 0
+    paid_guards = 30 // wage
+    assert stats.wages_paid == paid_guards * wage
+    assert stats.wages_unpaid == (guards - paid_guards) * wage
+    assert world.ledger.balance(TOWN, Asset.COIN) >= 0  # never overdrawn

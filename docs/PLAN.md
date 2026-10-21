@@ -167,6 +167,15 @@ One market at the Market site, cleared once per tick per good, at the posted pri
 
 This is deliberately simpler than the Doran & Parberry belief-based double auction. It is stable, explainable and deterministic. The richer auction is on the roadmap.
 
+**Revised during M3 (implemented):** the pure excess-demand rule above drove prices to the floor or ceiling and caused shortage spirals in 365-day runs. The implemented rule combines a *flow* term (today's consumption vs production) with a damping *stock* term (days of cover vs `target_cover_days`). Gatherers' effort scales with price/base price, which gives an upward-sloping supply curve. Supporting stabilisers:
+- producers pause once unsold stock exceeds `max_unsold_days` of recent sales;
+- purchases keep a food reserve, and crafters only buy inputs while crafting is profitable;
+- haulage fees are a share of goods value, pooled daily;
+- a town upkeep levy on idle coin funds guard wages;
+- seeded tie-breaks in integer apportionment. An id tie-break had silently bankrupted all but one smith.
+
+Result over seeds 1–5 and 42: no unpaid-wage days, food price variation ≤ 11%, and 4–5 NPCs hungry on average (poverty; guild relief arrives in M4).
+
 **Transport:** production lands in site stockpiles (Mine, Farms). Each tick `shipped = min(stockpile, capacity × capacity_mod)` moves to the producers' market inventories, and the merchants are paid a fee. A backlog above `backlog_threshold` days of output is a transport bottleneck signal.
 
 ### C.6 NPC decision logic (rule priority, evaluated each tick)

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from questless.sim.entities import NPC, DailyRecord, NPCState
 from questless.sim.ledger import Asset
+from questless.sim.market import stock_target
 
 if TYPE_CHECKING:
     from questless.sim.world import World
@@ -71,25 +72,66 @@ def productivity(world: World, npc: NPC) -> float:
 
 
 def produce(world: World, npc: NPC, rec: DailyRecord) -> None:
+    """Gather or craft, but never hold more than ``max_unsold_days`` of recent *sales* unsold:
+    an NPC who cannot sell slows down instead of producing into the void."""
     pc = world.config.professions[npc.profession]
     factor = productivity(world, npc)
 
     for good, base in pc.output.items():
-        qty = _whole_units(npc, str(good), base * factor)
+        if unsold(world, npc, good) >= unsold_cap(world, npc, good, base):
+            rec.slack = True
+            continue
+        qty = _whole_units(npc, str(good), base * factor * effort(world, good))
         world.ledger.produce(npc.site_account, good, qty, tick=world.tick, reason="gather")
         _add(rec.produced, good, qty)
 
     if pc.crafts_per_day:
-        _craft(world, npc, rec, _whole_units(npc, CRAFT_CARRY, pc.crafts_per_day * factor))
+        caps = {
+            g: unsold_cap(world, npc, g, pc.crafts_per_day / len(pc.recipes)) for g in pc.recipes
+        }
+        if all(unsold(world, npc, g) >= caps[g] for g in pc.recipes):
+            rec.slack = True
+            return
+        _craft(world, npc, rec, _whole_units(npc, CRAFT_CARRY, pc.crafts_per_day * factor), caps)
 
 
-def _craft(world: World, npc: NPC, rec: DailyRecord, crafts: int) -> None:
-    """Craft up to ``crafts`` units, each time picking the recipe with the best margin per input
-    unit at current prices that the NPC can afford from stock. Ties go to config order."""
+SALES_WINDOW = 7
+
+
+def unsold_cap(world: World, npc: NPC, good: Asset, base_rate: float) -> float:
+    """``max_unsold_days`` worth of recent daily sales, with a floor of half the base production
+    rate so a producer with no sales history can still put goods on the market."""
+    recent = list(npc.history)[-SALES_WINDOW:]
+    avg_sales = sum(r.sold.get(good, 0) for r in recent) / SALES_WINDOW
+    return world.config.needs.max_unsold_days * max(avg_sales, 0.5 * base_rate)
+
+
+def effort(world: World, good: Asset) -> float:
+    """Gatherers work harder when their goods fetch more than the base price, and ease off when
+    they fetch less. This gives the market an upward-sloping supply curve."""
+    lo, hi = world.config.market.effort
+    return min(max(world.prices[good] / world.config.goods[good].base_price, lo), hi)
+
+
+def unsold(world: World, npc: NPC, good: Asset) -> int:
+    """Units of ``good`` the NPC holds (at market and at its site) beyond its own stock target."""
+    held = world.ledger.balance(npc.account, good)
+    if npc.site_account != npc.account:
+        held += world.ledger.balance(npc.site_account, good)
+    return held - stock_target(world, npc, good)
+
+
+def _craft(world: World, npc: NPC, rec: DailyRecord, crafts: int, caps: dict[Asset, float]) -> None:
+    """Craft up to ``crafts`` units, each time picking, among recipes whose output is still below
+    its unsold cap, the best margin per input unit at current prices that the NPC can make from
+    stock. Ties go to config order."""
     recipes = world.config.professions[npc.profession].recipes
     ranked = sorted(recipes.items(), key=lambda item: -_margin_per_input(world, *item))
     for done in range(crafts):
-        for good, inputs in ranked:
+        wanted = [(g, inputs) for g, inputs in ranked if unsold(world, npc, g) < caps[g]]
+        if not wanted:
+            return
+        for good, inputs in wanted:
             if all(world.ledger.balance(npc.account, a) >= q for a, q in inputs.items()):
                 for a, q in inputs.items():
                     world.ledger.consume(npc.account, a, q, tick=world.tick, reason=f"craft {good}")
@@ -99,7 +141,7 @@ def _craft(world: World, npc: NPC, rec: DailyRecord, crafts: int) -> None:
                 break
         else:
             # Out of inputs: record what the remaining crafts of the preferred recipe would need.
-            _, preferred = ranked[0]
+            _, preferred = wanted[0]
             for a, q in preferred.items():
                 short = q * (crafts - done) - world.ledger.balance(npc.account, a)
                 _add(rec.unmet, a, max(short, 0))
@@ -129,6 +171,8 @@ def _update_state(world: World, npc: NPC, rec: DailyRecord) -> None:
         npc.state = NPCState.HUNGRY
     elif rec.idle:
         npc.state = NPCState.IDLE_NO_INPUT
+    elif rec.slack and not rec.produced:
+        npc.state = NPCState.IDLE_NO_DEMAND
     else:
         npc.state = NPCState.WORKING
     npc.history.append(rec)

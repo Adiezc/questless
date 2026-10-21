@@ -55,6 +55,7 @@ class NeedsConfig:
     equipment_threshold: float  # replace equipment when condition drops below this
     hungry_after: int  # days without food before productivity drops
     hungry_productivity: float
+    max_unsold_days: int  # producers pause once this many days of output sit unsold
 
 
 class ShockEffect(StrEnum):
@@ -90,10 +91,26 @@ class GuildConfig:
 
 
 @dataclass(frozen=True)
+class MarketConfig:
+    price_adjustment: float  # max daily relative price change (alpha)
+    target_cover_days: float  # stock-to-demand ratio at which prices hold steady
+    stock_weight: float  # weight of the stock (cover) term vs the flow term in price changes
+    effort: FloatRange  # gatherer effort multiplier range, driven by price / base price
+
+
+@dataclass(frozen=True)
+class TransportConfig:
+    capacity_per_merchant: int  # units per day moved from production sites to the market
+    fee_rate: float  # share of the goods' market value the producer pays the carriers
+
+
+@dataclass(frozen=True)
 class TownConfig:
     treasury: int
     guard_wage: int
     market_tax: float
+    upkeep_rate: float  # daily levy on NPC coin above upkeep_exempt; recycles idle coin
+    upkeep_exempt: int
 
 
 @dataclass(frozen=True)
@@ -107,6 +124,8 @@ class ScenarioConfig:
     professions: Mapping[Profession, ProfessionConfig]
     traits: TraitRanges
     needs: NeedsConfig
+    market: MarketConfig
+    transport: TransportConfig
     guilds: Mapping[str, GuildConfig]
     town: TownConfig
     player_wallet: int
@@ -148,6 +167,8 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "professions",
             "traits",
             "needs",
+            "market",
+            "transport",
             "guilds",
             "town",
             "player",
@@ -225,13 +246,39 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
     _keys(
         n,
         "needs",
-        required={"food_per_day", "equipment_threshold", "hungry_after", "hungry_productivity"},
+        required={
+            "food_per_day",
+            "equipment_threshold",
+            "hungry_after",
+            "hungry_productivity",
+            "max_unsold_days",
+        },
     )
     needs = NeedsConfig(
         food_per_day=_nonneg_int(n["food_per_day"], "needs.food_per_day"),
         equipment_threshold=_fraction(n["equipment_threshold"], "needs.equipment_threshold"),
         hungry_after=_nonneg_int(n["hungry_after"], "needs.hungry_after"),
         hungry_productivity=_fraction(n["hungry_productivity"], "needs.hungry_productivity"),
+        max_unsold_days=_pos_int(n["max_unsold_days"], "needs.max_unsold_days"),
+    )
+
+    m = data["market"]
+    _keys(
+        m,
+        "market",
+        required={"price_adjustment", "target_cover_days", "stock_weight", "effort"},
+    )
+    market = MarketConfig(
+        price_adjustment=_fraction(m["price_adjustment"], "market.price_adjustment"),
+        target_cover_days=_at_least(m["target_cover_days"], 0.1, "market.target_cover_days"),
+        stock_weight=_fraction(m["stock_weight"], "market.stock_weight"),
+        effort=_float_range(m["effort"], "market.effort", 0.0, 5.0),
+    )
+    tr = data["transport"]
+    _keys(tr, "transport", required={"capacity_per_merchant", "fee_rate"})
+    transport = TransportConfig(
+        capacity_per_merchant=_nonneg_int(tr["capacity_per_merchant"], "transport"),
+        fee_rate=_fraction(tr["fee_rate"], "transport.fee_rate"),
     )
 
     shocks = []
@@ -281,7 +328,11 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         )
 
     town = data["town"]
-    _keys(town, "town", required={"treasury", "guard_wage", "market_tax"})
+    _keys(
+        town,
+        "town",
+        required={"treasury", "guard_wage", "market_tax", "upkeep_rate", "upkeep_exempt"},
+    )
     player = data["player"]
     _keys(player, "player", required={"wallet"})
 
@@ -295,11 +346,15 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         professions=professions,
         traits=traits,
         needs=needs,
+        market=market,
+        transport=transport,
         guilds=guilds,
         town=TownConfig(
             treasury=_nonneg_int(town["treasury"], "town.treasury"),
             guard_wage=_nonneg_int(town["guard_wage"], "town.guard_wage"),
             market_tax=_fraction(town["market_tax"], "town.market_tax"),
+            upkeep_rate=_fraction(town["upkeep_rate"], "town.upkeep_rate"),
+            upkeep_exempt=_nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt"),
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
         outside=_holdings(data.get("outside", {}), "outside"),

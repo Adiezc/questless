@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from questless.config import ScenarioConfig
 from questless.sim.entities import (
     ESCROW,
+    MARKET,
     NPC,
     OUTSIDE,
     PLAYER,
@@ -22,9 +23,12 @@ from questless.sim.entities import (
     Traits,
 )
 from questless.sim.ledger import Asset, Ledger
+from questless.sim.market import MarketReport
+from questless.sim.market import clear as clear_market
 from questless.sim.names import make_name
 from questless.sim.rng import RngStreams
 from questless.sim.shocks import Modifiers, Shock
+from questless.sim.transport import TransportReport, ship
 
 
 @dataclass
@@ -38,8 +42,12 @@ class TickStats:
     produced_by_site: dict[Site, Counter[Asset]] = field(default_factory=dict)
     idle_npcs: int = 0
     hungry_npcs: int = 0
+    upkeep: int = 0
     wages_paid: int = 0
     wages_unpaid: int = 0
+    market: dict[Asset, MarketReport] = field(default_factory=dict)
+    transport: TransportReport | None = None
+    prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
 
 
 @dataclass
@@ -49,7 +57,7 @@ class World:
     rng: RngStreams
     npcs: dict[str, NPC]
     guilds: dict[str, Guild] = field(default_factory=dict)
-    prices: dict[Asset, int] = field(default_factory=dict)
+    prices: dict[Asset, float] = field(default_factory=dict)  # settle at unit_price()
     modifiers: Modifiers = field(default_factory=Modifiers)
     stats: list[TickStats] = field(default_factory=list)
     tick: int = 0
@@ -71,11 +79,26 @@ class World:
             stats.produced_by_site.setdefault(npc.site, Counter()).update(rec.produced)
             stats.idle_npcs += rec.idle
             stats.hungry_npcs += npc.hunger > self.config.needs.hungry_after
+        stats.transport = ship(self)
+        self._collect_upkeep(stats)
         self._pay_wages(stats)
+        stats.market = clear_market(self, stats.produced, stats.consumed)
+        stats.prices = dict(self.prices)
         self.stats.append(stats)
         if self.check_every_tick:
             self.check_invariants()
         self.tick += 1
+
+    def _collect_upkeep(self, stats: TickStats) -> None:
+        """Town levy on idle coin. Closes the money loop: coin that pools with one profession
+        flows back to the town, which pays guards, who buy food and weapons."""
+        rate, exempt = self.config.town.upkeep_rate, self.config.town.upkeep_exempt
+        for npc in self.npcs_in_order():
+            levy = int(max(self.ledger.balance(npc.account, Asset.COIN) - exempt, 0) * rate)
+            self.ledger.transfer(
+                npc.account, TOWN, Asset.COIN, levy, tick=self.tick, reason="upkeep"
+            )
+            stats.upkeep += levy
 
     def _pay_wages(self, stats: TickStats) -> None:
         wage = self.config.town.guard_wage
@@ -88,6 +111,10 @@ class World:
             else:
                 stats.wages_unpaid += wage
 
+    def unit_price(self, good: Asset) -> int:
+        """Integer coin price per unit at which trades settle today."""
+        return max(1, round(self.prices[good]))
+
     def npcs_in_order(self) -> list[NPC]:
         return [self.npcs[k] for k in sorted(self.npcs)]
 
@@ -96,12 +123,16 @@ class World:
 
     def check_invariants(self) -> None:
         self.ledger.check_conservation()
+        if self.ledger.holdings(MARKET):
+            raise AssertionError(
+                f"market clearing account not empty: {self.ledger.holdings(MARKET)}"
+            )
 
     def state_dict(self) -> dict:
         """Everything that defines the simulation state, in a deterministic JSON-friendly form."""
         return {
             "tick": self.tick,
-            "prices": {str(a): p for a, p in sorted(self.prices.items())},
+            "prices": {str(a): round(p, 9) for a, p in sorted(self.prices.items())},
             "ledger": self.ledger.snapshot(),
             "npcs": {
                 n.id: {
@@ -174,6 +205,7 @@ def build_world(config: ScenarioConfig) -> World:
     ledger.open_account(TOWN, {Asset.COIN: config.town.treasury})
     ledger.open_account(PLAYER, {Asset.COIN: config.player_wallet})
     ledger.open_account(ESCROW)
+    ledger.open_account(MARKET)
     ledger.open_account(OUTSIDE, dict(config.outside))
     ledger.seal()
 
@@ -183,7 +215,7 @@ def build_world(config: ScenarioConfig) -> World:
         rng=rng,
         npcs=npcs,
         guilds=guilds,
-        prices={asset: gc.base_price for asset, gc in config.goods.items()},
+        prices={asset: float(gc.base_price) for asset, gc in config.goods.items()},
         modifiers=Modifiers([Shock.from_config(s) for s in config.shocks]),
     )
     world.check_invariants()
