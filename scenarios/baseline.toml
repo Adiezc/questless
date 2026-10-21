@@ -1,0 +1,109 @@
+# QUESTLESS baseline scenario: a stable settlement with no shocks.
+# All values are initial guesses, to be tuned in milestone M9 (calibration).
+# SPDX-License-Identifier: MIT
+
+[scenario]
+name = "Baseline"
+description = "A stable mining and farming settlement. Few needs go unmet; few contracts appear."
+seed = 42
+days = 365
+guilds = true                     # set false for the guilds on/off experiment
+
+# Prices are integers in coin. Floor and ceiling are multiples of base_price.
+[goods.food]
+base_price = 4
+price_floor = 0.25
+price_ceiling = 4.0
+
+[goods.iron_ore]
+base_price = 6
+price_floor = 0.25
+price_ceiling = 4.0
+
+[goods.tools]
+base_price = 30
+price_floor = 0.25
+price_ceiling = 4.0
+
+[goods.weapons]
+base_price = 45
+price_floor = 0.25
+price_ceiling = 4.0
+
+# Population: 34 + 20 + 12 + 10 + 24 = 100 NPCs.
+# wallet and tool_condition are [low, high] ranges drawn per NPC from the seed.
+[professions.farmer]
+count = 34
+site = "farms"
+wallet = [60, 100]
+tool_condition = [0.5, 1.0]
+inventory = { food = 5, tools = 1 }
+
+[professions.miner]
+count = 20
+site = "mine"
+wallet = [60, 100]
+tool_condition = [0.5, 1.0]
+inventory = { food = 5, tools = 1 }
+
+[professions.blacksmith]
+count = 12
+site = "market"
+wallet = [120, 180]
+tool_condition = [0.5, 1.0]
+inventory = { food = 5, iron_ore = 6, tools = 1 }
+
+[professions.merchant]
+count = 10
+site = "market"
+wallet = [150, 250]
+tool_condition = [0.5, 1.0]
+inventory = { food = 5 }
+
+[professions.guard]
+count = 24
+site = "market"
+wallet = [40, 80]
+tool_condition = [0.5, 1.0]     # weapon condition for guards
+inventory = { food = 5, weapons = 1 }
+
+[traits]
+skill = [0.8, 1.2]       # production multiplier
+thrift = [0.1, 0.5]      # share of wallet kept as cash reserve
+stock_days = [2, 5]      # days of food and inputs an NPC tries to hold
+patience = [2, 5]        # days a need stays unmet before it is escalated
+
+[guilds.miners]
+name = "Miners Guild"
+professions = ["miner"]
+treasury = 600
+dues_rate = 0.05
+policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[guilds.merchants]
+name = "Merchants Guild"
+professions = ["merchant", "farmer"]
+treasury = 800
+dues_rate = 0.05
+policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[guilds.blacksmiths]
+name = "Blacksmiths Guild"
+professions = ["blacksmith"]
+treasury = 1000
+dues_rate = 0.05
+policy = { emergency_threshold = 0.6, max_contract_share = 0.4, reward_premium = 1.3 }
+
+[town]
+treasury = 3000
+guard_wage = 6           # coin per guard per day, paid by the town
+market_tax = 0.03        # share of each trade's value paid to the town
+
+[player]
+wallet = 300
+
+# Goods available to import from beyond the map (player caravans). Coin paid for imports
+# moves to the "outside" account, so total coin stays constant.
+[outside]
+food = 100000
+iron_ore = 100000

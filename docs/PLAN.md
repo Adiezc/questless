@@ -124,8 +124,8 @@ class NPC:
     profession: Profession
     site: SiteId
     guild_id: str | None
-    wallet: int  # coin, integer to avoid float drift
-    inventory: dict[Good, int]
+    # wallet and inventory are NOT fields: all coin and goods live in the Ledger under the
+    # NPC's id (decided in M1), so conservation is checked in one place.
     tool_condition: float
     hunger: int
     traits: Traits  # skill, thrift, stock_days, patience

@@ -1,0 +1,307 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Adrian Diez Cuadrado
+"""Scenario configuration: TOML file -> validated, typed, immutable config.
+
+Every tuning value lives in ``scenarios/*.toml``. Unknown keys are rejected so a typo in a scenario
+fails loudly instead of silently falling back to a default.
+"""
+
+from __future__ import annotations
+
+import tomllib
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from questless.sim.entities import GuildPolicy, Profession, Site
+from questless.sim.ledger import GOODS, Asset
+
+
+class ConfigError(ValueError):
+    pass
+
+
+IntRange = tuple[int, int]
+FloatRange = tuple[float, float]
+
+
+@dataclass(frozen=True)
+class GoodConfig:
+    base_price: int
+    price_floor: float  # multiple of base_price
+    price_ceiling: float
+
+
+@dataclass(frozen=True)
+class ProfessionConfig:
+    count: int
+    site: Site
+    wallet: IntRange
+    inventory: Mapping[Asset, int]
+    tool_condition: FloatRange
+
+
+@dataclass(frozen=True)
+class TraitRanges:
+    skill: FloatRange
+    thrift: FloatRange
+    stock_days: IntRange
+    patience: IntRange
+
+
+@dataclass(frozen=True)
+class GuildConfig:
+    name: str
+    professions: tuple[Profession, ...]
+    treasury: int
+    dues_rate: float
+    policy: GuildPolicy
+
+
+@dataclass(frozen=True)
+class TownConfig:
+    treasury: int
+    guard_wage: int
+    market_tax: float
+
+
+@dataclass(frozen=True)
+class ScenarioConfig:
+    name: str
+    description: str
+    seed: int
+    days: int
+    guilds_enabled: bool
+    goods: Mapping[Asset, GoodConfig]
+    professions: Mapping[Profession, ProfessionConfig]
+    traits: TraitRanges
+    guilds: Mapping[str, GuildConfig]
+    town: TownConfig
+    player_wallet: int
+    outside: Mapping[Asset, int]
+
+    @property
+    def population(self) -> int:
+        return sum(p.count for p in self.professions.values())
+
+
+# --- loading -------------------------------------------------------------------------------------
+
+
+def load_scenario(path: str | Path) -> ScenarioConfig:
+    path = Path(path)
+    try:
+        with path.open("rb") as fh:
+            data = tomllib.load(fh)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"{path}: invalid TOML: {exc}") from exc
+    return parse_scenario(data, source=str(path))
+
+
+def parse_scenario(data: Mapping[str, Any], source: str = "<scenario>") -> ScenarioConfig:
+    try:
+        return _parse(data)
+    except ConfigError as exc:
+        raise ConfigError(f"{source}: {exc}") from None
+
+
+def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
+    _keys(
+        data,
+        "scenario",
+        required={"scenario", "goods", "professions", "traits", "guilds", "town", "player"},
+        optional={"outside"},
+    )
+
+    sc = data["scenario"]
+    _keys(sc, "scenario", required={"name", "seed", "days"}, optional={"description", "guilds"})
+
+    goods = {}
+    _keys(data["goods"], "goods", required={str(g) for g in GOODS})
+    for name, g in data["goods"].items():
+        _keys(g, f"goods.{name}", required={"base_price", "price_floor", "price_ceiling"})
+        floor, ceiling = float(g["price_floor"]), float(g["price_ceiling"])
+        if not 0 < floor <= 1 <= ceiling:
+            raise ConfigError(f"goods.{name}: need 0 < price_floor <= 1 <= price_ceiling")
+        goods[Asset(name)] = GoodConfig(_pos_int(g["base_price"], f"goods.{name}"), floor, ceiling)
+
+    professions = {}
+    _keys(data["professions"], "professions", required={str(p) for p in Profession})
+    for name, p in data["professions"].items():
+        where = f"professions.{name}"
+        _keys(
+            p,
+            where,
+            required={"count", "site", "wallet", "tool_condition"},
+            optional={"inventory"},
+        )
+        professions[Profession(name)] = ProfessionConfig(
+            count=_nonneg_int(p["count"], f"{where}.count"),
+            site=_enum(Site, p["site"], f"{where}.site"),
+            wallet=_int_range(p["wallet"], f"{where}.wallet"),
+            inventory=_holdings(p.get("inventory", {}), f"{where}.inventory"),
+            tool_condition=_float_range(p["tool_condition"], f"{where}.tool_condition", 0, 1),
+        )
+
+    t = data["traits"]
+    _keys(t, "traits", required={"skill", "thrift", "stock_days", "patience"})
+    traits = TraitRanges(
+        skill=_float_range(t["skill"], "traits.skill", 0.01, 10),
+        thrift=_float_range(t["thrift"], "traits.thrift", 0, 1),
+        stock_days=_int_range(t["stock_days"], "traits.stock_days", 1),
+        patience=_int_range(t["patience"], "traits.patience", 1),
+    )
+
+    guilds = {}
+    claimed: dict[Profession, str] = {}
+    for gid, g in data["guilds"].items():
+        where = f"guilds.{gid}"
+        _keys(g, where, required={"name", "professions", "treasury", "dues_rate", "policy"})
+        profs = tuple(_enum(Profession, p, f"{where}.professions") for p in g["professions"])
+        for prof in profs:
+            if prof in claimed:
+                raise ConfigError(f"{where}: {prof} already belongs to guild {claimed[prof]!r}")
+            claimed[prof] = gid
+        pol = g["policy"]
+        _keys(
+            pol,
+            f"{where}.policy",
+            required={"emergency_threshold", "max_contract_share", "reward_premium"},
+        )
+        guilds[gid] = GuildConfig(
+            name=str(g["name"]),
+            professions=profs,
+            treasury=_nonneg_int(g["treasury"], f"{where}.treasury"),
+            dues_rate=_fraction(g["dues_rate"], f"{where}.dues_rate"),
+            policy=GuildPolicy(
+                emergency_threshold=_fraction(pol["emergency_threshold"], f"{where}.policy"),
+                max_contract_share=_fraction(pol["max_contract_share"], f"{where}.policy"),
+                reward_premium=_at_least(pol["reward_premium"], 1.0, f"{where}.policy"),
+            ),
+        )
+
+    town = data["town"]
+    _keys(town, "town", required={"treasury", "guard_wage", "market_tax"})
+    player = data["player"]
+    _keys(player, "player", required={"wallet"})
+
+    cfg = ScenarioConfig(
+        name=str(sc["name"]),
+        description=str(sc.get("description", "")),
+        seed=_nonneg_int(sc["seed"], "scenario.seed"),
+        days=_pos_int(sc["days"], "scenario.days"),
+        guilds_enabled=bool(sc.get("guilds", True)),
+        goods=goods,
+        professions=professions,
+        traits=traits,
+        guilds=guilds,
+        town=TownConfig(
+            treasury=_nonneg_int(town["treasury"], "town.treasury"),
+            guard_wage=_nonneg_int(town["guard_wage"], "town.guard_wage"),
+            market_tax=_fraction(town["market_tax"], "town.market_tax"),
+        ),
+        player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
+        outside=_holdings(data.get("outside", {}), "outside"),
+    )
+    if cfg.population <= 0:
+        raise ConfigError("population is zero")
+    if cfg.population > 1000:
+        raise ConfigError(f"population {cfg.population} exceeds prototype limit of 1000")
+    return cfg
+
+
+# --- validators ----------------------------------------------------------------------------------
+
+
+def _keys(
+    table: Any, where: str, *, required: set[str], optional: frozenset[str] | set[str] = frozenset()
+) -> None:
+    if not isinstance(table, Mapping):
+        raise ConfigError(f"{where}: expected a table")
+    missing = required - table.keys()
+    unknown = table.keys() - required - optional
+    if missing:
+        raise ConfigError(f"{where}: missing {sorted(missing)}")
+    if unknown:
+        raise ConfigError(f"{where}: unknown keys {sorted(unknown)}")
+
+
+def _enum(enum: type, value: Any, where: str) -> Any:
+    try:
+        return enum(value)
+    except ValueError:
+        options = ", ".join(e.value for e in enum)
+        raise ConfigError(f"{where}: {value!r} is not one of: {options}") from None
+
+
+def _int(value: Any, where: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ConfigError(f"{where}: expected an integer, got {value!r}")
+    return value
+
+
+def _nonneg_int(value: Any, where: str) -> int:
+    v = _int(value, where)
+    if v < 0:
+        raise ConfigError(f"{where}: must be >= 0")
+    return v
+
+
+def _pos_int(value: Any, where: str) -> int:
+    v = _int(value, where)
+    if v <= 0:
+        raise ConfigError(f"{where}: must be > 0")
+    return v
+
+
+def _number(value: Any, where: str) -> float:
+    if not isinstance(value, int | float) or isinstance(value, bool):
+        raise ConfigError(f"{where}: expected a number, got {value!r}")
+    return float(value)
+
+
+def _fraction(value: Any, where: str) -> float:
+    v = _number(value, where)
+    if not 0 <= v <= 1:
+        raise ConfigError(f"{where}: must be between 0 and 1")
+    return v
+
+
+def _at_least(value: Any, minimum: float, where: str) -> float:
+    v = _number(value, where)
+    if v < minimum:
+        raise ConfigError(f"{where}: must be >= {minimum}")
+    return v
+
+
+def _pair(value: Any, where: str) -> tuple[Any, Any]:
+    if not isinstance(value, list | tuple) or len(value) != 2:
+        raise ConfigError(f"{where}: expected [low, high]")
+    return value[0], value[1]
+
+
+def _int_range(value: Any, where: str, minimum: int = 0) -> IntRange:
+    lo, hi = (_int(v, where) for v in _pair(value, where))
+    if not minimum <= lo <= hi:
+        raise ConfigError(f"{where}: need {minimum} <= low <= high, got [{lo}, {hi}]")
+    return lo, hi
+
+
+def _float_range(value: Any, where: str, minimum: float, maximum: float) -> FloatRange:
+    lo, hi = (_number(v, where) for v in _pair(value, where))
+    if not minimum <= lo <= hi <= maximum:
+        raise ConfigError(f"{where}: need {minimum} <= low <= high <= {maximum}")
+    return lo, hi
+
+
+def _holdings(table: Any, where: str) -> dict[Asset, int]:
+    if not isinstance(table, Mapping):
+        raise ConfigError(f"{where}: expected a table")
+    out: dict[Asset, int] = {}
+    for name, qty in table.items():
+        asset = _enum(Asset, name, where)
+        if asset is Asset.COIN:
+            raise ConfigError(f"{where}: coin is set via wallet/treasury, not inventory")
+        out[asset] = _nonneg_int(qty, f"{where}.{name}")
+    return out
