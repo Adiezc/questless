@@ -290,6 +290,9 @@ with why_col:
         st.markdown(
             f"**{icon} {html.escape(quest_title(c))}** &nbsp; `{c.id}` &nbsp; {c.status.value}"
         )
+        st.markdown(
+            f'<p class="ql-summary">{html.escape(s.summarise(c.id))}</p>', unsafe_allow_html=True
+        )
         lines = c.provenance.render(names())
         items = []
         for ev, line in zip(c.provenance.chain, lines, strict=True):

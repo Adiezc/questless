@@ -30,6 +30,7 @@ from questless import persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts.model import Contract, Status
 from questless.contracts.provenance import series, verify
+from questless.contracts.summary import summarise
 from questless.metrics import timeseries
 from questless.player import Quote, apply_action, quote_contract
 from questless.sim.entities import PLAYER
@@ -122,6 +123,10 @@ class Simulation:
 
     def contract(self, contract_id: str) -> Contract:
         return self.world.contracts.contracts[contract_id]
+
+    def summarise(self, contract_id: str) -> str:
+        """The quest in one short paragraph: root cause, key effect, who pays for what."""
+        return summarise(self.world, self.contract(contract_id))
 
     def explain(self, contract_id: str) -> list[str]:
         """ "Why does this quest exist?" as sentences, root cause first."""
