@@ -28,10 +28,20 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .ql-num, .ql-mono { font-family: "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 
 /* Brand line */
-.ql-brand { display: flex; align-items: baseline; gap: 0.9rem; margin: 0 0 0.2rem 0; }
-.ql-brand h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.01em; margin: 0; padding: 0; color: var(--ink); }
-.ql-brand span { color: var(--ink-2); font-size: 0.95rem; }
+.ql-brand { display: flex; align-items: baseline; gap: 0.9rem; margin: 0; }
+.ql-brand h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.01em; margin: 0; padding: 0; color: var(--ink); }
+.ql-brand span { color: var(--ink-2); font-size: 0.85rem; }
 .ql-lede { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.6rem 0; max-width: 80ch; }
+
+/* Sticky compact header container */
+div[data-testid="stHorizontalBlock"]:has(> div [data-testid="stMetric"]:has(label:has(p:contains("Day")))) {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  background: var(--page);
+  padding: 0.6rem 0 0.8rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
 
 /* Section titles */
 .ql-h { font-size: 0.95rem; font-weight: 600; color: var(--ink); margin: 0.2rem 0 0.4rem 0; }
