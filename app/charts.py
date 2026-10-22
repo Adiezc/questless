@@ -16,6 +16,7 @@ import random
 
 import plotly.graph_objects as go
 
+from questless.contracts.provenance import _label as subject_label
 from questless.sim.ledger import Asset
 
 SURFACE = "#1a1a19"
@@ -232,43 +233,43 @@ def single_line(days, values, title: str, color: str, shocks, height: int = 220)
     return _layout(fig, height, title, legend=False)
 
 
-def evidence_chart(sim, contract) -> go.Figure:
-    """The contract's good over time: output against its pre-shock normal, with the contract day
-    marked. If the chain has no production drop (transport), show unfilled demand instead."""
-    series = sim.timeseries()
-    good = str(contract.good)
-    days = series["day"]
-    drop = next(
-        (
-            e
-            for e in contract.provenance.chain
-            if e.kind == "production_drop" and e.subject == f"production:{good}"
-        ),
-        None,
-    )
-    fig = go.Figure()
-    if drop is not None:
-        values, label = series["produced"][good], f"{GOOD_LABELS[good]} produced per day"
-    else:
-        values, label = series["unfilled"][good], f"{GOOD_LABELS[good]}: unmet demand per day"
-    fig.add_trace(
+def evidence_chart(sim, contract, step: int) -> go.Figure:
+    """One measured step of the contract's chain, day by day. Values come from
+    ``sim.evidence_series``, i.e. the same ``measure()`` that ``verify()`` re-checks, so the line
+    passes exactly through the recorded value (the marked point). Baseline and threshold from the
+    evidence are drawn as reference lines."""
+    ev = contract.provenance.chain[step]
+    points = sim.evidence_series(contract.id, step)
+    days, values = list(points), list(points.values())
+    color = GOOD_COLORS.get(str(contract.good), ACCENT)
+    fig = go.Figure(
         go.Scatter(
             x=days,
             y=values,
             mode="lines",
-            name=label,
-            line=dict(color=GOOD_COLORS[good], width=2),
+            line=dict(color=color, width=2),
             hovertemplate="day %{x}: %{y}<extra></extra>",
         )
     )
-    if drop is not None:
-        fig.add_hline(
-            y=drop.baseline,
-            line=dict(color=INK_2, width=1, dash="dot"),
-            annotation_text=f"normal {drop.baseline:.0f}/day",
-            annotation_position="top left",
-            annotation_font=dict(size=10, color=INK_2),
+    for value, name, dash in ((ev.baseline, "normal", "dot"), (ev.threshold, "threshold", "dash")):
+        if value is not None:
+            fig.add_hline(
+                y=value,
+                line=dict(color=INK_2, width=1, dash=dash),
+                annotation_text=f"{name} {value:g}",
+                annotation_position="top left",
+                annotation_font=dict(size=10, color=INK_2),
+            )
+    tick = ev.measure[1]
+    fig.add_trace(
+        go.Scatter(
+            x=[tick],
+            y=[points[tick]],
+            mode="markers",
+            marker=dict(color=ACCENT, size=9, line=dict(color=SURFACE, width=2)),
+            hovertemplate=f"day {tick}: recorded {ev.value:g}<extra></extra>",
         )
+    )
     fig.add_vline(
         x=contract.created_tick,
         line=dict(color=ACCENT, width=1),
@@ -277,7 +278,19 @@ def evidence_chart(sim, contract) -> go.Figure:
         annotation_font=dict(size=10, color=ACCENT),
     )
     _shade_shocks(fig, sim.world.modifiers.shocks, days[-1] if days else 0)
-    return _layout(fig, 210, label, legend=False)
+    title = f"{subject_label(ev.subject)}: {ev.metric.replace('_', ' ')}"
+    return _layout(fig, 210, title, legend=False)
+
+
+def default_step(chain, steps: list[int]) -> int | None:
+    """The fact charted until the player picks one: the output drop if there is one (the usual
+    story), else the first measured effect after the root cause."""
+    for kind in ("production_drop", "transport_backlog", "unfilled_demand"):
+        for i in steps:
+            if chain[i].kind == kind:
+                return i
+    effects = [i for i in steps if chain[i].kind != "shock"]
+    return (effects or steps or [None])[0]
 
 
 def treasury_chart(series: dict, names: dict[str, str], shocks) -> go.Figure:

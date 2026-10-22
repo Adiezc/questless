@@ -293,18 +293,24 @@ with why_col:
         st.markdown(
             f'<p class="ql-summary">{html.escape(s.summarise(c.id))}</p>', unsafe_allow_html=True
         )
+        chain = c.provenance.chain
+        steps = [i for i, e in enumerate(chain) if e.measure]  # the ones a chart can show
+        picked = st.session_state.get(f"step-{c.id}")
+        if picked not in steps:
+            picked = charts.default_step(chain, steps)
         lines = c.provenance.render(names())
         items = []
-        for ev, line in zip(c.provenance.chain, lines, strict=True):
+        for i, (ev, line) in enumerate(zip(chain, lines, strict=True)):
             group, tag = EVIDENCE_GROUP.get(ev.kind, ("cause", "Fact"))
             day, _, text = line.partition(": ")
             items.append(
-                f'<li class="{group}"><span class="ql-kind">{tag}</span>'
+                f'<li class="{group}{" picked" if i == picked else ""}">'
+                f'<span class="ql-kind">{tag}</span>'
                 f'<span class="ql-day">{html.escape(day)}</span>'
                 f'<span class="ql-text">{html.escape(text)}</span></li>'
             )
         st.markdown(f'<ol class="ql-chain">{"".join(items)}</ol>', unsafe_allow_html=True)
-        measured = sum(1 for e in c.provenance.chain if e.measure)
+        measured = len(steps)
         problems = s.verify(c.id)
         if problems:
             st.error("Provenance check failed: " + "; ".join(problems))
@@ -314,7 +320,20 @@ with why_col:
                 "re-check against the simulation record.</div>",
                 unsafe_allow_html=True,
             )
-        st.plotly_chart(charts.evidence_chart(s, c), config={"displayModeBar": False})
+        if steps:
+            tags = {i: EVIDENCE_GROUP.get(chain[i].kind, ("", "Fact"))[1] for i in steps}
+            chips = {  # add the day only where two facts share a tag
+                i: tag if list(tags.values()).count(tag) == 1 else f"{tag} · day {chain[i].tick}"
+                for i, tag in tags.items()
+            }
+            st.pills(
+                "Chart a measured fact",
+                steps,
+                default=picked,
+                key=f"step-{c.id}",
+                format_func=lambda i: chips[i],
+            )
+            st.plotly_chart(charts.evidence_chart(s, c, picked), config={"displayModeBar": False})
 
         lineage = s.lineage(c.id)
         if lineage["ancestors"] or lineage["children"]:

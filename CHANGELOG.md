@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 - Provenance: `series(world, key, start, end)` re-measures an evidence key day by day, and
   `Simulation.evidence_series(contract_id, step)` returns it for one chain step, so evidence charts
   show exactly the numbers `verify()` checks (M15.1).
+- Dashboard: each measured fact in a quest's "Why?" chain is clickable. Picking one highlights it
+  and charts it day by day from `evidence_series`, with its normal and threshold lines and the
+  recorded value marked (M15.2).
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
