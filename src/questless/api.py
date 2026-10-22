@@ -29,7 +29,7 @@ from typing import Any
 from questless import persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts.model import Contract, Status
-from questless.contracts.provenance import verify
+from questless.contracts.provenance import series, verify
 from questless.metrics import timeseries
 from questless.player import Quote, apply_action, quote_contract
 from questless.sim.entities import PLAYER
@@ -135,6 +135,13 @@ class Simulation:
     def verify(self, contract_id: str) -> list[str]:
         """Re-measure every recorded number in the contract's provenance; [] means it holds."""
         return verify(self.world, self.contract(contract_id))
+
+    def evidence_series(self, contract_id: str, step: int) -> dict[int, float]:
+        """Day-by-day values of one measured step in a contract's chain, for charting it."""
+        ev = self.contract(contract_id).provenance.chain[step]
+        if ev.measure is None:
+            raise ValueError(f"step {step} of {contract_id} ({ev.kind}) is not a measured value")
+        return series(self.world, ev.measure[0])
 
     def lineage(self, contract_id: str) -> dict[str, list[str]]:
         board = self.world.contracts
