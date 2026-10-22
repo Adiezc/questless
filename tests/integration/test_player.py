@@ -143,6 +143,14 @@ def test_t8_save_load_replays_exactly(sim, tmp_path):
     assert restored.state_hash() == sim.world.state_hash()
 
 
+@pytest.mark.parametrize("bad_factor", [float("nan"), float("inf"), float("-inf")])
+def test_m13_2_shock_rejects_non_finite_factor_and_preserves_state(sim, bad_factor):
+    before = sim.world.state_hash()
+    with pytest.raises(ActionError, match="factor must be a finite number"):
+        sim.shock("transport_capacity", bad_factor, 10, "Bad Shock")
+    assert sim.world.state_hash() == before
+
+
 def test_tampered_save_is_rejected(sim, tmp_path):
     sim.step(30)
     path = save(sim.world, tmp_path / "run.json")
