@@ -33,21 +33,21 @@ def build_report(world: World) -> dict[str, Any]:
             "id": c.id,
             "kind": c.kind.name if hasattr(c.kind, "name") else str(c.kind),
             "good": str(c.good),
-            "quantity": c.quantity,
+            "qty": c.qty,
             "reward": c.reward,
             "status": c.status.name if hasattr(c.status, "name") else str(c.status),
         }
         for c in live_list
     ]
 
-    # Guild treasuries
+    # Guild treasuries from ledger
     guild_data = {}
     for gid, guild in sorted(world.guilds.items()):
         guild_data[gid] = {
-            "name": getattr(guild, "name", gid.title()),
+            "name": guild.name,
             "treasury_history": [s.guilds[gid].treasury if gid in s.guilds else 0 for s in stats],
             "escrowed_history": [s.guilds[gid].escrowed if gid in s.guilds else 0 for s in stats],
-            "current_treasury": guild.treasury if hasattr(guild, "treasury") else 0,
+            "current_treasury": world.ledger.balance(guild.account, "coin"),
         }
 
     scenario_name = getattr(world.config, "name", "Simulation")
@@ -115,9 +115,7 @@ def render_markdown(data: dict[str, Any]) -> str:
         lines.append("| ID | Kind | Good | Qty | Reward |")
         lines.append("| :--- | :--- | :--- | :--- | :--- |")
         for c in data["live_contracts"]:
-            lines.append(
-                f"| {c['id']} | {c['kind']} | {c['good']} | {c['quantity']} | {c['reward']} |"
-            )
+            lines.append(f"| {c['id']} | {c['kind']} | {c['good']} | {c['qty']} | {c['reward']} |")
     else:
         lines.append("No active contracts at report time.")
 
@@ -144,7 +142,7 @@ def render_html(data: dict[str, Any]) -> str:
     for c in data.get("live_contracts", []):
         contract_rows.append(
             f"<tr><td>{html.escape(str(c['id']))}</td><td>{html.escape(str(c['kind']))}</td>"
-            f"<td>{html.escape(str(c['good']))}</td><td>{c['quantity']}</td>"
+            f"<td>{html.escape(str(c['good']))}</td><td>{c['qty']}</td>"
             f"<td>{c['reward']} coin</td></tr>"
         )
     contract_table = (
