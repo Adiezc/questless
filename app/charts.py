@@ -25,7 +25,8 @@ INK_2 = "#c3c2b7"
 MUTED = "#898781"
 GRID = "#2c2c2a"
 AXIS = "#383835"
-SHADE = "rgba(224, 163, 60, 0.08)"  # shock windows: a wash of the UI accent
+WARMUP_SHADE = "rgba(137, 135, 129, 0.08)"  # grey warm-up band for days 0-9
+SHOCK_SHADE = "rgba(195, 194, 183, 0.10)"  # neutral shock window band
 ACCENT = "#e0a33c"
 CRITICAL = "#d03b3b"
 
@@ -73,25 +74,36 @@ def _layout(
 
 
 def _shade_shocks(fig: go.Figure, shocks, day_max: int) -> None:
+    # Warm-up band for days 0-9 to contextualize startup transients
+    if day_max >= 0:
+        fig.add_vrect(
+            x0=0,
+            x1=min(9, day_max) + 0.5,
+            fillcolor=WARMUP_SHADE,
+            line_width=0,
+            layer="below",
+        )
     for s in shocks:
         if s.start > day_max:
             continue
         fig.add_vrect(
             x0=s.start,
             x1=min(s.end, day_max + 1) - 0.5,
-            fillcolor=SHADE,
-            line_width=0,
+            fillcolor=SHOCK_SHADE,
+            line_width=1,
+            line_color=MUTED,
+            line_dash="dot",
             layer="below",
         )
         fig.add_annotation(
             x=s.start,
-            y=1,
+            y=1.02,
             yref="paper",
             text=s.name,
             showarrow=False,
             xanchor="left",
-            yanchor="top",
-            font=dict(size=10, color=ACCENT),
+            yanchor="bottom",
+            font=dict(size=10, color=INK_2),
         )
 
 
