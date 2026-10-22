@@ -29,6 +29,8 @@ All notable changes to this project are documented here. The format follows
 - Scenario files that set a number to `nan`, `inf` or `-inf` now fail to load with a clear
   "must be a finite number" error, instead of crashing partway through a run (#10, thanks
   @ElectLive).
+- Player shocks with a `nan`, `inf` or `-inf` factor are rejected with a clear error before
+  anything is scheduled, leaving the world unchanged (M13.2, #21, thanks @RajGahoi).
 - Guild treasury reports are taken after the day's contract escrow, so the dashboard's treasury
   card and chart agree (M13.3, #13).
 
