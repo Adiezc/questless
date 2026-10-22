@@ -114,6 +114,10 @@ The reward is escrowed before the contract is posted.
 - **Lineage:** the most recent contract for an upstream good becomes the parent.
 - **Verification:** measured evidence stores `(metric key, tick)`; `verify()` recomputes value
   and baseline from `TickStats` and checks the causal ordering.
+- **Quest summary:** the middle step prefers evidence for the contract's good, in order of
+  production drop, transport backlog, price spike and unfilled demand. If only an upstream
+  good has such evidence, its own name labels the quoted numbers. Funding still names the
+  contract's good and quantity.
 
 ## Player
 
