@@ -47,6 +47,8 @@ All notable changes to this project are documented here. The format follows
 - `Simulation.step()` raises `ValueError` for a negative number of days instead of doing nothing,
   and unknown contract, NPC and guild ids raise `UnknownIdError` (a `KeyError`) with a plain
   message such as "unknown contract 'C-9999'" (M13.4, #24, thanks @ZeeEmn).
+- Quest summaries name the good each quoted number belongs to, preferring the contract's own good,
+  so an iron-ore contract no longer quotes the tools figures (M13.6, #50, thanks @Golden007-prog).
 
 ## [0.1.0] - 2026-10-21
 
