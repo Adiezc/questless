@@ -12,6 +12,9 @@ All notable changes to this project are documented here. The format follows
 - Quest cards show an estimated profit: the reward minus the cheaper of buying the missing units
   at market or a caravan that arrives in time (M16.2). `Simulation.quote()` and the pure
   `quote_buy`, `quote_caravan` and `quote_contract` helpers expose the same numbers.
+- Provenance: `series(world, key, start, end)` re-measures an evidence key day by day, and
+  `Simulation.evidence_series(contract_id, step)` returns it for one chain step, so evidence charts
+  show exactly the numbers `verify()` checks (M15.1).
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so

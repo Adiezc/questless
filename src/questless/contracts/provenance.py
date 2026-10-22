@@ -128,6 +128,14 @@ def measure(world: World, key: tuple, tick: int) -> float:
     return METRICS[name](world, tick, *args)
 
 
+def series(world: World, key: tuple, start: int = 0, end: int | None = None) -> dict[int, float]:
+    """``measure(world, key, t)`` for each recorded day from ``start`` to ``end`` (inclusive,
+    default the last recorded day), keyed by tick. Charts built from this agree with the chain
+    by construction: they read the very numbers ``verify`` re-checks."""
+    last = len(world.stats) - 1 if end is None else min(end, len(world.stats) - 1)
+    return {t: measure(world, key, t) for t in range(max(start, 0), last + 1)}
+
+
 def verify(world: World, contract: Contract) -> list[str]:
     """Recompute every measured evidence value and check the chain's structure.
     Returns a list of problems (empty when the provenance holds)."""

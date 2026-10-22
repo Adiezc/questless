@@ -8,7 +8,7 @@ import dataclasses
 import pytest
 
 from questless.contracts.model import ContractKind
-from questless.contracts.provenance import verify
+from questless.contracts.provenance import measure, series, verify
 from questless.sim.ledger import Asset
 from questless.sim.world import build_world
 from tests.conftest import bandits, drought, mine_collapse, with_shocks
@@ -112,3 +112,44 @@ def test_rendered_explanation_uses_names_and_numbers(worlds):
     lines = c.provenance.render(names)
     assert lines[0].startswith("Day 20: The farms")
     assert not any("npc_" in line for line in lines)
+
+
+@pytest.mark.parametrize("name", list(SCENARIOS))
+def test_m15_1_series_agrees_with_every_measured_step(worlds, name):
+    """M15.1 acceptance: a chart built from ``series`` shows exactly the numbers in the chain,
+    for every measured value and baseline of every contract."""
+    world = worlds[name]
+    checked = 0
+    for c in world.contracts.contracts.values():
+        for e in c.provenance.chain:
+            for recorded, m in ((e.value, e.measure), (e.baseline, e.baseline_measure)):
+                if m is None:
+                    continue
+                key, tick = m
+                assert series(world, key, tick - 3, tick + 3)[tick] == pytest.approx(recorded)
+                checked += 1
+    assert checked, f"{name} produced no measured evidence"
+
+
+def test_m15_1_series_covers_recorded_days_only(worlds):
+    world = worlds["drought"]
+    days = series(world, ("transport_factor",), -5)
+    assert list(days) == list(range(len(world.stats)))  # clamped to what was recorded
+    assert series(world, ("transport_factor",), 10, 12) == {
+        t: measure(world, ("transport_factor",), t) for t in (10, 11, 12)
+    }
+
+
+def test_m15_1_simulation_evidence_series():
+    from questless.api import Simulation
+    from tests.conftest import SCENARIOS as DIR
+
+    sim = Simulation.from_scenario(DIR / "iron_shortage.toml")
+    sim.step(40)
+    c = next(c for c in sim.contracts() if any(e.measure for e in c.provenance.chain))
+    for i, e in enumerate(c.provenance.chain):
+        if e.measure is None:
+            with pytest.raises(ValueError, match="not a measured value"):
+                sim.evidence_series(c.id, i)
+        else:
+            assert sim.evidence_series(c.id, i)[e.measure[1]] == pytest.approx(e.value)
