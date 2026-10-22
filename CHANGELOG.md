@@ -20,10 +20,21 @@ All notable changes to this project are documented here. The format follows
 - Dashboard: each measured fact in a quest's "Why?" chain is clickable. Picking one highlights it
   and charts it day by day from `evidence_series`, with its normal and threshold lines and the
   recorded value marked (M15.2).
+- Run report: `questless.report` builds a summary of a run (production, hunger, live contracts,
+  guild treasuries) and renders it as Markdown or a standalone offline HTML page with SVG
+  sparklines (#29, thanks @RajGahoi).
+- Dashboard: a grey warm-up band covers days 0-9, and shocks are drawn as neutral hatched bands
+  labelled above the plot (M14.3, #26, thanks @RajGahoi).
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
   low-volume goods are as visible as food (M14.4, #14).
+- Dashboard: guilds have their own colour set, and the treasury chart starts at zero (M14.5,
+  #25, thanks @RajGahoi).
+- Dashboard: the brand, day and time controls share one compact sticky header, and the intro
+  text moved into the "How it works" tab (M14.6, #27, thanks @RajGahoi).
+- Quest board: contract types use plain words ("Guild order", "Town order", "Transport job"), and
+  pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
 - Scenario files that set a number to `nan`, `inf` or `-inf` now fail to load with a clear
@@ -33,6 +44,9 @@ All notable changes to this project are documented here. The format follows
   anything is scheduled, leaving the world unchanged (M13.2, #21, thanks @RajGahoi).
 - Guild treasury reports are taken after the day's contract escrow, so the dashboard's treasury
   card and chart agree (M13.3, #13).
+- `Simulation.step()` raises `ValueError` for a negative number of days instead of doing nothing,
+  and unknown contract, NPC and guild ids raise `UnknownIdError` (a `KeyError`) with a plain
+  message such as "unknown contract 'C-9999'" (M13.4, #24, thanks @ZeeEmn).
 
 ## [0.1.0] - 2026-10-21
 
