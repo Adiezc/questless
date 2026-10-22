@@ -420,7 +420,13 @@ with econ:
             config={"displayModeBar": False},
         )
         st.plotly_chart(
-            charts.goods_lines(series, "unfilled", "Unmet demand (buyers who could pay)", shocks),
+            charts.goods_lines(
+                series,
+                "unfilled_pct",
+                "Unmet demand (% of buyers who could pay)",
+                shocks,
+                percent=True,
+            ),
             config={"displayModeBar": False},
         )
     with b:
