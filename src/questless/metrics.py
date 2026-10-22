@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from questless.sim.ledger import GOODS, Asset
 
 if TYPE_CHECKING:
+    from questless.sim.market import MarketReport
     from questless.sim.world import World
 
 
@@ -24,6 +25,7 @@ def timeseries(world: World) -> dict[str, Any]:
         "price": {g: [round(s.prices[Asset(g)], 2) for s in stats] for g in goods},
         "produced": {g: [s.produced.get(Asset(g), 0) for s in stats] for g in goods},
         "unfilled": {g: [s.market[Asset(g)].unfilled for s in stats] for g in goods},
+        "unfilled_pct": {g: [_unfilled_pct(s.market[Asset(g)]) for s in stats] for g in goods},
         "traded": {g: [s.market[Asset(g)].traded for s in stats] for g in goods},
         "hungry": [s.hungry_npcs for s in stats],
         "idle": [s.idle_npcs for s in stats],
@@ -41,3 +43,8 @@ def timeseries(world: World) -> dict[str, Any]:
             "backlog": [s.transport.backlog if s.transport else 0 for s in stats],
         },
     }
+
+
+def _unfilled_pct(report: MarketReport) -> float:
+    """Unmet demand as a share of demand from buyers who could pay; 0 on a day nobody bid."""
+    return round(100 * report.unfilled / report.demand, 1) if report.demand else 0.0

@@ -180,8 +180,11 @@ def settlement_map(sim) -> go.Figure:
     return _layout(fig, 340)
 
 
-def goods_lines(series: dict, key: str, title: str, shocks, height: int = 260) -> go.Figure:
+def goods_lines(
+    series: dict, key: str, title: str, shocks, height: int = 260, percent: bool = False
+) -> go.Figure:
     days = series["day"]
+    suffix = "%" if percent else ""
     fig = go.Figure()
     for good, values in series[key].items():
         fig.add_trace(
@@ -191,12 +194,15 @@ def goods_lines(series: dict, key: str, title: str, shocks, height: int = 260) -
                 mode="lines",
                 name=GOOD_LABELS[good],
                 line=dict(color=GOOD_COLORS[good], width=2),
-                hovertemplate=GOOD_LABELS[good] + ": %{y}<extra></extra>",
+                hovertemplate=GOOD_LABELS[good] + ": %{y}" + suffix + "<extra></extra>",
             )
         )
     _shade_shocks(fig, shocks, days[-1] if days else 0)
     fig.update_layout(hovermode="x unified")
     fig.update_xaxes(title=dict(text="day", font=dict(size=11, color=MUTED)))
+    if percent:  # a share stays within 0-100; the padding keeps lines at the limits visible
+        ticks = [0, 25, 50, 75, 100]  # explicit text: Plotly drops ticksuffix with tickvals
+        fig.update_yaxes(range=[-3, 103], tickvals=ticks, ticktext=[f"{t}%" for t in ticks])
     return _layout(fig, height, title)
 
 
