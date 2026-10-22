@@ -137,9 +137,7 @@ def render_html(data: dict[str, Any]) -> str:
         )
 
     guild_table = (
-        "".join(guild_rows)
-        if guild_rows
-        else "<tr><td colspan='3'>No guild records</td></tr>"
+        "".join(guild_rows) if guild_rows else "<tr><td colspan='3'>No guild records</td></tr>"
     )
 
     contract_rows = []
