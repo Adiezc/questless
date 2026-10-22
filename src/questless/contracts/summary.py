@@ -32,9 +32,13 @@ def summarise(world: World, contract: Contract) -> str:
     if root is not None:
         name = root.metric.removesuffix("_factor").replace("_", " ")
         parts.append(f"{name.capitalize()} struck on day {root.tick}.")
-    middle = next((e for kind in MIDDLE for e in chain if e.kind == kind), None)
+    middles = [e for kind in MIDDLE for e in chain if e.kind == kind]
+    middle = next(
+        (e for e in middles if e.subject.partition(":")[2] == str(contract.good)),
+        middles[0] if middles else None,
+    )
     if middle is not None:
-        parts.append(_middle(middle, good))
+        parts.append(_middle(middle))
     funding = next((e for e in reversed(chain) if e.kind == "funding_decision"), None)
     if funding is not None:
         who = _name(world, contract.funder)
@@ -47,7 +51,8 @@ def summarise(world: World, contract: Contract) -> str:
     return " ".join(parts)
 
 
-def _middle(e: Evidence, good: str) -> str:
+def _middle(e: Evidence) -> str:
+    good = e.subject.partition(":")[2].replace("_", " ")
     if e.kind == "production_drop":
         return f"{good.capitalize()} output fell to {_num(e.value)}/day from {_num(e.baseline)}."
     if e.kind == "transport_backlog":
