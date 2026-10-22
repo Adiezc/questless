@@ -413,10 +413,22 @@ econ, npcs_tab, guilds_tab, log_tab, about_tab = st.tabs(
 )
 
 with econ:
+    # Index view needs the reference window (days 10-14) to have passed; until then show units.
+    indexed = st.toggle(
+        "Show as % of normal",
+        key="indexed",
+        help="Each good relative to its average over days 10-14, after warm-up and before shocks.",
+    ) and any(v is not None for values in series["price_index"].values() for v in values)
     a, b = st.columns(2)
     with a:
         st.plotly_chart(
-            charts.goods_lines(series, "produced", "Production per day", shocks),
+            charts.goods_lines(
+                series,
+                "produced_index" if indexed else "produced",
+                "Production (% of normal)" if indexed else "Production per day",
+                shocks,
+                index=indexed,
+            ),
             config={"displayModeBar": False},
         )
         st.plotly_chart(
@@ -431,7 +443,13 @@ with econ:
         )
     with b:
         st.plotly_chart(
-            charts.goods_lines(series, "price", "Prices (coin)", shocks),
+            charts.goods_lines(
+                series,
+                "price_index" if indexed else "price",
+                "Prices (% of normal)" if indexed else "Prices (coin)",
+                shocks,
+                index=indexed,
+            ),
             config={"displayModeBar": False},
         )
         st.plotly_chart(

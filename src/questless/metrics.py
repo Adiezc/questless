@@ -8,6 +8,7 @@ knowing the engine's internals.
 
 from __future__ import annotations
 
+from statistics import fmean
 from typing import TYPE_CHECKING, Any
 
 from questless.sim.ledger import GOODS, Asset
@@ -15,6 +16,9 @@ from questless.sim.ledger import GOODS, Asset
 if TYPE_CHECKING:
     from questless.sim.market import MarketReport
     from questless.sim.world import World
+
+# Days 10-14 are "normal": after the warm-up (days 0-9) and before the scenarios' shocks (day 15).
+REFERENCE_DAYS = slice(10, 15)
 
 
 def timeseries(world: World) -> dict[str, Any]:
@@ -24,6 +28,8 @@ def timeseries(world: World) -> dict[str, Any]:
         "day": [s.tick for s in stats],
         "price": {g: [round(s.prices[Asset(g)], 2) for s in stats] for g in goods},
         "produced": {g: [s.produced.get(Asset(g), 0) for s in stats] for g in goods},
+        "price_index": {g: _index([s.prices[Asset(g)] for s in stats]) for g in goods},
+        "produced_index": {g: _index([s.produced.get(Asset(g), 0) for s in stats]) for g in goods},
         "unfilled": {g: [s.market[Asset(g)].unfilled for s in stats] for g in goods},
         "unfilled_pct": {g: [_unfilled_pct(s.market[Asset(g)]) for s in stats] for g in goods},
         "traded": {g: [s.market[Asset(g)].traded for s in stats] for g in goods},
@@ -44,3 +50,16 @@ def timeseries(world: World) -> dict[str, Any]:
 def _unfilled_pct(report: MarketReport) -> float:
     """Unmet demand as a share of demand from buyers who could pay; 0 on a day nobody bid."""
     return round(100 * report.unfilled / report.demand, 1) if report.demand else 0.0
+
+
+def _index(values: list[float]) -> list[float | None]:
+    """``values`` as a percentage of their mean over ``REFERENCE_DAYS``, so 100 means normal.
+
+    All ``None`` until the reference window has passed, or if the good was absent throughout it.
+    """
+    reference = values[REFERENCE_DAYS]
+    full = len(reference) == REFERENCE_DAYS.stop - REFERENCE_DAYS.start
+    base = fmean(reference) if full else 0.0
+    if not base:
+        return [None] * len(values)
+    return [round(100 * v / base, 1) for v in values]
