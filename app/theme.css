@@ -57,6 +57,8 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .ql-card-meta { color: var(--muted); font-size: 0.78rem; display: flex; gap: 0.9rem; flex-wrap: wrap; }
 .ql-card-meta b { color: var(--ink); font-weight: 500; }
 .ql-reward { color: var(--accent); font-family: "Geist Mono", monospace; font-weight: 500; }
+.ql-profit { color: var(--good); font-family: "Geist Mono", monospace; }
+.ql-loss { color: var(--critical); font-family: "Geist Mono", monospace; }
 
 /* Provenance timeline */
 .ql-chain { list-style: none; margin: 0.3rem 0 0.6rem 0; padding: 0 0 0 1.1rem; position: relative; }

@@ -9,7 +9,7 @@ import pytest
 from questless.api import Simulation
 from questless.contracts.model import ContractKind, Status
 from questless.persistence import ReplayMismatch, load, save
-from questless.player import ActionError
+from questless.player import ActionError, Quote, quote_buy, quote_caravan
 from questless.sim.entities import ESCROW, OUTSIDE, PLAYER
 from questless.sim.ledger import Asset
 from tests.conftest import SCENARIOS
@@ -151,3 +151,49 @@ def test_tampered_save_is_rejected(sim, tmp_path):
     path.write_text(json.dumps(data))
     with pytest.raises(ReplayMismatch):
         load(path)
+
+
+def test_m16_2_quote_is_pure_and_matches_what_sourcing_costs(sim):
+    """The card's estimate changes nothing, and following it costs exactly what it said."""
+    c = _first_iron_contract(sim)
+    before = sim.world.state_hash()
+    quote = sim.quote(c.id)
+    assert sim.world.state_hash() == before
+    assert quote is not None and quote.profit == c.reward - quote.cost
+
+    sim.accept(c.id)
+    coin = sim.player()["coin"]
+    if quote.source == "market":
+        assert sim.buy("iron_ore", c.qty) == c.qty
+    else:
+        assert quote.source == "caravan"
+        sim.step(sim.caravan("iron_ore", c.qty) - sim.day)
+    assert coin - sim.player()["coin"] == quote.cost
+    sim.deliver(c.id)
+    assert sim.player()["coin"] == coin + quote.profit
+
+
+def test_m16_2_quote_counts_goods_in_hand_and_skips_late_caravans(sim):
+    c = _first_iron_contract(sim)
+    sim.accept(c.id)
+    sim.step(sim.caravan("iron_ore", c.qty) - sim.day)
+    assert sim.quote(c.id) == Quote("in hand", 0, c.reward)
+
+    late = Simulation.from_scenario(SCENARIOS / "iron_shortage.toml")
+    c = _first_iron_contract(late)
+    late.step(c.deadline_tick - late.config.contracts.caravan_days - late.day)
+    # A caravan is on offer, but ordered today it would land on the deadline; nobody sells ore.
+    assert quote_caravan(late.world, c.good, c.qty) is not None
+    assert quote_buy(late.world, c.good, c.qty) is None
+    assert late.quote(c.id) is None
+
+
+def test_m16_2_transport_quote_is_the_whole_reward():
+    sim = Simulation.from_scenario(SCENARIOS / "bandits.toml")
+    for _ in range(90):
+        for cid in sim.step():
+            c = sim.contract(cid)
+            if c.kind is ContractKind.TRANSPORT:
+                assert sim.quote(cid) == Quote("haul", 0, c.reward)
+                return
+    pytest.skip("no transport contract in 90 days of bandits")
