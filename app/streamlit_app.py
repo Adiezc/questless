@@ -274,7 +274,8 @@ with board_col:
     if suppressed:
         def _suppressed_label(k: str, count: int) -> str:
             if k == "covered_by_pool":
-                return f"{count} needs already covered by a guild order" if count != 1 else "1 need already covered by a guild order"
+                suffix = "needs already covered by a guild order" if count != 1 else "need already covered by a guild order"
+                return f"{count} {suffix}"
             return f"{k.replace('_', ' ')} {count}"
 
         parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
