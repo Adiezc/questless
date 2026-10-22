@@ -5,10 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Dashboard: a "Show as % of normal" toggle on the Economy tab plots prices and production
+  relative to each good's average over days 10-14, with a dotted 100% line (M14.1, #15).
+- Metrics: `price_index`, `produced_index`, `unfilled_pct` and per-guild `escrowed` series.
+
+### Changed
+- Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
+  low-volume goods are as visible as food (M14.4, #14).
+
 ### Fixed
 - Scenario files that set a number to `nan`, `inf` or `-inf` now fail to load with a clear
   "must be a finite number" error, instead of crashing partway through a run (#10, thanks
   @ElectLive).
+- Guild treasury reports are taken after the day's contract escrow, so the dashboard's treasury
+  card and chart agree (M13.3, #13).
 
 ## [0.1.0] - 2026-10-21
 
