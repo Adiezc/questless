@@ -38,9 +38,9 @@ SHOCKS = {
 }
 KIND_LABEL = {
     ContractKind.PROCUREMENT: ("Procurement", ":material/person:"),
-    ContractKind.GUILD_SUPPLY: ("Guild supply", ":material/groups:"),
-    ContractKind.TOWN_SUPPLY: ("Town supply", ":material/shield:"),
-    ContractKind.TRANSPORT: ("Haulage", ":material/local_shipping:"),
+    ContractKind.GUILD_SUPPLY: ("Guild order", ":material/groups:"),
+    ContractKind.TOWN_SUPPLY: ("Town order", ":material/shield:"),
+    ContractKind.TRANSPORT: ("Transport job", ":material/local_shipping:"),
 }
 EVIDENCE_GROUP = {
     "shock": ("root", "Root cause"),
@@ -143,6 +143,16 @@ def quest_title(c) -> str:
 
 def kind_label(c) -> tuple[str, str]:
     return KIND_LABEL[c.kind]
+
+
+def _suppressed_label(k: str, count: int) -> str:
+    if k == "covered_by_pool":
+        if count != 1:
+            suffix = "needs already covered by a guild or town order"
+        else:
+            suffix = "need already covered by a guild or town order"
+        return f"{count} {suffix}"
+    return f"{k.replace('_', ' ')} {count}"
 
 
 def profit_tag(quote: Quote | None) -> str:
@@ -272,7 +282,7 @@ with board_col:
                         )
     suppressed = s.summary()["suppressed"]
     if suppressed:
-        parts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in sorted(suppressed.items()))
+        parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
         st.caption(f"Needs not turned into contracts so far: {parts}.")
 
 with why_col:
