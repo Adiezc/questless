@@ -145,6 +145,16 @@ def kind_label(c) -> tuple[str, str]:
     return KIND_LABEL[c.kind]
 
 
+def _suppressed_label(k: str, count: int) -> str:
+    if k == "covered_by_pool":
+        if count != 1:
+            suffix = "needs already covered by a guild or town order"
+        else:
+            suffix = "need already covered by a guild or town order"
+        return f"{count} {suffix}"
+    return f"{k.replace('_', ' ')} {count}"
+
+
 def profit_tag(quote: Quote | None) -> str:
     """Estimated profit for a card's meta line, e.g. "≈ +120 profit (market)"."""
     if quote is None:
@@ -272,16 +282,6 @@ with board_col:
                         )
     suppressed = s.summary()["suppressed"]
     if suppressed:
-
-        def _suppressed_label(k: str, count: int) -> str:
-            if k == "covered_by_pool":
-                if count != 1:
-                    suffix = "needs already covered by a guild order"
-                else:
-                    suffix = "need already covered by a guild order"
-                return f"{count} {suffix}"
-            return f"{k.replace('_', ' ')} {count}"
-
         parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
         st.caption(f"Needs not turned into contracts so far: {parts}.")
 
