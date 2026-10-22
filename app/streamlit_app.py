@@ -38,9 +38,9 @@ SHOCKS = {
 }
 KIND_LABEL = {
     ContractKind.PROCUREMENT: ("Procurement", ":material/person:"),
-    ContractKind.GUILD_SUPPLY: ("Guild supply", ":material/groups:"),
-    ContractKind.TOWN_SUPPLY: ("Town supply", ":material/shield:"),
-    ContractKind.TRANSPORT: ("Haulage", ":material/local_shipping:"),
+    ContractKind.GUILD_SUPPLY: ("Guild order", ":material/groups:"),
+    ContractKind.TOWN_SUPPLY: ("Town order", ":material/shield:"),
+    ContractKind.TRANSPORT: ("Transport job", ":material/local_shipping:"),
 }
 EVIDENCE_GROUP = {
     "shock": ("root", "Root cause"),
@@ -272,7 +272,12 @@ with board_col:
                         )
     suppressed = s.summary()["suppressed"]
     if suppressed:
-        parts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in sorted(suppressed.items()))
+        def _suppressed_label(k: str, count: int) -> str:
+            if k == "covered_by_pool":
+                return f"{count} needs already covered by a guild order" if count != 1 else "1 need already covered by a guild order"
+            return f"{k.replace('_', ' ')} {count}"
+
+        parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
         st.caption(f"Needs not turned into contracts so far: {parts}.")
 
 with why_col:
