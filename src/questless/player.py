@@ -133,6 +133,8 @@ def shock(
     if eff is ShockEffect.SITE_OUTPUT and where is None:
         raise ActionError("site_output shocks need a site")
     _positive(duration)
+    if not math.isfinite(factor):
+        raise ActionError("factor must be a finite number")
     if factor < 0:
         raise ActionError("factor must be >= 0")
     world.modifiers.add(Shock(name, eff, world.tick, world.tick + duration, factor, where, "user"))
