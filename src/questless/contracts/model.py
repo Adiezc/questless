@@ -16,6 +16,9 @@ class ContractKind(StrEnum):
     GUILD_SUPPLY = "guild_supply"  # a guild pools members' needs into one contract
     TOWN_SUPPLY = "town_supply"  # the town pools its guards' needs into one contract
     TRANSPORT = "transport"  # goods stuck at production sites must be hauled to market
+    RELIEF = "relief"  # relief aid for poverty-trapped NPCs funded by guild or town
+    ENFORCEMENT = "enforcement"  # town-funded contract to intercept smuggling runs (M19.4)
+    SMUGGLING_RUN = "smuggling_run"  # smuggler-funded contract to carry contraband (M19.4)
 
 
 class Status(StrEnum):
