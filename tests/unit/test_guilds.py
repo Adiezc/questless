@@ -8,10 +8,12 @@ import statistics
 
 import pytest
 
+from questless.api import Simulation
 from questless.sim.entities import OUTSIDE
 from questless.sim.guilds import collect_dues, provide_relief, working_capital
 from questless.sim.ledger import Asset
 from questless.sim.world import build_world
+from tests.conftest import SCENARIOS
 
 
 @pytest.fixture
@@ -129,3 +131,19 @@ def test_year_with_guilds_conserves_everything(world):
     world.step(365)  # invariants are checked every tick
     for report in world.stats[-1].guilds.values():
         assert report.treasury >= 0
+
+
+def test_treasury_card_matches_chart_after_escrow():
+    """M13.3: the report is re-read after the contract board moves escrow, so the dashboard's
+    treasury card (a live balance) equals the chart's last point every day."""
+    sim = Simulation.from_scenario(SCENARIOS / "mine_disaster.toml")
+    saw_escrow = False
+    for _ in range(90):
+        sim.step(1)
+        series = sim.timeseries()
+        for gid, guild in sim.world.guilds.items():
+            assert sim.guild(gid)["treasury"] == series["treasury"][gid][-1]
+            locked = sum(c.reward for c in sim.world.contracts.live() if c.funder == guild.account)
+            assert series["escrowed"][gid][-1] == locked
+            saw_escrow |= locked > 0
+    assert saw_escrow, "no guild funded a contract, so the test proved nothing"

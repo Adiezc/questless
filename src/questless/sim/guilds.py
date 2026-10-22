@@ -15,7 +15,7 @@ With guilds disabled no guild accounts exist and none of this runs.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from questless.sim.ledger import Asset
@@ -32,7 +32,8 @@ class GuildReport:
     dues: int
     relief: int
     relief_recipients: int
-    treasury: int  # end of day
+    treasury: int  # end of day, after today's contracts took or returned escrow
+    escrowed: int = 0  # coin this guild has locked in live contracts, end of day
 
 
 def provide_relief(world: World) -> dict[str, dict[str, int]]:
@@ -114,4 +115,23 @@ def reports(
             treasury=world.ledger.balance(guild.account, Asset.COIN),
         )
         for gid, guild in sorted(world.guilds.items())
+    }
+
+
+def close_reports(world: World, reports: dict[str, GuildReport]) -> dict[str, GuildReport]:
+    """Re-read treasuries once the contract board has run, so a report matches the live balance.
+
+    Posting a contract moves its reward from the funder into escrow, and expiry refunds it; both
+    happen after dues. ``escrowed`` is the coin each guild still has locked in live contracts.
+    """
+    locked: dict[str, int] = {}
+    for c in world.contracts.live():
+        locked[c.funder] = locked.get(c.funder, 0) + c.reward
+    return {
+        gid: replace(
+            report,
+            treasury=world.ledger.balance(world.guilds[gid].account, Asset.COIN),
+            escrowed=locked.get(world.guilds[gid].account, 0),
+        )
+        for gid, report in reports.items()
     }

@@ -27,6 +27,7 @@ from questless.sim.entities import (
     Traits,
 )
 from questless.sim.guilds import GuildReport, collect_dues, provide_relief
+from questless.sim.guilds import close_reports as close_guild_reports
 from questless.sim.guilds import reports as guild_reports
 from questless.sim.ledger import Asset, Ledger
 from questless.sim.market import MarketReport
@@ -114,6 +115,7 @@ class World:
         self.stats.append(stats)
         self.needs.update(self)
         stats.contracts = self.contracts.step(self)
+        stats.guilds = close_guild_reports(self, stats.guilds)  # escrow moved after dues
         self.tick += 1
         # Caravans due on the new day unload now, so the player can use them that day.
         receive_caravans(self)
