@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from questless.api import Simulation
+from questless.api import Simulation, UnknownIdError
 from questless.contracts.model import ContractKind, Status
 from questless.persistence import ReplayMismatch, load, save
 from questless.player import ActionError, Quote, quote_buy, quote_caravan
@@ -18,6 +18,31 @@ from tests.conftest import SCENARIOS
 @pytest.fixture
 def sim():
     return Simulation.from_scenario(SCENARIOS / "iron_shortage.toml")
+
+
+def test_step_rejects_negative_days(sim):
+    before = sim.day
+    with pytest.raises(ValueError, match="Days must be non-negative"):
+        sim.step(-1)
+
+    assert sim.day == before
+
+
+def test_contract_rejects_unknown_id(sim):
+    with pytest.raises(UnknownIdError) as exc_info:
+        sim.contract("C-9999")
+
+    assert str(exc_info.value) == "unknown contract 'C-9999'"
+
+
+def test_npc_rejects_unknown_id(sim):
+    with pytest.raises(KeyError, match=("unknown npc 'C-9999'")):
+        sim.npc("C-9999")
+
+
+def test_guild_rejects_unknown_id(sim):
+    with pytest.raises(KeyError, match=("unknown guild 'C-9999'")):
+        sim.guild("C-9999")
 
 
 def _first_iron_contract(sim):
