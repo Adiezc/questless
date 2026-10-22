@@ -32,6 +32,10 @@ def timeseries(world: World) -> dict[str, Any]:
             gid: [s.guilds[gid].treasury if gid in s.guilds else None for s in stats]
             for gid in sorted(world.guilds)
         },
+        "escrowed": {
+            gid: [s.guilds[gid].escrowed if gid in s.guilds else None for s in stats]
+            for gid in sorted(world.guilds)
+        },
         "transport": {
             "capacity": [s.transport.capacity if s.transport else 0 for s in stats],
             "backlog": [s.transport.backlog if s.transport else 0 for s in stats],
