@@ -272,6 +272,7 @@ with board_col:
                         )
     suppressed = s.summary()["suppressed"]
     if suppressed:
+
         def _suppressed_label(k: str, count: int) -> str:
             if k == "covered_by_pool":
                 if count != 1:
