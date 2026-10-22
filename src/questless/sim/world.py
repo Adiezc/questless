@@ -59,6 +59,9 @@ class TickStats:
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
     guilds: dict[str, GuildReport] = field(default_factory=dict)
     contracts: ContractTickReport | None = None
+    cpi: float = 100.0
+    inflation: float = 0.0
+    policy_rate: float = 0.05
 
 
 @dataclass
@@ -73,6 +76,7 @@ class World:
     stats: list[TickStats] = field(default_factory=list)
     needs: NeedTracker = field(default_factory=NeedTracker)
     contracts: ContractBoard = field(default_factory=ContractBoard)
+    central_bank: object | None = None
     actions: list[dict] = field(default_factory=list)  # player action log, for replay
     pending_caravans: list[tuple[int, str, int]] = field(default_factory=list)
     tick: int = 0
@@ -112,6 +116,13 @@ class World:
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
         stats.guilds = guild_reports(self, collect_dues(self, start_coin, relief), relief)
+        if self.central_bank is not None:
+            cpi, inf = self.central_bank.compute_cpi(self)
+            stats.cpi = cpi
+            stats.inflation = inf
+            self.central_bank.execute_policy_step(self)
+            stats.policy_rate = self.central_bank.policy_rate
+
         self.stats.append(stats)
         self.needs.update(self)
         stats.contracts = self.contracts.step(self)

@@ -90,6 +90,9 @@ TEMPLATES = {
     "transport_backlog": "{subject}: {value} units waiting at production sites.",
     "partial_funding": "{subject} could fund {value} of the {threshold} units needed.",
     "funding_decision": "{subject} escrowed {value} coin (had {baseline}, limit {threshold}).",
+    "monetary_policy": (
+        "{subject}: {metric} set to {value} (inflation {baseline}, target {threshold})."
+    ),
 }
 
 
@@ -120,6 +123,9 @@ METRICS: dict[str, Callable[..., float]] = {
     "share": _share,
     "site_factor": lambda w, t, site: w.modifiers.site_output(Site(site), t),
     "transport_factor": lambda w, t: w.modifiers.transport_capacity(t),
+    "cpi": lambda w, t: getattr(w.stats[t], "cpi", 100.0),
+    "inflation": lambda w, t: getattr(w.stats[t], "inflation", 0.0),
+    "policy_rate": lambda w, t: getattr(w.stats[t], "policy_rate", 0.05),
 }
 
 

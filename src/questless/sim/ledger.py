@@ -11,8 +11,9 @@ operations, each of which is journalled:
 - ``produce``: creates goods (never coin) from a recipe.
 - ``consume``: destroys goods (never coin) through eating, wear or recipe inputs.
 
-Conservation therefore reduces to: for every asset,
-``sum(balances) == genesis + produced - consumed``, and for coin ``produced == consumed == 0``.
+Conservation therefore reduces to: for goods,
+``sum(balances) == genesis + produced - consumed``, and for coin
+``sum(balances) == genesis + minted - burned``.
 """
 
 from __future__ import annotations
@@ -39,6 +40,8 @@ class EntryKind(StrEnum):
     TRANSFER = "transfer"
     PRODUCE = "produce"
     CONSUME = "consume"
+    MINT = "mint"
+    BURN = "burn"
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +77,8 @@ class Ledger:
         self._genesis: Counter[Asset] = Counter()
         self._produced: Counter[Asset] = Counter()
         self._consumed: Counter[Asset] = Counter()
+        self._minted: int = 0
+        self._burned: int = 0
         self._sealed = False
         # Bounded so long runs stay cheap; totals above are exact regardless of the limit.
         self.journal: deque[Entry] = deque(maxlen=journal_limit)
@@ -131,11 +136,13 @@ class Ledger:
     def totals(self) -> dict[Asset, int]:
         return {a: self.total(a) for a in Asset}
 
-    def flows(self) -> dict[str, dict[Asset, int]]:
+    def flows(self) -> dict[str, dict[Asset, int] | int]:
         return {
             "genesis": dict(self._genesis),
             "produced": dict(self._produced),
             "consumed": dict(self._consumed),
+            "minted": self._minted,
+            "burned": self._burned,
         }
 
     # --- operations -----------------------------------------------------------------------------
@@ -182,18 +189,48 @@ class Ledger:
         self._consumed[asset] += qty
         self.journal.append(Entry(tick, EntryKind.CONSUME, asset, qty, account, None, reason))
 
+    def mint(self, account: str, qty: int, *, tick: int, reason: str) -> None:
+        """Mint new coin into an account (only central_bank allowed). M20.1."""
+        if account != "central_bank":
+            raise InvalidOperation(f"minting only allowed for central_bank, got {account!r}")
+        _check_qty(qty)
+        if qty == 0:
+            return
+        self._account(account)[Asset.COIN] += qty
+        self._minted += qty
+        self.journal.append(Entry(tick, EntryKind.MINT, Asset.COIN, qty, None, account, reason))
+
+    def burn(self, account: str, qty: int, *, tick: int, reason: str) -> None:
+        """Burn coin from an account (only central_bank allowed). M20.1."""
+        if account != "central_bank":
+            raise InvalidOperation(f"burning only allowed for central_bank, got {account!r}")
+        _check_qty(qty)
+        if qty == 0:
+            return
+        holder = self._account(account)
+        if holder[Asset.COIN] < qty:
+            raise InsufficientBalance(
+                f"{account} has {holder[Asset.COIN]} coin, cannot burn {qty} ({reason})"
+            )
+        holder[Asset.COIN] -= qty
+        self._burned += qty
+        self.journal.append(Entry(tick, EntryKind.BURN, Asset.COIN, qty, account, None, reason))
+
     # --- invariants -----------------------------------------------------------------------------
 
     def check_conservation(self) -> None:
         """Raise ConservationError if any asset was created or destroyed outside the rules."""
         problems: list[str] = []
         for asset in Asset:
-            expected = self._genesis[asset] + self._produced[asset] - self._consumed[asset]
+            if asset is Asset.COIN:
+                expected = self._genesis[Asset.COIN] + self._minted - self._burned
+            else:
+                expected = self._genesis[asset] + self._produced[asset] - self._consumed[asset]
             actual = self.total(asset)
             if actual != expected:
                 problems.append(f"{asset}: expected {expected}, found {actual}")
         if self._produced[Asset.COIN] or self._consumed[Asset.COIN]:
-            problems.append("coin supply changed after genesis")
+            problems.append("coin cannot be produced or consumed via recipe operations")
         negatives = [
             f"{acct}:{asset}={qty}"
             for acct, bal in self._balances.items()
