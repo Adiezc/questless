@@ -445,8 +445,8 @@ st.divider()
 # --- tabs ----------------------------------------------------------------------------------------
 
 shocks = s.world.modifiers.shocks
-econ, npcs_tab, guilds_tab, log_tab, about_tab = st.tabs(
-    ["Economy", "NPCs", "Guilds", "Event log", "How it works"]
+econ, futures_tab, npcs_tab, guilds_tab, log_tab, about_tab = st.tabs(
+    ["Economy", "Futures", "NPCs", "Guilds", "Event log", "How it works"]
 )
 
 with econ:
@@ -495,6 +495,90 @@ with econ:
             ),
             config={"displayModeBar": False},
         )
+
+with futures_tab:
+    st.markdown('<p class="ql-h">Merchants Guild Forward Quote Board</p>', unsafe_allow_html=True)
+    merchants = s.world.guilds.get("merchants")
+    if not merchants:
+        st.info("Merchants Guild is not active in this scenario.")
+    else:
+        treasury = s.world.ledger.balance(merchants.account, "coin")
+        st.caption(f"Merchants Guild Treasury: **{treasury} coin** (exposure capped at 50%)")
+
+        spots = {
+            str(a): int(round(p)) for a, p in s.world.prices.items() if str(a) in charts.GOOD_LABELS
+        }
+        covers = {str(a): 14.0 for a in spots}
+        board = s.world.market_maker.quote_board(
+            goods_spot=spots,
+            goods_cover=covers,
+            ledger=s.world.ledger,
+            guild_account=merchants.account,
+            tick=s.day,
+        )
+
+        quote_rows = []
+        for g, horizons in sorted(board.items()):
+            label = charts.GOOD_LABELS.get(g, g.title())
+            spot_price = spots.get(g, 0)
+            quote_rows.append(
+                {
+                    "Good": label,
+                    "Spot Price": f"{spot_price} coin",
+                    "10-Day Forward": f"{horizons[10].forward} coin (max {horizons[10].max_qty})",
+                    "20-Day Forward": f"{horizons[20].forward} coin (max {horizons[20].max_qty})",
+                    "30-Day Forward": f"{horizons[30].forward} coin (max {horizons[30].max_qty})",
+                }
+            )
+        st.dataframe(pd.DataFrame(quote_rows), hide_index=True)
+
+        st.markdown('<p class="ql-h">Open Positions & Mark-to-Market</p>', unsafe_allow_html=True)
+        open_pos = [f for f in s.world.futures.positions.values() if f.status.name == "OPEN"]
+        if not open_pos:
+            st.caption("No open futures positions at present.")
+        else:
+            pos_rows = []
+            for f in open_pos:
+                curr_spot = spots.get(f.good, f.strike)
+                mtm_pnl = (
+                    (curr_spot - f.strike) * f.qty
+                    if f.buyer == "player"
+                    else (f.strike - curr_spot) * f.qty
+                )
+                pnl_str = f"+{mtm_pnl}" if mtm_pnl >= 0 else str(mtm_pnl)
+                pos_rows.append(
+                    {
+                        "ID": f.id,
+                        "Good": charts.GOOD_LABELS.get(f.good, f.good),
+                        "Qty": f.qty,
+                        "Strike": f"{f.strike} coin",
+                        "Delivery Day": f.delivery_tick,
+                        "Days Left": max(0, f.delivery_tick - s.day),
+                        "Buyer": "You" if f.buyer == "player" else f.buyer,
+                        "Seller": "You" if f.seller == "player" else f.seller,
+                        "Mark-to-Market P&L": f"{pnl_str} coin",
+                    }
+                )
+            st.dataframe(pd.DataFrame(pos_rows), hide_index=True)
+
+        st.markdown('<p class="ql-h">Settlement & Default History</p>', unsafe_allow_html=True)
+        settled_pos = [f for f in s.world.futures.positions.values() if f.status.name != "OPEN"]
+        if not settled_pos:
+            st.caption("No futures positions settled yet.")
+        else:
+            hist_rows = []
+            for f in settled_pos:
+                hist_rows.append(
+                    {
+                        "ID": f.id,
+                        "Good": charts.GOOD_LABELS.get(f.good, f.good),
+                        "Qty": f.qty,
+                        "Strike": f"{f.strike} coin",
+                        "Delivered On": f.delivery_tick,
+                        "Status": f.status.name,
+                    }
+                )
+            st.dataframe(pd.DataFrame(hist_rows), hide_index=True)
 
 with npcs_tab:
     rows = []
