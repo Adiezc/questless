@@ -31,7 +31,7 @@ from questless.config import ScenarioConfig, load_scenario
 from questless.contracts.model import Contract, Status
 from questless.contracts.provenance import verify
 from questless.metrics import timeseries
-from questless.player import apply_action
+from questless.player import Quote, apply_action, quote_contract
 from questless.sim.entities import PLAYER
 from questless.sim.ledger import GOODS, Asset
 from questless.sim.world import World, build_world
@@ -127,6 +127,10 @@ class Simulation:
         """ "Why does this quest exist?" as sentences, root cause first."""
         names = {n.id: n.name for n in self.world.npcs.values()}
         return self.contract(contract_id).provenance.render(names)
+
+    def quote(self, contract_id: str) -> Quote | None:
+        """Estimated profit if you sourced this contract the cheapest feasible way today."""
+        return quote_contract(self.world, self.contract(contract_id))
 
     def verify(self, contract_id: str) -> list[str]:
         """Re-measure every recorded number in the contract's provenance; [] means it holds."""

@@ -11,7 +11,6 @@ can only show what the engine computed. The simulation lives in ``st.session_sta
 from __future__ import annotations
 
 import html
-import math
 from pathlib import Path
 
 import charts
@@ -20,7 +19,7 @@ import streamlit as st
 
 from questless import Simulation
 from questless.contracts.model import ContractKind, Status
-from questless.player import ActionError
+from questless.player import ActionError, Quote, quote_buy, quote_caravan
 from questless.sim.ledger import GOODS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -146,6 +145,18 @@ def kind_label(c) -> tuple[str, str]:
     return KIND_LABEL[c.kind]
 
 
+def profit_tag(quote: Quote | None) -> str:
+    """Estimated profit for a card's meta line, e.g. "≈ +120 profit (market)"."""
+    if quote is None:
+        return (
+            '<span class="ql-loss" title="Neither the market nor a caravan can supply it">'
+            "can't source</span>"
+        )
+    css = "ql-profit" if quote.profit >= 0 else "ql-loss"
+    tip = f"Reward minus about {quote.cost} coin to source it ({quote.source}), at today's prices"
+    return f'<span class="{css}" title="{tip}">≈ {quote.profit:+d} profit ({quote.source})</span>'
+
+
 # --- header --------------------------------------------------------------------------------------
 
 st.markdown(
@@ -227,12 +238,14 @@ with board_col:
             selected = c.id == st.session_state.selected
             with st.container(key=f"{'questsel' if selected else 'quest'}-{c.id}"):
                 kind, icon = kind_label(c)
+                quote = s.quote(c.id) if c.live else None
                 st.markdown(
                     f'<div class="ql-card-title">{html.escape(quest_title(c))}</div>'
                     f'<div class="ql-card-reason">{html.escape(c.reason)}</div>'
                     f'<div class="ql-card-meta"><span class="ql-reward">{c.reward} coin</span>'
                     f"<span><b>{c.qty}</b> {charts.GOOD_LABELS[str(c.good)].lower()}</span>"
                     f"<span>{kind}</span>"
+                    + (profit_tag(quote) if c.live else "")
                     + (
                         f"<span>{c.deadline_tick - s.day} days left</span>"
                         if c.live
@@ -337,14 +350,14 @@ with why_col:
             )
             if c.kind is not ContractKind.TRANSPORT:
                 missing = max(c.qty - held, 0)
-                price = s.world.unit_price(c.good)
-                caravan_cost = math.ceil(
-                    missing * s.config.goods[c.good].base_price * s.config.caravan_markup
-                )
+                market_cost = quote_buy(s.world, c.good, missing)
+                caravan_cost = quote_caravan(s.world, c.good, missing)
                 with st.container(horizontal=True, gap="small"):
                     st.button(
-                        f"Buy {missing} at market ({missing * price} coin)",
-                        disabled=not missing,
+                        f"Buy {missing} at market ({market_cost} coin)"
+                        if market_cost is not None
+                        else f"Not enough {charts.GOOD_LABELS[good].lower()} for sale",
+                        disabled=not missing or market_cost is None,
                         icon=":material/shopping_cart:",
                         on_click=act,
                         args=(s.buy, good, max(missing, 1)),
@@ -352,8 +365,10 @@ with why_col:
                     )
                     st.button(
                         f"Caravan {missing} ({caravan_cost} coin, "
-                        f"{s.config.contracts.caravan_days} days)",
-                        disabled=not missing,
+                        f"{s.config.contracts.caravan_days} days)"
+                        if caravan_cost is not None
+                        else "No caravan carries enough",
+                        disabled=not missing or caravan_cost is None,
                         icon=":material/local_shipping:",
                         on_click=act,
                         args=(s.caravan, good, max(missing, 1)),

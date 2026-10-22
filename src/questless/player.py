@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from questless.config import ShockEffect
 from questless.contracts.engine import adjust_reputation
-from questless.contracts.model import Status
+from questless.contracts.model import Contract, ContractKind, Status
 from questless.sim.alloc import allocate
 from questless.sim.entities import IN_TRANSIT, OUTSIDE, PLAYER, TOWN, Site
 from questless.sim.ledger import GOODS, Asset
@@ -58,11 +59,7 @@ def buy(world: World, good: str, qty: int) -> int:
     qty = _positive(qty)
     price = world.unit_price(asset)
     affordable = world.ledger.balance(PLAYER, Asset.COIN) // price
-    asks = []
-    for npc in world.npcs_in_order():
-        surplus = world.ledger.balance(npc.account, asset) - stock_target(world, npc, asset)
-        if surplus > 0:
-            asks.append((npc.id, surplus))
+    asks = _asks(world, asset)
     want = min(qty, affordable)
     if not asks or want <= 0:
         raise ActionError(f"nobody is selling {good} (or you cannot afford it at {price})")
@@ -90,7 +87,7 @@ def caravan(world: World, good: str, qty: int) -> int:
     qty = _positive(qty)
     if world.ledger.balance(OUTSIDE, asset) < qty:
         raise ActionError(f"no caravan carries {good} (outside stock too low)")
-    cost = math.ceil(qty * world.config.goods[asset].base_price * world.config.caravan_markup)
+    cost = _caravan_cost(world, asset, qty)
     if world.ledger.balance(PLAYER, Asset.COIN) < cost:
         raise ActionError(f"a caravan of {qty} {good} costs {cost} coin")
     world.ledger.transfer(PLAYER, OUTSIDE, Asset.COIN, cost, tick=world.tick, reason="caravan")
@@ -152,6 +149,49 @@ ACTIONS: dict[str, Callable[..., Any]] = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class Quote:
+    """What a contract would earn the player if sourced the cheapest feasible way today."""
+
+    source: str  # "market", "caravan", "in hand" (already holding enough) or "haul" (transport)
+    cost: int
+    profit: int  # reward - cost; can be negative
+
+
+def quote_buy(world: World, asset: Asset, qty: int) -> int | None:
+    """Coin to buy ``qty`` at today's price, or ``None`` if sellers hold fewer than that.
+    Pure: reads the same surplus ``buy`` would, changes nothing."""
+    if sum(units for _, units in _asks(world, asset)) < qty:
+        return None
+    return qty * world.unit_price(asset)
+
+
+def quote_caravan(world: World, asset: Asset, qty: int) -> int | None:
+    """Coin for a caravan of ``qty``, or ``None`` if the outside stock is too low. Pure."""
+    if world.ledger.balance(OUTSIDE, asset) < qty:
+        return None
+    return _caravan_cost(world, asset, qty)
+
+
+def quote_contract(world: World, contract: Contract) -> Quote | None:
+    """Estimated profit for ``contract``: reward minus the cheaper of buying the missing units at
+    market or importing them by caravan in time. ``None`` if neither can source them. Only an
+    estimate: buying moves the price, and other buyers may get there first."""
+    if contract.kind is ContractKind.TRANSPORT:  # the player hauls what is already there
+        return Quote("haul", 0, contract.reward)
+    missing = max(contract.qty - world.ledger.balance(PLAYER, contract.good), 0)
+    if not missing:
+        return Quote("in hand", 0, contract.reward)
+    options = [("market", quote_buy(world, contract.good, missing))]
+    if world.tick + world.config.contracts.caravan_days < contract.deadline_tick:
+        options.append(("caravan", quote_caravan(world, contract.good, missing)))
+    feasible = [(cost, source) for source, cost in options if cost is not None]
+    if not feasible:
+        return None
+    cost, source = min(feasible)
+    return Quote(source, cost, contract.reward - cost)
+
+
 def receive_caravans(world: World) -> None:
     """Called at the start of each tick: caravans due today unload into the player's stock."""
     due = [c for c in world.pending_caravans if c[0] <= world.tick]
@@ -169,6 +209,20 @@ def _contract(world: World, contract_id: str):
     if world.tick >= c.deadline_tick:
         raise ActionError(f"{contract_id} has passed its deadline")
     return c
+
+
+def _asks(world: World, asset: Asset) -> list[tuple[str, int]]:
+    """NPCs holding more ``asset`` than they want, with how many they would sell."""
+    asks = []
+    for npc in world.npcs_in_order():
+        surplus = world.ledger.balance(npc.account, asset) - stock_target(world, npc, asset)
+        if surplus > 0:
+            asks.append((npc.id, surplus))
+    return asks
+
+
+def _caravan_cost(world: World, asset: Asset, qty: int) -> int:
+    return math.ceil(qty * world.config.goods[asset].base_price * world.config.caravan_markup)
 
 
 def _good(name: str) -> Asset:
