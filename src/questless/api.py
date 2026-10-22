@@ -72,6 +72,9 @@ class Simulation:
     def step(self, days: int = 1) -> list[str]:
         """Advance ``days``; returns the ids of contracts posted meanwhile."""
         created: list[str] = []
+        if days < 0:
+            raise ValueError("Days must be non-negative")
+
         for _ in range(days):
             self.world.step()
             created += self.world.stats[-1].contracts.created
@@ -121,7 +124,10 @@ class Simulation:
         return [c for c in cs if status is None or c.status is Status(status)]
 
     def contract(self, contract_id: str) -> Contract:
-        return self.world.contracts.contracts[contract_id]
+        try:
+            return self.world.contracts.contracts[contract_id]
+        except KeyError:
+            raise KeyError(f"unknown contract {contract_id!r}") from None
 
     def explain(self, contract_id: str) -> list[str]:
         """ "Why does this quest exist?" as sentences, root cause first."""
@@ -154,7 +160,11 @@ class Simulation:
         return {str(g): round(p, 2) for g, p in self.world.prices.items()}
 
     def npc(self, npc_id: str) -> dict[str, Any]:
-        n = self.world.npcs[npc_id]
+        try:
+            n = self.world.npcs[npc_id]
+        except KeyError:
+            raise KeyError(f"unknown npc {npc_id!r}") from None
+
         ledger = self.world.ledger
         return {
             "id": n.id,
@@ -174,7 +184,11 @@ class Simulation:
         }
 
     def guild(self, guild_id: str) -> dict[str, Any]:
-        g = self.world.guilds[guild_id]
+        try:
+            g = self.world.guilds[guild_id]
+        except KeyError:
+            raise KeyError(f"unknown guild {guild_id!r}") from None
+
         return {
             "id": g.id,
             "name": g.name,
