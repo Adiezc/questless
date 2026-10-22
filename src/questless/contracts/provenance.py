@@ -96,6 +96,12 @@ TEMPLATES = {
 # --- metrics ------------------------------------------------------------------------------------
 
 
+def _lawlessness_index(world: World, tick: int, days: int = 30) -> float:
+    """Sum of smuggled volume and lost tax over the past N days (M19.3)."""
+    window = _window(world, tick, days)
+    return float(sum(getattr(s, "smuggled_volume", 0) + getattr(s, "lost_tax", 0) for s in window))
+
+
 def _window(world: World, tick: int, days: int) -> list:
     return world.stats[max(tick - days + 1, 0) : tick + 1]
 
@@ -120,6 +126,7 @@ METRICS: dict[str, Callable[..., float]] = {
     "share": _share,
     "site_factor": lambda w, t, site: w.modifiers.site_output(Site(site), t),
     "transport_factor": lambda w, t: w.modifiers.transport_capacity(t),
+    "lawlessness": _lawlessness_index,
 }
 
 

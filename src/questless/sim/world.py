@@ -59,6 +59,8 @@ class TickStats:
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
     guilds: dict[str, GuildReport] = field(default_factory=dict)
     contracts: ContractTickReport | None = None
+    smuggled_volume: int = 0
+    lost_tax: int = 0
 
 
 @dataclass
