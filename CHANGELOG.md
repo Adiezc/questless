@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format follows
 - Dashboard: a "Show as % of normal" toggle on the Economy tab plots prices and production
   relative to each good's average over days 10-14, with a dotted 100% line (M14.1, #15).
 - Metrics: `price_index`, `produced_index`, `unfilled_pct` and per-guild `escrowed` series.
+- Quests open with a one-sentence summary read off the evidence chain: root cause, key effect and
+  who pays for what (M16.1). It only repeats numbers the chain recorded. `Simulation.summarise()`.
 - Quest cards show an estimated profit: the reward minus the cheaper of buying the missing units
   at market or a caravan that arrives in time (M16.2). `Simulation.quote()` and the pure
   `quote_buy`, `quote_caravan` and `quote_contract` helpers expose the same numbers.

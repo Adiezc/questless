@@ -4,11 +4,13 @@
 back to root causes; cascades link contracts into a lineage."""
 
 import dataclasses
+import re
 
 import pytest
 
 from questless.contracts.model import ContractKind
-from questless.contracts.provenance import measure, series, verify
+from questless.contracts.provenance import _num, measure, series, verify
+from questless.contracts.summary import summarise
 from questless.sim.ledger import Asset
 from questless.sim.world import build_world
 from tests.conftest import bandits, drought, mine_collapse, with_shocks
@@ -153,3 +155,19 @@ def test_m15_1_simulation_evidence_series():
                 sim.evidence_series(c.id, i)
         else:
             assert sim.evidence_series(c.id, i)[e.measure[1]] == pytest.approx(e.value)
+
+
+@pytest.mark.parametrize("name", list(SCENARIOS))
+def test_m16_1_summary_only_repeats_numbers_from_the_chain(worlds, name):
+    """M16.1: every number in a summary was recorded in the chain (or is the contract's qty)."""
+    world = worlds[name]
+    assert world.contracts.contracts
+    for c in world.contracts.contracts.values():
+        text = summarise(world, c)
+        assert text.endswith("."), c.id
+        allowed = {str(c.qty)}
+        for e in c.provenance.chain:
+            allowed.add(str(e.tick))
+            allowed |= {_num(v) for v in (e.value, e.baseline, e.threshold) if v is not None}
+        assert set(re.findall(r"\d+(?:\.\d+)?", text)) <= allowed, (c.id, text)
+        assert f"{c.reward} coin" in text, (c.id, text)
