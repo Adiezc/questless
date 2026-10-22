@@ -88,6 +88,7 @@ TEMPLATES = {
     "guild_emergency": "{subject}: {pct} of members who use it are short (emergency at {thr_pct}).",
     "town_emergency": "{subject}: {pct} of guards are short (emergency at {thr_pct}).",
     "transport_backlog": "{subject}: {value} units waiting at production sites.",
+    "poverty": "{subject} had {value} unaffordable demand over {metric} (normally {baseline}).",
     "partial_funding": "{subject} could fund {value} of the {threshold} units needed.",
     "funding_decision": "{subject} escrowed {value} coin (had {baseline}, limit {threshold}).",
 }
@@ -104,6 +105,13 @@ def _produced(world: World, tick: int, good: str, days: int) -> float:
     return round(fmean(s.produced.get(Asset(good), 0) for s in _window(world, tick, days)), 2)
 
 
+def _unaffordable(world: World, tick: int, good: str, days: int) -> float:
+    return round(
+        fmean(s.market[Asset(good)].unaffordable for s in _window(world, tick, days)),
+        2,
+    )
+
+
 def _share(world: World, tick: int, profession: str, what: str, days: int) -> float:
     values = []
     for s in _window(world, tick, days):
@@ -115,6 +123,7 @@ def _share(world: World, tick: int, profession: str, what: str, days: int) -> fl
 
 METRICS: dict[str, Callable[..., float]] = {
     "unfilled": lambda w, t, good: w.stats[t].market[Asset(good)].unfilled,
+    "unaffordable": _unaffordable,
     "price": lambda w, t, good: round(w.stats[t].prices[Asset(good)], 2),
     "produced": _produced,
     "share": _share,
