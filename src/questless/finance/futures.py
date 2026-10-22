@@ -188,6 +188,137 @@ class FuturesMarket:
     def total_escrow(self) -> int:
         return self.open_notional() + self.total_collateral()
 
+    def settle_tick(
+        self,
+        tick: int,
+        ledger: Ledger,
+        spot_prices: dict[str, int],
+    ) -> list[dict[str, Any]]:
+        """Settle all futures positions due on `tick`.
+
+        Physical delivery rules:
+        - If seller has >= future.qty in goods:
+          1. Deliver `future.qty` goods from seller to buyer.
+          2. Transfer buyer escrow (`future.notional` coin) to seller.
+          3. Return seller collateral (`future.collateral` coin) to seller.
+          4. Settle delivery obligation in registry.
+          5. Mark future SETTLED.
+        - If seller cannot deliver (seller goods < future.qty):
+          1. Refund buyer escrow (`future.notional` coin) to buyer.
+          2. Spot compensation = max(spot - strike, 0) * qty.
+             Buyer receives compensation up to available collateral.
+          3. Any remaining collateral is returned to seller.
+          4. If collateral was insufficient or seller defaulted, mark obligation DEFAULTED.
+          5. Mark future DEFAULTED.
+        """
+        results: list[dict[str, Any]] = []
+        due = [
+            f
+            for f in self.positions.values()
+            if f.status == FutureStatus.OPEN and f.delivery_tick == tick
+        ]
+
+        for f in due:
+            seller_goods = ledger.balance(f.seller, f.good)
+            spot = spot_prices.get(f.good, f.strike)
+
+            if seller_goods >= f.qty:
+                # 1. Physical delivery of goods
+                ledger.transfer(
+                    f.seller,
+                    f.buyer,
+                    f.good,
+                    f.qty,
+                    tick=tick,
+                    reason="future_physical_delivery",
+                )
+                # 2. Release buyer escrow to seller
+                ledger.transfer(
+                    f.buyer_escrow_account,
+                    f.seller,
+                    "coin",
+                    f.notional,
+                    tick=tick,
+                    reason="future_escrow_release",
+                )
+                # 3. Return seller collateral to seller
+                ledger.transfer(
+                    f.seller_collateral_account,
+                    f.seller,
+                    "coin",
+                    f.collateral,
+                    tick=tick,
+                    reason="future_collateral_return",
+                )
+                # 4. Settle obligation
+                self.registry.settle(f.delivery_obligation_id, f.notional)
+                f.status = FutureStatus.SETTLED
+
+                results.append(
+                    {
+                        "future_id": f.id,
+                        "status": "settled",
+                        "delivered_qty": f.qty,
+                        "escrow_paid": f.notional,
+                        "collateral_returned": f.collateral,
+                    }
+                )
+            else:
+                # Default path
+                # 1. Refund buyer escrow in full
+                ledger.transfer(
+                    f.buyer_escrow_account,
+                    f.buyer,
+                    "coin",
+                    f.notional,
+                    tick=tick,
+                    reason="future_default_escrow_refund",
+                )
+
+                # 2. Compensation from collateral: max(spot - strike, 0) * qty
+                comp_due = max(0, spot - f.strike) * f.qty
+                collateral_avail = ledger.balance(f.seller_collateral_account, "coin")
+                comp_paid = min(comp_due, collateral_avail)
+
+                if comp_paid > 0:
+                    ledger.transfer(
+                        f.seller_collateral_account,
+                        f.buyer,
+                        "coin",
+                        comp_paid,
+                        tick=tick,
+                        reason="future_default_compensation",
+                    )
+
+                # 3. Return remainder of collateral to seller
+                rem_collateral = ledger.balance(f.seller_collateral_account, "coin")
+                if rem_collateral > 0:
+                    ledger.transfer(
+                        f.seller_collateral_account,
+                        f.seller,
+                        "coin",
+                        rem_collateral,
+                        tick=tick,
+                        reason="future_default_collateral_return",
+                    )
+
+                # 4. Record default in M17 obligation registry
+                self.registry.default(f.delivery_obligation_id)
+                f.status = FutureStatus.DEFAULTED
+
+                results.append(
+                    {
+                        "future_id": f.id,
+                        "status": "defaulted",
+                        "spot": spot,
+                        "strike": f.strike,
+                        "compensation_due": comp_due,
+                        "compensation_paid": comp_paid,
+                    }
+                )
+
+        return results
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "next_id": self.next_id,

@@ -88,3 +88,110 @@ def test_future_serialization():
     assert rf.notional == 50
     assert rf.collateral == 15
     assert rf.status == FutureStatus.OPEN
+
+
+def test_future_physical_settlement_success():
+    ledger = Ledger()
+    buyer = "npc:buyer"
+    seller = "npc:seller"
+
+    ledger.open_account(buyer)
+    ledger.open_account(seller)
+    ledger.produce(buyer, "coin", 500, tick=0, reason="init")
+    ledger.produce(seller, "coin", 200, tick=0, reason="init")
+    # Seller has 10 units of iron_ore to deliver
+    ledger.produce(seller, "iron_ore", 10, tick=0, reason="init")
+
+    init_total_coin = ledger.total("coin")
+    init_total_ore = ledger.total("iron_ore")
+
+    market = FuturesMarket()
+    f = market.open_future(
+        ledger=ledger,
+        good="iron_ore",
+        qty=10,
+        strike=25,
+        delivery_tick=10,
+        buyer=buyer,
+        seller=seller,
+        tick=1,
+    )
+    # Notional: 250, Collateral: 75
+    assert ledger.balance(buyer, "coin") == 250
+    assert ledger.balance(seller, "coin") == 125
+
+    # Settle at tick 10 with spot price 30
+    results = market.settle_tick(tick=10, ledger=ledger, spot_prices={"iron_ore": 30})
+    assert len(results) == 1
+    assert results[0]["status"] == "settled"
+    assert f.status == FutureStatus.SETTLED
+
+    # Buyer has received 10 iron_ore
+    assert ledger.balance(buyer, "iron_ore") == 10
+    assert ledger.balance(seller, "iron_ore") == 0
+
+    # Seller received buyer escrow (250) + collateral return (75) = 125 + 325 = 450
+    assert ledger.balance(seller, "coin") == 450
+    assert ledger.balance(buyer, "coin") == 250
+
+    # Escrow balances are now empty
+    assert ledger.balance(f.buyer_escrow_account, "coin") == 0
+    assert ledger.balance(f.seller_collateral_account, "coin") == 0
+
+    # Invariants
+    assert ledger.total("coin") == init_total_coin
+    assert ledger.total("iron_ore") == init_total_ore
+    assert market.total_escrow() == 0
+
+    # Obligation settled
+    ob = market.registry.obligations[f.delivery_obligation_id]
+    assert ob.status == ObligationStatus.SETTLED
+
+
+def test_future_default_and_compensation():
+    ledger = Ledger()
+    buyer = "npc:buyer"
+    seller = "npc:seller"
+
+    ledger.open_account(buyer)
+    ledger.open_account(seller)
+    ledger.produce(buyer, "coin", 500, tick=0, reason="init")
+    ledger.produce(seller, "coin", 200, tick=0, reason="init")
+    # Seller has 0 iron_ore (cannot deliver)
+
+    init_total_coin = ledger.total("coin")
+
+    market = FuturesMarket()
+    f = market.open_future(
+        ledger=ledger,
+        good="iron_ore",
+        qty=10,
+        strike=25,
+        delivery_tick=10,
+        buyer=buyer,
+        seller=seller,
+        tick=1,
+    )
+    # Notional = 250. Collateral = 75.
+
+    # Settle at tick 10 when spot has spiked to 30.
+    # Compensation = (30 - 25) * 10 = 50 coin from collateral.
+    results = market.settle_tick(tick=10, ledger=ledger, spot_prices={"iron_ore": 30})
+    assert len(results) == 1
+    assert results[0]["status"] == "defaulted"
+    assert results[0]["compensation_paid"] == 50
+    assert f.status == FutureStatus.DEFAULTED
+
+    # Buyer gets refund of escrow (250) + compensation (50) = 550
+    assert ledger.balance(buyer, "coin") == 550
+
+    # Seller gets remaining collateral (75 - 50 = 25) + kept their unescrowed (125) = 150
+    assert ledger.balance(seller, "coin") == 150
+
+    # Total coin strictly conserved
+    assert ledger.total("coin") == init_total_coin
+    assert market.total_escrow() == 0
+
+    # Obligation defaulted
+    ob = market.registry.obligations[f.delivery_obligation_id]
+    assert ob.status == ObligationStatus.DEFAULTED
