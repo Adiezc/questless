@@ -34,6 +34,7 @@ def test_contract_rejects_unknown_id(sim):
 
     assert str(exc_info.value) == "unknown contract 'C-9999'"
 
+
 def test_npc_rejects_unknown_id(sim):
     with pytest.raises(KeyError, match=("unknown npc 'C-9999'")):
         sim.npc("C-9999")
