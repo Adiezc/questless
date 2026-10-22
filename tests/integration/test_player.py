@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from questless.api import Simulation
+from questless.api import Simulation, UnknownIdError
 from questless.contracts.model import ContractKind, Status
 from questless.persistence import ReplayMismatch, load, save
 from questless.player import ActionError
@@ -29,9 +29,10 @@ def test_step_rejects_negative_days(sim):
 
 
 def test_contract_rejects_unknown_id(sim):
-    with pytest.raises(KeyError, match=("unknown contract 'C-9999'")):
+    with pytest.raises(UnknownIdError) as exc_info:
         sim.contract("C-9999")
 
+    assert str(exc_info.value) == "unknown contract 'C-9999'"
 
 def test_npc_rejects_unknown_id(sim):
     with pytest.raises(KeyError, match=("unknown npc 'C-9999'")):

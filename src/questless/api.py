@@ -37,6 +37,11 @@ from questless.sim.ledger import GOODS, Asset
 from questless.sim.world import World, build_world
 
 
+class UnknownIdError(KeyError):
+    def __str__(self) -> str:
+        return str(self.args[0])
+
+
 class Simulation:
     def __init__(self, world: World) -> None:
         self.world = world
@@ -127,7 +132,7 @@ class Simulation:
         try:
             return self.world.contracts.contracts[contract_id]
         except KeyError:
-            raise KeyError(f"unknown contract {contract_id!r}") from None
+            raise UnknownIdError(f"unknown contract {contract_id!r}") from None
 
     def explain(self, contract_id: str) -> list[str]:
         """ "Why does this quest exist?" as sentences, root cause first."""
@@ -163,7 +168,7 @@ class Simulation:
         try:
             n = self.world.npcs[npc_id]
         except KeyError:
-            raise KeyError(f"unknown npc {npc_id!r}") from None
+            raise UnknownIdError(f"unknown npc {npc_id!r}") from None
 
         ledger = self.world.ledger
         return {
@@ -187,7 +192,7 @@ class Simulation:
         try:
             g = self.world.guilds[guild_id]
         except KeyError:
-            raise KeyError(f"unknown guild {guild_id!r}") from None
+            raise UnknownIdError(f"unknown guild {guild_id!r}") from None
 
         return {
             "id": g.id,
