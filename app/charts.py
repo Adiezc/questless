@@ -31,7 +31,8 @@ CRITICAL = "#d03b3b"
 
 GOOD_COLORS = {"food": "#3987e5", "iron_ore": "#d95926", "tools": "#199e70", "weapons": "#c98500"}
 GOOD_LABELS = {"food": "Food", "iron_ore": "Iron ore", "tools": "Tools", "weapons": "Weapons"}
-GUILD_COLORS = {"miners": "#3987e5", "merchants": "#d95926", "blacksmiths": "#199e70"}
+# Guilds have their own distinct palette (purple/violet, teal/cyan, and gold/ochre) to avoid clashing with good colors
+GUILD_COLORS = {"miners": "#9c6ade", "merchants": "#0bb8b8", "blacksmiths": "#d49b28"}
 
 STATE_STYLE = {
     "working": ("Working", "#3987e5", "circle"),
@@ -308,5 +309,5 @@ def treasury_chart(series: dict, names: dict[str, str], shocks) -> go.Figure:
             )
         )
     _shade_shocks(fig, shocks, days[-1] if days else 0)
-    fig.update_layout(hovermode="x unified")
+    fig.update_layout(hovermode="x unified", yaxis=dict(rangemode="tozero"))
     return _layout(fig, 260, "Guild treasuries (coin)")
