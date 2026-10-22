@@ -169,30 +169,26 @@ def profit_tag(quote: Quote | None) -> str:
 
 # --- header --------------------------------------------------------------------------------------
 
-st.markdown(
-    '<div class="ql-brand"><h1>Questless</h1><span>Emergent quests from living worlds</span></div>'
-    '<p class="ql-lede">100 rule-based NPCs farm, mine, forge, haul and trade. When the economy '
-    "leaves needs unmet, guilds and townsfolk post funded contracts. Every quest below was caused "
-    "by the simulation, and can show you why.</p>",
-    unsafe_allow_html=True,
-)
-
 with st.container(horizontal=True, vertical_alignment="bottom", gap="small"):
+    st.markdown(
+        '<div class="ql-brand"><h1>Questless</h1><span>Emergent quests</span></div>',
+        unsafe_allow_html=True,
+    )
     label = st.selectbox(
         "Scenario",
         list(SCENARIOS),
         index=list(SCENARIOS).index(st.session_state.scenario),
-        width=220,
+        width=180,
     )
-    seed = st.number_input("Seed", value=st.session_state.seed, step=1, min_value=0, width=110)
+    seed = st.number_input("Seed", value=st.session_state.seed, step=1, min_value=0, width=100)
     st.button("Load", icon=":material/restart_alt:", on_click=load, args=(label, int(seed)))
-    st.space("medium")
-    st.metric("Day", sim().day, width=90)
-    st.button("+1 day", on_click=advance, args=(1,))
-    st.button("+7 days", on_click=advance, args=(7,))
-    st.button("+30 days", on_click=advance, args=(30,))
+    st.space("small")
+    st.metric("Day", sim().day, width=80)
+    st.button("+1", on_click=advance, args=(1,), help="Advance 1 day")
+    st.button("+7", on_click=advance, args=(7,), help="Advance 7 days")
+    st.button("+30", on_click=advance, args=(30,), help="Advance 30 days")
     st.button("Next quest", icon=":material/skip_next:", type="primary", on_click=next_quest)
-    with st.popover("Shock the economy", icon=":material/bolt:"):
+    with st.popover("Shock", icon=":material/bolt:"):
         st.caption(
             "Starts today. Shocks only change rates; every effect flows through the economy."
         )
@@ -564,6 +560,10 @@ with log_tab:
 with about_tab:
     st.markdown(
         """
+100 rule-based NPCs farm, mine, forge, haul and trade. When the economy leaves needs unmet,
+guilds and townsfolk post funded contracts. Every quest below was caused by the simulation,
+and can show you why.
+
 **The loop.** NPC activity sets economic conditions. Unmet needs become contracts. Player actions
 change the world, which creates new activity.
 
