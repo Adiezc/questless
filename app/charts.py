@@ -31,7 +31,8 @@ CRITICAL = "#d03b3b"
 
 GOOD_COLORS = {"food": "#3987e5", "iron_ore": "#d95926", "tools": "#199e70", "weapons": "#c98500"}
 GOOD_LABELS = {"food": "Food", "iron_ore": "Iron ore", "tools": "Tools", "weapons": "Weapons"}
-# Guilds have their own distinct palette (purple/violet, teal/cyan, and gold/ochre) to avoid clashing with good colors
+# Guilds have their own distinct palette (purple, teal, and gold)
+# to avoid clashing with good colors
 GUILD_COLORS = {"miners": "#9c6ade", "merchants": "#0bb8b8", "blacksmiths": "#d49b28"}
 
 STATE_STYLE = {
