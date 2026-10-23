@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Experiment: `experiments/late_joiners.py` runs the scripted player joining a fresh world and a
+  world that has run 1,000 days, with the shock moved to the same point in the player's time, and
+  compares them at equal days played (M58.2). First results: the old world doesn't treat a
+  newcomer worse (first contract 2-4 days sooner, similar or higher profit with a wider spread).
 - Progressive upkeep levy: optional `[[town.levy_brackets]]` (threshold, rate) above the flat
   `upkeep_rate`, each bracket taxing only the coin that falls in it (M58.3). Without brackets the
   levy and every state hash are unchanged.
