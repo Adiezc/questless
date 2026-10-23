@@ -164,6 +164,8 @@ class ScenarioConfig:
     caravan_markup: float  # imports cost base price x this
     outside: Mapping[Asset, int]
     shocks: tuple[ShockConfig, ...] = ()
+    # [founding.bounds]: knobs a colony may change from its parent, as (knob, low, high) (M54)
+    founding_bounds: tuple[tuple[str, float, float], ...] = ()
 
     @property
     def population(self) -> int:
@@ -230,7 +232,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "town",
             "player",
         },
-        optional={"outside", "shocks"},
+        optional={"outside", "shocks", "founding"},
     )
 
     sc = data["scenario"]
@@ -471,6 +473,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         caravan_markup=_at_least(player["caravan_markup"], 1.0, "player.caravan_markup"),
         outside=_holdings(data.get("outside", {}), "outside"),
         shocks=tuple(shocks),
+        founding_bounds=_founding_bounds(data.get("founding", {}), set(guilds)),
     )
     if cfg.population <= 0:
         raise ConfigError("population is zero")
@@ -514,6 +517,47 @@ def _int(value: Any, where: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise ConfigError(f"{where}: expected an integer, got {value!r}")
     return value
+
+
+# Institutional knobs a colony may inherit with changes (M54). Safeguards, conservation rules and
+# physical constants are deliberately absent. "*" stands for every guild id.
+MUTABLE_KNOBS = frozenset(
+    {
+        "town.upkeep_rate",
+        "town.upkeep_exempt",
+        "town.guard_wage",
+        "town.market_tax",
+        "guilds.*.dues_rate",
+        "guilds.*.policy.relief_days",
+        "guilds.*.policy.max_daily_relief_share",
+        "guilds.*.policy.reward_premium",
+    }
+)
+
+
+def _founding_bounds(founding: Any, guild_ids: set[str]) -> tuple[tuple[str, float, float], ...]:
+    _keys(founding, "founding", required=set(), optional={"bounds"})
+    bounds = founding.get("bounds", {})
+    if not isinstance(bounds, Mapping):
+        raise ConfigError("founding.bounds: expected a table")
+    out = []
+    for knob, rng in sorted(bounds.items()):
+        where = f"founding.bounds.{knob!r}"
+        parts = knob.split(".")
+        generic = ".".join(
+            "*" if i == 1 and parts[0] == "guilds" else p for i, p in enumerate(parts)
+        )
+        if generic not in MUTABLE_KNOBS:
+            raise ConfigError(f"{where}: not a knob a colony may change {sorted(MUTABLE_KNOBS)}")
+        if parts[0] == "guilds" and parts[1] != "*" and parts[1] not in guild_ids:
+            raise ConfigError(f"{where}: unknown guild {parts[1]!r}")
+        if not isinstance(rng, list) or len(rng) != 2:
+            raise ConfigError(f"{where}: expected [low, high]")
+        low, high = _number(rng[0], where), _number(rng[1], where)
+        if low > high:
+            raise ConfigError(f"{where}: low must not exceed high")
+        out.append((knob, low, high))
+    return tuple(out)
 
 
 def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
@@ -681,6 +725,11 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
         "player": {"wallet": cfg.player_wallet, "caravan_markup": cfg.caravan_markup},
         "outside": holdings(cfg.outside),
         "shocks": shocks,
+        **(
+            {"founding": {"bounds": {k: [lo, hi] for k, lo, hi in cfg.founding_bounds}}}
+            if cfg.founding_bounds
+            else {}
+        ),
     }
 
 
