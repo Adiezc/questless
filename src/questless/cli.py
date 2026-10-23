@@ -16,8 +16,9 @@ import json
 import sys
 import time
 from collections.abc import Sequence
+from pathlib import Path
 
-from questless import __version__
+from questless import __version__, bugreport
 from questless.api import Simulation
 from questless.persistence import ReplayMismatch
 
@@ -40,6 +41,13 @@ def build_parser() -> argparse.ArgumentParser:
     rep = sub.add_parser("replay", help="replay a save file and verify it reproduces exactly")
     rep.add_argument("save")
 
+    rp = sub.add_parser(
+        "repro",
+        help="replay a bug report and check its observation "
+        "(exit 0 not reproduced, 1 reproduced, 2 replay mismatch)",
+    )
+    rp.add_argument("report")
+
     demo = sub.add_parser("demo", help="open the interactive dashboard (needs the demo extra)")
     demo.add_argument("--port", type=int, default=8501)
     return parser
@@ -52,10 +60,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run(args)
     if args.command == "replay":
         return _replay(args)
+    if args.command == "repro":
+        return _repro(args)
     if args.command == "demo":
         return _demo(args)
     parser.print_help()
     return 0
+
+
+def _repro(args: argparse.Namespace) -> int:
+    report = json.loads(Path(args.report).read_text())
+    outcome = bugreport.repro(report)
+    print(f"{outcome.status}: {outcome.message}")
+    if report.get("note"):
+        print(f"note: {report['note']}")
+    return {bugreport.REPRODUCED: 1, bugreport.REPLAY_MISMATCH: 2}.get(outcome.status, 0)
 
 
 def _run(args: argparse.Namespace) -> int:

@@ -26,7 +26,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from questless import persistence
+from questless import bugreport, persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts import causes
 from questless.contracts.model import Contract, Status
@@ -65,6 +65,12 @@ class Simulation:
 
     def save(self, path: str | Path) -> Path:
         return persistence.save(self.world, path)
+
+    def bug_report(self, note: str, observation: dict[str, Any] | None = None) -> dict[str, Any]:
+        """A self-replaying bug report: this run's save, plus what you saw as a checkable
+        observation such as ``{"metric": ["price", "tools"], "tick": 74, "op": ">=",
+        "value": 60}``. Check it later with ``questless repro``."""
+        return bugreport.write(self.world, note, observation)
 
     # --- time -----------------------------------------------------------------------------------
 
