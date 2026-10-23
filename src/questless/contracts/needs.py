@@ -123,3 +123,21 @@ def _transport_signals(world: World) -> dict[Asset, tuple[int, int]]:
         if backlog > threshold * daily_output:
             out[good] = (backlog, unfilled)
     return out
+
+
+def suppressed(world: World) -> dict[str, dict[str, int]]:
+    """Needs that did not post as contracts, grouped by suppression reason and poverty."""
+    counts: dict[str, int] = {}
+    for s in world.stats:
+        if s.contracts and s.contracts.suppressed:
+            for k, v in s.contracts.suppressed.items():
+                counts[k] = counts.get(k, 0) + v
+
+    poverty: dict[str, int] = {}
+    if world.stats:
+        last_market = world.stats[-1].market
+        for good, report in last_market.items():
+            if report.unaffordable > 0:
+                poverty[str(good)] = report.unaffordable
+
+    return {"counts": counts, "poverty": poverty}

@@ -239,3 +239,9 @@ class Simulation:
             "prices": self.prices(),
             "state_hash": self.world.state_hash(),
         }
+
+    def suppressed_needs(self) -> dict[str, dict[str, int]]:
+        """Needs that did not post as contracts, grouped by reason and poverty."""
+        from questless.contracts.needs import suppressed
+
+        return suppressed(self.world)

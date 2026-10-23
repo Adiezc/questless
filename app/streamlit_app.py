@@ -276,10 +276,20 @@ with board_col:
                             args=(s.accept, c.id),
                             kwargs={"success": "Accepted {result}"},
                         )
-    suppressed = s.summary()["suppressed"]
-    if suppressed:
-        parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
-        st.caption(f"Needs not turned into contracts so far: {parts}.")
+    supp = s.suppressed_needs()
+    suppressed = supp.get("counts", {})
+    poverty = supp.get("poverty", {})
+    if suppressed or poverty:
+        with st.expander("Why no quests?", expanded=not shown):
+            if suppressed:
+                parts = ", ".join(_suppressed_label(k, v) for k, v in sorted(suppressed.items()))
+                st.markdown(f"**Filtered needs:** {parts}.")
+            if poverty:
+                pov_parts = ", ".join(
+                    f"{qty} {charts.GOOD_LABELS.get(g, g).lower()}"
+                    for g, qty in sorted(poverty.items())
+                )
+                st.markdown(f"**Unaffordable demand today (poverty, not scarcity):** {pov_parts}.")
 
 with why_col:
     st.markdown('<p class="ql-h">Why does this quest exist?</p>', unsafe_allow_html=True)

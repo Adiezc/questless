@@ -64,3 +64,19 @@ def test_streak_survives_a_one_day_gap_but_not_two(world):
         _mark(world, smith, Asset.IRON_ORE, *marks)
         tracker.update(world)
     assert tracker.get(smith.id, Asset.IRON_ORE).days == 1  # new streak
+
+
+def test_suppressed_needs_returns_counts_and_poverty(baseline):
+    """M16.4: Mine Disaster day 149 returns a non-empty poverty explanation and grouped counts."""
+    from questless.api import Simulation
+    from questless.contracts.needs import suppressed
+    from tests.conftest import SCENARIOS
+
+    sim = Simulation.from_scenario(SCENARIOS / "mine_disaster.toml")
+    sim.step(149)
+    res = suppressed(sim.world)
+    assert "counts" in res and "poverty" in res
+    assert res["counts"].get("covered_by_pool", 0) > 0
+    assert len(res["poverty"]) > 0
+    assert any(qty > 0 for qty in res["poverty"].values())
+    assert sim.suppressed_needs() == res
