@@ -15,6 +15,10 @@ the same seed of each shipped shock scenario. Gain is coin per day plus held goo
 price, against the starting wallet. Harm is hungry NPC-days, against the honest run. Outputs in
 experiments/results/: exploit_hunt.csv (one row per run) and exploit_hunt.md.
 
+Every flagged exploit gets a findings section (M52.4): the attacker and seed, a saved replay in
+experiments/results/exploits/ (``questless`` loads it like any save) and the coin flows that show
+who paid for the attacker's gain.
+
 With ``--policy`` (M52.3), every player plays the scenario the policy extends ("before") and the
 policy ("after") on the same seeds; an attacker that beats honest play on most seeds after but
 not before is a new exploit the policy opened. Outputs: exploit_hunt_<policy>.{csv,md}.
@@ -42,6 +46,8 @@ from shock_vs_baseline import ScriptedPlayer  # noqa: E402
 from questless.api import Simulation  # noqa: E402
 from questless.config import load_scenario  # noqa: E402
 from questless.contracts.model import Status  # noqa: E402
+from questless.sim.entities import ESCROW, PLAYER  # noqa: E402
+from questless.sim.ledger import Asset, EntryKind  # noqa: E402
 
 RESULTS = ROOT / "experiments" / "results"
 DAYS = 120
@@ -88,13 +94,98 @@ def config(source: str):
     return load_scenario(ROOT / "scenarios" / f"{source}.toml")
 
 
-def play(source: str, player: str, seed: int, days: int = DAYS) -> Simulation:
+def play(
+    source: str, player: str, seed: int, days: int = DAYS, flows: list | None = None
+) -> Simulation:
+    """One player's run. With ``flows``, every coin transfer to or from the player is appended to
+    it as it happens (the ledger journal only keeps the most recent entries)."""
     sim = Simulation.from_scenario(dataclasses.replace(config(source), seed=seed))
     bot = make(player, sim)
     for _ in range(days):
+        tick = sim.day
         bot.act()
         sim.step()
+        if flows is not None:
+            flows.extend(_player_coin(sim, tick))
     return sim
+
+
+def _player_coin(sim: Simulation, tick: int) -> list:
+    out = []
+    for e in reversed(sim.world.ledger.journal):
+        if e.tick < tick:
+            break
+        if e.kind is EntryKind.TRANSFER and e.asset is Asset.COIN and PLAYER in (e.src, e.dst):
+            out.append(e)
+    return out[::-1]
+
+
+def _who(sim: Simulation, account: str, reason: str) -> str:
+    """Name the party behind a coin flow: a contract's funder for escrow, else the account."""
+    if account == ESCROW and reason in {c.id for c in sim.contracts()}:
+        account = sim.contract(reason).funder
+    if account in sim.world.npcs:
+        return f"{sim.world.npcs[account].profession}s"
+    return account
+
+
+def finding(source: str, player: str, seed: int, honest_gain: float) -> str:
+    """M52.4: one exploit as evidence: its replay and who paid for the gain."""
+    flows: list = []
+    sim = play(source, player, seed, flows=flows)
+    label = source.replace(":", "_").replace("/", "_").replace(".toml", "")
+    replay = RESULTS / "exploits" / f"{label}_{player}_seed{seed}.json"
+    sim.save(replay)
+    paid_in: dict[str, int] = {}
+    paid_out: dict[str, int] = {}
+    for e in flows:
+        if e.dst == PLAYER:
+            who = _who(sim, e.src, e.reason)
+            paid_in[who] = paid_in.get(who, 0) + e.qty
+        else:
+            who = _who(sim, e.dst, e.reason)
+            paid_out[who] = paid_out.get(who, 0) + e.qty
+    gain = run((source, player, seed, DAYS))["gain_per_day"]
+    shown = replay.relative_to(ROOT) if replay.is_relative_to(ROOT) else replay
+
+    def listing(d: dict[str, int]) -> str:
+        return ", ".join(f"{k} {v:,}" for k, v in sorted(d.items(), key=lambda kv: -kv[1]))
+
+    return "\n".join(
+        [
+            f"\n### {player} on {source}, seed {seed}\n",
+            f"- **Gain:** {gain} coin/day against {honest_gain} for the better honest player.",
+            f"- **Replay:** `{shown}` (load with `Simulation.load`).",
+            f"- **Coin in, by who paid:** {listing(paid_in) or 'none'}.",
+            f"- **Coin out, by who received it:** {listing(paid_out) or 'none'}.",
+        ]
+    )
+
+
+def findings(rows: list[dict], sources: list[str]) -> str:
+    """A findings section for every (source, attacker) flagged as an exploit, on its best seed."""
+    seeds = sorted({r["seed"] for r in rows})
+    parts = []
+    for source in sources:
+        for p in PLAYERS:
+            if p in HONEST:
+                continue
+            rs, beats, _ = score(rows, source, p)
+            if beats <= len(seeds) / 2:
+                continue
+            honest = {
+                s: max(
+                    r["gain_per_day"]
+                    for r in rows
+                    if r["scenario"] == source and r["seed"] == s and r["player"] in HONEST
+                )
+                for s in seeds
+            }
+            best = max(rs, key=lambda r: r["gain_per_day"] - honest[r["seed"]])
+            parts.append(finding(source, p, best["seed"], honest[best["seed"]]))
+    if not parts:
+        return ""
+    return "\n## Exploit evidence (M52.4)\n" + "\n".join(parts) + "\n"
 
 
 def run(job: tuple[str, str, int, int]) -> dict:
@@ -232,7 +323,7 @@ def main() -> None:
         rows = hunt([f"before:{args.policy}", f"after:{args.policy}"], args.seeds)
         stem = f"exploit_hunt_{Path(args.policy).stem}"
         _write_csv(rows, RESULTS / f"{stem}.csv")
-        report = summarise_policy(rows, args.policy)
+        report = summarise_policy(rows, args.policy) + findings(rows, [f"after:{args.policy}"])
         (RESULTS / f"{stem}.md").write_text(report)
         print(report)
         return
@@ -241,7 +332,7 @@ def main() -> None:
         writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    report = summarise(rows) + FINDINGS
+    report = summarise(rows) + FINDINGS + findings(rows, list(SCENARIOS))
     (RESULTS / "exploit_hunt.md").write_text(report)
     print(report)
 
