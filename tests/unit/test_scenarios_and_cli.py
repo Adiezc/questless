@@ -11,7 +11,8 @@ from tests.conftest import SCENARIOS
 
 
 @pytest.mark.parametrize(
-    "name", ["baseline", "iron_shortage", "mine_disaster", "drought", "bandits"]
+    "name",
+    ["baseline", "iron_shortage", "mine_disaster", "drought", "bandits", "legitimacy_spiral"],
 )
 def test_shipped_scenarios_load_and_round_trip(name):
     cfg = load_scenario(SCENARIOS / f"{name}.toml")

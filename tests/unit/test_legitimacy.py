@@ -88,3 +88,23 @@ def test_bad_legitimacy_config_fails_loudly(baseline, table, message):
     raw["legitimacy"] = table
     with pytest.raises(ConfigError, match=message):
         parse_scenario(raw)
+
+
+def test_spiral_scenario_traps_the_town_on_most_seeds():
+    """M48.5: a town starting short of coin stays stuck: low legitimacy, evasion, unpaid wages."""
+    from questless.config import load_scenario
+    from tests.conftest import SCENARIOS
+
+    cfg = load_scenario(SCENARIOS / "legitimacy_spiral.toml")
+    trapped = 0
+    for seed in range(1, 6):
+        world = build_world(dataclasses.replace(cfg, seed=seed))
+        world.step(90)
+        late = world.stats[60:]
+        trapped += (
+            max(s.legitimacy for s in late) < 0.6
+            and all(s.wages_unpaid for s in late)
+            and sum(s.levy_evaded for s in late) > 0
+        )
+        world.check_invariants()
+    assert trapped >= 4

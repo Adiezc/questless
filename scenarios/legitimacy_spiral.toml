@@ -1,0 +1,16 @@
+# Scenario: the legitimacy spiral (M48). The town starts with almost no coin, so it can't pay every
+# guard. Unpaid wages lower its legitimacy, NPCs evade the upkeep levy, the town collects less, and
+# fewer guards are paid again. No shock is needed: the loop alone keeps the town stuck.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "baseline.toml"
+name = "Legitimacy Spiral"
+description = "A town starting with 300 coin falls into a spiral of unpaid wages and levy evasion."
+days = 180
+
+[town]
+treasury = 300
+
+[legitimacy]
+enabled = true

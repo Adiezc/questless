@@ -72,7 +72,15 @@ def test_middle_kind_priority_is_preserved_for_the_same_good():
     )
 
 
-@pytest.mark.parametrize("scenario", sorted(SCENARIOS.glob("*.toml")), ids=lambda p: p.stem)
+# Scenarios about the town's budget rather than shortages; their broke town funds no quests.
+NO_QUESTS = {"legitimacy_spiral"}
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    sorted(p for p in SCENARIOS.glob("*.toml") if p.stem not in NO_QUESTS),
+    ids=lambda p: p.stem,
+)
 def test_scenario_summary_numbers_belong_to_the_named_good(scenario):
     world = build_world(load_scenario(scenario))
     world.step(150)
