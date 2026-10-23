@@ -9,6 +9,9 @@ All notable changes to this project are documented here. The format follows
 - Progressive upkeep levy: optional `[[town.levy_brackets]]` (threshold, rate) above the flat
   `upkeep_rate`, each bracket taxing only the coin that falls in it (M58.3). Without brackets the
   levy and every state hash are unchanged.
+- `causes.graph(world, contract)` and `Simulation.graph(contract_id)` export a quest's causal chain
+  as JSON: evidence as nodes (with their sentence and measure keys) and cause-to-effect edges
+  (M55.0). Ready for the map (M15) and the wiki (M25).
 - CONTRIBUTING: "Giving everyone a turn". One claimed issue and one open pull request per
   person at a time, `good first issue` tasks kept for first-time contributors, and every bug fix
   needs a test shown to fail without the fix. The pull request template asks for both.
@@ -55,6 +58,8 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Saves of worlds whose guilds have no `max_treasury` load again; the absent ceiling was written
+  as `None`, which the loader rejected.
 - Guild treasuries no longer hoard the town's coin in long runs. A guild's coin above its new
   `policy.max_treasury` (3,000 in the baseline) pays the daily upkeep levy to the town, reported
   as `GuildReport.upkeep`. Over 2,000 days on seeds 42 and 7, unpaid guard days fall from 899 and
