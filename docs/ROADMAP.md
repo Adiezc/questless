@@ -253,6 +253,11 @@ v0.2 makes the economy richer. v0.3 makes it useful to three audiences beyond th
 - **Players and teachers:** a world that documents itself (M25) and teaches real economics and
   politics from what actually happened in it (M26).
 
+Three milestones added from the
+[#53 idea bank](https://github.com/Adiezc/questless/issues/53) (2026-10-23) give M32's politics
+real feedback and let studios attack a policy before it ships: legitimacy (M48), beliefs and
+rumours (M49) and policy stress tests (M52).
+
 The v0.1 and v0.2 guarantees still apply. New dependencies stay optional extras; the engine stays
 standard-library only.
 
@@ -269,15 +274,21 @@ standard-library only.
 | M30 | **Tamper-evident world log** (no blockchain needed; see [BLOCKCHAIN.md](BLOCKCHAIN.md)) | M20 (mint and burn) | 4 h |
 | M31 | **One-person-one-character safeguards** | M29 for juries; multiple players in the engine | 8 h |
 | M32 | **Elections and a campaign-finance register** | M20 (lobbying), M31 (graph tracing) | 6 h |
+| M48 | **Legitimacy and levy evasion** | M13 (better after M19) | 6 h |
+| M49 | **Beliefs and rumours** | M13 | 7 h |
+| M52 | **Policy stress tests** with attacker bots | M23, M31.2 | 6 h |
 | M27 | Docs, examples and v0.3.0 tag | all | 1.5 h |
 
-- **Total:** about 58.5 h, roughly 7.5 working days; plan for **9.5 days** with the usual overrun.
+- **Total:** about 77.5 h, roughly 10 working days; plan for **12.5 days** with the usual overrun.
 - **How to build each one:** [BUILD_GUIDE.md](BUILD_GUIDE.md) breaks every milestone into
   issue-sized tasks with files, tests and pitfalls.
 - **Fastest win:** M23 needs nothing from v0.2 beyond the bug fixes, so it can be built first if
   the repo goes public before v0.2 is done.
+- **Can start any time:** M48 and M49 need only v0.1's levy, guard wages and prices, so they can
+  run in parallel with v0.2.
 - **Cut order if behind:** the wiki's graph view (keep the pages), the agent leaderboard (keep the
-  environment and baselines), lesson count (ship 4 lessons, not 8).
+  environment and baselines), lesson count (ship 4 lessons, not 8), M52's grid search (keep the
+  attacker bots and their report).
 
 ## M23: economy checks on every pull request (6 h)
 
@@ -532,6 +543,60 @@ claim the court (M29) can hear.
 routed through an alt to exceed the limit are flagged on most seeds; the dashboard shows each
 policy decision with its beneficiaries and their donations.
 
+## M48: legitimacy and levy evasion (6 h)
+
+**Goal:** the town's authority is a stock that can run down. Legitimacy is the share of NPCs who
+comply with the town, between 0 and 1. Unpaid guard wages and long hunger lower it; paid wages and
+full stomachs slowly rebuild it. Low legitimacy means NPCs evade the upkeep levy, the town collects
+less, fewer guards are paid, and legitimacy falls again: a spiral the causal chain can explain from
+start to finish, with every step re-measurable.
+- **Where it runs:** tick step 3, right after guard wages, so today's unpaid wages count today. It
+  builds on the wage rotation for an underfunded town (#52).
+- **No new money:** evaded coin simply stays with the NPC. The ledger needs no new operation, and
+  conservation is untouched.
+- **Off by default:** baseline results and state hashes don't change until a scenario turns it on.
+- **Feeds later work:** smuggling (M19) can rise as legitimacy falls, mayors (M32) can campaign on
+  it, the invisible border (M53) measures it per site, and M26 gets a lesson on state capacity.
+
+**Accept when:** a `legitimacy_spiral` scenario (a town that starts short of coin) shows the spiral
+on most of 10 seeds; its chain links unpaid wages, legitimacy and evasion in at least three steps
+that all re-verify; the baseline is unchanged with the feature off.
+
+## M49: beliefs and rumours (7 h)
+
+**Goal:** NPCs and guilds act on what they believe, not on the true state. Each keeps a believed
+price and shortage per good, with the day it learned it and who told it. Merchants carry news
+between sites with a delay, so beliefs lag reality, and a quest can be posted for a shortage that
+has already ended.
+- **The chain shows both:** "the Blacksmiths Guild believed ore cost 31 (told by a merchant on day
+  40)" next to "measured: 18 on day 44". Both are evidence and both re-verify: the belief against
+  the belief record, the truth against `measure()`.
+- **Zero delay is today's engine:** with the delay at 0 every belief equals the truth, so v0.1
+  results are reproduced exactly.
+- Promotes the "Imperfect information and rumours" backlog idea. Fog of cause (detective quests)
+  and told history (M50) build on it.
+
+**Accept when:** a "false alarm" scenario posts at least one quest for a shortage that had already
+ended, its chain shows belief and truth side by side, and every number re-verifies; with the delay
+at 0 the baseline hash is unchanged.
+
+## M52: policy stress tests (6 h)
+
+**Goal:** before a tax, levy or enforcement change ships, scripted players try to break it. A
+policy is a TOML change to a scenario; attacker bots (from M31's bot league) search for ways to
+profit from it, and the result goes into M23's pull-request comment: "bot `wait-and-claim` gains
+14 coin a day under this change; here is the replay."
+- **Attackers** are small, documented strategies over the public player actions: claim and wait,
+  buy before a known shock, corner a good, funnel value through alts. Each attempt is a replayable
+  action log.
+- **Findings are evidence:** each exploit comes with its seed, the saved replay and the ledger
+  flows that show who lost.
+- A bot like this would have found the transport-contract bug (#43), where a player was paid in
+  full for hauling nothing.
+
+**Accept when:** the attacker suite finds a deliberately planted exploit on most seeds and nothing
+on the baseline, and the M23 comment links a replay for each finding.
+
 ## M27: docs, examples and v0.3.0 (1.5 h)
 
 - README sections for CI, agents, wiki and lessons, each with a one-command example.
@@ -547,7 +612,9 @@ The target is one shared world for every player (a megaserver at EVE Online's sc
 fantasy or a science-fiction setting, on one planet or across a galaxy. The full architecture is in
 [BLUEPRINT.md](BLUEPRINT.md). v0.4 builds the parts that can be proven at small scale: many
 regions in one world, a map and ecology that respond to the economy, fair automation, player
-quests and diplomacy.
+quests and diplomacy. Three milestones from the
+[#53 idea bank](https://github.com/Adiezc/questless/issues/53) (M53-M55) let borders, colonies
+and long supply chains emerge from the same ledger.
 
 ### Build order
 
@@ -561,10 +628,14 @@ quests and diplomacy.
 | M38 | **Players post quests** | M31, M37 | 6 h |
 | M39 | **Treaties, sanctions and embargoes** | M34, M19, M29, M32 | 10 h |
 | M40 | **Surrogate fast-forward experiment** | M34 | 8 h |
+| M53 | **The invisible border** | M34, M48 | 6 h |
+| M54 | **Civilization DNA** | M34 (the mutation can be built earlier) | 6 h |
+| M55 | **Infrastructure dependency maps** | M34 | 8 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
-- **Total:** about 77 h, roughly 10 working days; plan for **13 days**.
-- **Critical path:** M33 → M34 → M35/M36/M39. M37 and M38 can run in parallel once M31 lands.
+- **Total:** about 97 h, roughly 12 working days; plan for **16 days**.
+- **Critical path:** M33 → M34 → M35/M36/M39/M53-M55. M37 and M38 can run in parallel once M31
+  lands.
 - **Cut order if behind:** the surrogate experiment (M40), sanctions (keep treaties and
   embargoes), new towns being founded in M35 (keep road growth).
 
@@ -706,6 +777,59 @@ limit 5 actions per day
 - **Accept when:** the write-up reports where the surrogate works and where it fails, with the
   numbers. A negative result is a valid outcome.
 
+## M53: the invisible border (6 h)
+
+**Goal:** a border is wherever a town's authority actually reaches, not a line drawn on a map. For
+each site and region, *reach* is measured from the ledger: the share of the levy actually
+collected there (M48), how often paid guards patrol it, and how much of its trade pays the town's
+market tax. Where two towns' reach overlaps, the border sits where one overtakes the other.
+- **Borders move:** an unpaid garrison or a new road (M35) shifts them, and the map shows the
+  change with a chain explaining why.
+- **Contested zones** are places no town reaches well. Smuggling (M19) thrives there, and towns
+  can post patrol and collection quests to claim them.
+- **No polygons:** the border is drawn from measured reach, so it can always be re-verified.
+
+**Accept when:** in a two-town scenario, cutting one town's guard wages moves the border towards
+it within a configured number of days on most seeds, and every border point on the map links to
+the reach numbers behind it.
+
+## M54: civilization DNA (6 h)
+
+**Goal:** when colonists found a new settlement (M35), it inherits its parent's institutions with
+small changes. The colony's config is a copy of the parent's (levy rate, guild rules, guard wage,
+relief policy) with deterministic, bounded mutations, and it records its lineage.
+- **Mutations** come from a `founding` RNG stream, within bounds set per knob in the scenario, so a
+  run replays exactly.
+- **Lineage** works like contract lineage: each settlement's wiki page (M25) shows its family tree
+  and which rules it changed.
+- **Selection is real:** settlements whose rules work grow and found more colonies; those that
+  don't shrink (M35). Over a long run the map shows which institutions spread.
+- **Can start before M34:** the `mutate()` function and its tests work on single-town scenarios
+  today.
+
+**Accept when:** colonies' configs differ from their parent's only within the declared bounds; a
+long run replays to the same family tree; the report shows which rule variants spread and which
+died out.
+
+## M55: infrastructure dependency maps (8 h)
+
+**Goal:** show how one broken link travels. When a bridge or road fails, the causal walk follows
+its effects across regions: the bridge closes, ore stops crossing, smiths two regions away run
+short, tools wear out, farms produce less, and a town far from the bridge goes hungry. Each step is
+evidence with a measure key.
+- **Engine:** `causes.py` gets edges that cross regions through M34's transit ledger, and chains
+  can be exported as a graph (nodes and edges as JSON).
+- **Dependency view:** for any site, a ranked list of the links whose loss would hurt it most, from
+  forked replays that cut each link in turn.
+- **Quests:** the most critical links attract funded maintenance and bypass contracts before they
+  fail, with the counterfactual as evidence.
+- **Can start before M34:** exporting today's single-town chains as a graph is useful on its own
+  (M15's map, M25's wiki).
+
+**Accept when:** cutting one bridge in a three-region scenario produces a chain that crosses at
+least two regions and re-verifies at every step, and the dependency view's top-ranked link matches
+the largest loss in the forked replays.
+
 ## M41: docs, both skins and v0.4.0 (3 h)
 
 - A theme switch in the dashboard; a multi-region map.
@@ -717,7 +841,9 @@ Status: **in scope, planned after v0.4** · added 2026-10-21
 
 A megaserver lives or dies by its community. v0.5 makes the world safe to join (privacy), easy to
 talk in (a common language without leaving anyone out), worth playing *together* (steward NPCs)
-and worth learning from (a skills passport).
+and worth learning from (a skills passport). Two milestones from the
+[#53 idea bank](https://github.com/Adiezc/questless/issues/53) (M50, M51) make history itself
+something players learn to check: what NPCs say happened, against what the log proves.
 
 ### Build order
 
@@ -728,9 +854,11 @@ and worth learning from (a skills passport).
 | M44 | **Steward NPCs: AI that keeps the world fun and pushes players together** | M24, M31, M37 | 12 h |
 | M45 | **Skills passport** | M25, M26 | 6 h |
 | M47 | **Skill tracks: eleven real-world subjects taught through play** | M26, M45, and each track's mechanics | 14 h |
+| M50 | **Told history versus the log** (cultural memory and myths) | M49, M25 | 8 h |
+| M51 | **Records that decay** | M50, M25, M30; M33 for institution names | 6 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 48 h, roughly 6 working days; plan for **8 days**.
+- **Total:** about 62 h, roughly 8 working days; plan for **10 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -874,6 +1002,45 @@ skills-passport entries (M45) and challenges. Details and the full list in
 **Accept when:** every track has its concept map, three lessons whose numbers re-verify, and
 passport detectors with tests.
 
+## M50: told history versus the log (8 h)
+
+**Goal:** NPCs tell their own version of events, and players test the claims against the log. The
+world keeps two histories: the objective one (the ledger and evidence, which never change) and the
+told one (what NPCs say happened, which drifts as stories pass from mouth to mouth). This merges
+three #53 ideas: cultural memory, world-written history and living myth-making.
+- **Claims** are derived from real evidence: who told it, which event, the stated value and the day
+  it was told. Each retelling distorts it by fixed rules (the mine collapse grows deadlier, the
+  guild that helped gets more credit), so a claim can be wrong but never invented.
+- **Spreading** reuses M49's network: claims travel with merchants and through guilds.
+- **Fact-checking is gameplay:** a `fact_check` action compares a claim with `measure()` and pays
+  for corrections, in the spirit of the "player journalism with fact checks" idea.
+- **Myths:** claims that survive many retellings become named legends on the wiki (M25), each
+  marked true, partly true or false, with the evidence.
+- **Guardrail:** narration never rewrites state. A language model may phrase a claim, but its
+  numbers and its event come from the record.
+
+**Accept when:** every claim links to a real event; a fact check of a distorted claim recovers the
+measured value; a long run produces at least one legend whose verdict re-verifies.
+
+## M51: records that decay (6 h)
+
+**Goal:** the in-world archive can be lost. The developer's log (M30) is permanent and
+tamper-evident, but the town's own records are copies that wear out unless an institution keeps
+them: a library, a body of scholars, an academy or a college (the name comes from the theme pack,
+M33).
+- **Upkeep:** each record has a condition that falls every day; a funded institution (wages paid
+  through the ledger) restores it. An unfunded archive loses its oldest, least-used records first.
+- **Lost records:** when a record goes, the wiki page for that event (M25) keeps only the told
+  version (M50). History becomes what people remember.
+- **Recovery quests:** a RECOVER contract finds a copy in ruins, an abandoned site or a distant
+  region, and fulfilling it restores the record. This turns #53's archaeology idea into play.
+- **A lesson** for M26 and the media-literacy track (M47): how much of what we know depends on who
+  paid to keep it.
+
+**Accept when:** with the institution unfunded, records are lost in the documented order and their
+wiki pages fall back to told history; a recovery contract restores one; the M30 audit still
+verifies the full developer log throughout.
+
 ## M46: docs and v0.5.0 (2 h)
 
 PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT updated with what was built; changelog; tag v0.5.0.
@@ -898,7 +1065,7 @@ Scores are how likely a 2030s studio would ship each idea (1-10), followed by a 
 | Research grants: shortages drive new recipes | 8 | 1 day |
 | An elected mayor: guilds vote on tax policy | 7 | 6 h |
 | Seasons and climate cycles | 7 | 4 h |
-| Imperfect information and rumours | 7 | 1 day |
+| Imperfect information and rumours (now **M49**) | 7 | 1 day |
 | Births, bankruptcy and business succession | 7 | 1 day |
 | Contract feed for a companion app or Discord | 6 | 4 h |
 

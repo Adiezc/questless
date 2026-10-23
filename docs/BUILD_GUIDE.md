@@ -29,14 +29,18 @@ guarantees, propose it in the issue before building it.
     [M27](#m27-docs-and-v030) · [M28](#m28-bug-reports-that-replay-themselves) ·
     [M29](#m29-courts-for-broken-contracts) · [M30](#m30-tamper-evident-world-log) ·
     [M31](#m31-one-person-one-character-safeguards) ·
-    [M32](#m32-elections-and-a-campaign-finance-register)
+    [M32](#m32-elections-and-a-campaign-finance-register) ·
+    [M48](#m48-legitimacy-and-levy-evasion) · [M49](#m49-beliefs-and-rumours) ·
+    [M52](#m52-policy-stress-tests)
   - v0.4: [M33](#m33-theme-packs-and-world-topology) · [M34](#m34-regions-and-simulation-level-of-detail) ·
     [M35](#m35-a-map-shaped-by-the-economy) · [M36](#m36-ecology-and-the-commons) ·
     [M37](#m37-legal-automation-standing-orders) · [M38](#m38-players-post-quests) ·
     [M39](#m39-treaties-sanctions-and-embargoes) · [M40](#m40-surrogate-fast-forward-experiment) ·
-    [M41](#m41-docs-both-skins-and-v040)
+    [M41](#m41-docs-both-skins-and-v040) · [M53](#m53-the-invisible-border) ·
+    [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
-    [M45](#m45-skills-passport) · [M46](#m46-docs-and-v050)
+    [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
+    [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
 - [Part 5: backlog ideas, sketched](#part-5-backlog-ideas-sketched)
 
 ---
@@ -602,6 +606,90 @@ elections replay exactly.
 and cache it. Keep NPC voting simple and explainable; a voting rule nobody can explain defeats
 the point of a transparency feature.
 
+### M48: legitimacy and levy evasion
+
+**Where:** new `src/questless/sim/legitimacy.py`, `sim/world.py` (`_collect_upkeep`,
+`_pay_wages`, `TickStats`, `state_dict()`), `config.py` (`[legitimacy]`),
+`contracts/provenance.py`, `contracts/causes.py`, `scenarios/legitimacy_spiral.toml`, `app/`.
+
+**Design in one paragraph:** `World.legitimacy` is one number in [0, 1] for the town. Each day in
+tick step 3, after `_pay_wages`, it moves under two pressures: the share of today's guard wages
+left unpaid, and the share of NPCs hungry over the last few days. It falls fast and recovers
+slowly (two rates in config). The levy runs before wages, so `_collect_upkeep` uses yesterday's
+legitimacy: each NPC pays with a probability derived from it, and evaded coin stays in the NPC's
+wallet. Nothing new touches the ledger, so conservation holds by construction.
+
+| Task | Size | How |
+|---|---|---|
+| M48.1 Legitimacy stock | M | `legitimacy.update(world, stats)` called after `_pay_wages`. Inputs: `wages_unpaid / (wages_paid + wages_unpaid)` and the hungry share averaged over `hunger_window` days. The rates, window and starting value come from `[legitimacy]` (R1), with `enabled = false` in the baseline. Store it in `TickStats.legitimacy` and `state_dict()`. |
+| M48.2 Levy evasion | M | In `_collect_upkeep`, an NPC pays with probability `compliance(legitimacy)` (a clamped linear map from config), drawn from `world.rng.stream("levy")` in sorted NPC order. Record `TickStats.levy_evaded`. No ledger change: the coin stays put. |
+| M48.3 Evidence kinds **(good first issue after M48.1)** | S | `unpaid_wages`, `legitimacy_drop` and `levy_evasion`, each with a template and a `METRICS` key (R3). |
+| M48.4 Causal walk | M | In `causes.py`, explain unpaid wages (and any town-funded guard contract) by walking back: unpaid wages ← levy evasion ← legitimacy drop ← earlier unpaid wages and hunger. The spiral is a loop, so stop at the first repeat of an evidence kind and link to its earlier occurrence. |
+| M48.5 Scenario and chart | S | `scenarios/legitimacy_spiral.toml` extends the baseline with a small town treasury (R7); a legitimacy line on the town chart (R6). |
+
+**Tests:** with `enabled = false` the baseline state hash is unchanged; with it on, conservation
+holds every day and legitimacy stays in [0, 1]; a forced week of unpaid wages lowers it and a
+funded month restores it; the spiral's chain re-verifies.
+
+**Pitfalls:** the loop can lock a town into permanent collapse. That is a valid result for the
+spiral scenario but not for the baseline, so test that a normally funded town recovers from a
+one-week shock. Keep legitimacy one number per town here; per-site reach is M53's job.
+
+### M49: beliefs and rumours
+
+**Where:** new `src/questless/sim/beliefs.py`, `sim/behaviour.py`, `sim/market.py`,
+`sim/guilds.py`, `contracts/needs.py`, `contracts/engine.py`, `contracts/provenance.py`,
+`config.py` (`[beliefs]`), `scenarios/false_alarm.toml`.
+
+**Design in one paragraph:** today every NPC decision reads `world.prices` or
+`world.unit_price()` directly. M49 puts a view between the decision and the world:
+`view(world, holder).price(good)`. A belief store keeps, per holder (an NPC or a guild) and good,
+the believed price, whether the good is short, the day it was observed and the source. Holders at
+the market observe the truth daily; holders at the mine and farms hear it only when a merchant who
+was at the market reaches them, `delay_days` later. Guilds decide on contracts through their
+beliefs, so a guild can fund a quest for a shortage that has already ended. With `delay_days = 0`
+the view returns the truth and nothing changes.
+
+| Task | Size | How |
+|---|---|---|
+| M49.1 Price view refactor **(good first issue)** | S | Route every decision-side price read in `behaviour.py`, `market.py` (buyer and seller decisions, not clearing) and `guilds.py` through `view(world, holder)`. The first view just returns the true price. Done when every test and the baseline state hash are unchanged. |
+| M49.2 Belief store | M | `Belief(price, short, observed_tick, source)` per (holder, good), on `World` and in `state_dict()`. Updated after market clearing (step 5): market holders observe; merchants carry their beliefs to the sites they haul from, arriving `delay_days` later. Iterate in sorted id order. |
+| M49.3 The board reads beliefs | M | `NeedTracker.update` and the candidate step in `contracts/engine.py` use the funder's beliefs about shortage and price, so a shortage a guild still believes in can produce a contract after it has ended. |
+| M49.4 Belief evidence | S | A `belief` evidence kind: "the Blacksmiths Guild believed ore cost 31 (told by Elan Cart on day 40)". Its measure key reads the belief record, so `verify()` checks what was believed; the next step in the chain measures the truth. |
+| M49.5 False-alarm scenario | S | `scenarios/false_alarm.toml`: a short mine shock and a long news delay, so a quest is posted after the mine has reopened (R7). |
+
+**Tests:** with `delay_days = 0` the baseline hash is unchanged; no belief is ever dated after the
+day it is used; the false-alarm scenario posts a stale quest on most seeds; every belief evidence
+record re-verifies.
+
+**Pitfalls:** the market must clear at true prices; only decisions use beliefs. One belief per NPC
+per good is 400 entries a day, which is fine for one town; with M34 regions, keep beliefs at guild
+level unless profiling says otherwise.
+
+### M52: policy stress tests
+
+**Where:** new `experiments/stress/` (`attackers.py`, `policy.py`, `run.py`), M23's workflow and
+pull-request comment, M31.2's bot league.
+
+**Design in one paragraph:** a policy is a TOML file that `extends` a scenario and changes only
+knobs. An attacker is a function from what a player can see (the public board, prices and its own
+wallet) to player actions, applied through `player.apply_action`, so every attempt is a replayable
+save. The search runs seeds × attackers × (before, after) and scores each attacker's gain per day
+against an honest reference player. A gain above a configured margin on most seeds is an exploit.
+
+| Task | Size | How |
+|---|---|---|
+| M52.0 Exploit hunters **(can start now)** | M | Two or three scripted players over today's actions (claim and wait, buy before a scheduled shock, accept and abandon). Run them on the shipped scenarios and report coin gained per day against an honest player. They need nothing from M23 or M31. |
+| M52.1 Policy overlays | S | Load a policy with `extends`; `policy.diff(a, b)` lists the knobs that changed. |
+| M52.2 Attacker library | M | Port M31.2's bots (colluding alts, cornering) to the attacker interface; each documents its strategy in its docstring. |
+| M52.3 Grid and scoring | M | Seeds × attackers × (before, after) through M23.2's `run_grid`. Default 5 seeds; the full grid is a nightly job. |
+| M52.4 Findings report | S | For each exploit: the attacker, the seed, the saved replay and the ledger flows showing who lost. Posted in M23's pull-request comment. |
+| M52.5 Planted-exploit test | S | A test policy with a deliberate hole (a contract that pays when nothing is delivered, like #43) must be found; the baseline must come back clean. |
+
+**Pitfalls:** attackers must see only what a player sees, never world internals, or they will find
+exploits no player could use. Keep each attacker small and explainable; a finding nobody can
+explain can't be fixed.
+
 ### M33: theme packs and world topology
 
 **Where:** new `themes/` folder, `config.py` (`[world]` graph, `theme`), `sim/entities.py`
@@ -746,6 +834,67 @@ sides; a breach pays from the bond; conservation and replay hold.
 Theme switch and multi-region map in the dashboard; README and BLUEPRINT updated with measured
 results; changelog; tag v0.4.0.
 
+### M53: the invisible border
+
+**Where:** new `src/questless/geo/reach.py`, M34's regions, M48's levy statistics,
+`contracts/engine.py` (patrol and collection contracts), `contracts/provenance.py`, `app/` (map
+layer).
+
+| Task | Size | How |
+|---|---|---|
+| M53.0 Per-site reach in one town **(can start after M48)** | S | Record levy owed, collected and evaded per site in `TickStats`; reach = collected ÷ owed. Works in today's single town. |
+| M53.1 Reach index | M | Per site and town: levy reach, patrol days (guard days spent there) and the share of trade paying the market tax, combined with weights from config. Each component has a `METRICS` key so `verify()` can re-measure it. |
+| M53.2 Border from reach | M | The town with the highest reach controls a site if it is above a threshold; otherwise the site is contested. Smooth over N days so borders don't flicker. |
+| M53.3 Border evidence | S | A `border_shift` evidence kind: "the Mine passed from Ashford to contested on day 80: Ashford's reach fell from 0.7 to 0.3". |
+| M53.4 Contested-zone quests | M | Patrol and collection contracts (R4) funded by a town that wants a contested site; the outcome is measured as reach gained. |
+| M53.5 Map layer **(good first issue after M53.2)** | S | Colour sites by controlling town and hatch contested ones; a click shows the reach numbers. |
+
+**Tests:** reach stays in [0, 1]; a two-town scenario with one town's wages cut moves the border on
+most seeds; every `border_shift` re-verifies; replay gives the same borders.
+
+**Pitfalls:** patrols need guards to have a location. If M34 doesn't give guards a site, use guard
+wage-days assigned per region from config as a proxy and say so in the docs.
+
+### M54: civilization DNA
+
+**Where:** `config.py` (`mutate()`, `[founding]` bounds), M35's founding step, `sim/world.py`
+(settlement lineage), M25 settlement pages, `report.py`.
+
+| Task | Size | How |
+|---|---|---|
+| M54.1 `mutate()` **(can start now)** | M | `mutate(cfg, rng, bounds) -> ScenarioConfig` changes only the knobs listed in `[founding.bounds]`, each within its range, using a `founding` RNG stream. It returns a new config. Tests check bounds, determinism and that `to_dict()` round-trips. |
+| M54.2 Lineage | S | Each settlement records `parent` and `mutations` (the knob diff), saved in `state_dict()`. |
+| M54.3 Founding hook | M | When M35 founds a town, its config is `mutate(parent)`; colonists bring coin and goods from the parent through the transit ledger. |
+| M54.4 Family tree | S | A wiki page and a report section: the tree of settlements, each with its diff from its parent. |
+| M54.5 Selection report | M | Over a long run, which knob values are held by growing settlements and which by shrinking ones. |
+
+**Tests:** mutated configs stay within bounds and pass the strict loader; the same seed gives the
+same family tree; conservation holds across founding.
+
+**Pitfalls:** mutating everything makes noise. Start with four to six institutional knobs (levy
+rate, guard wage, relief policy, guild dues). Never mutate safeguards or conservation rules.
+
+### M55: infrastructure dependency maps
+
+**Where:** `contracts/causes.py`, new `src/questless/geo/dependencies.py`, M34's transit ledger,
+M35's roads, `sim/shocks.py`, `app/` (dependency view).
+
+| Task | Size | How |
+|---|---|---|
+| M55.0 Chain as a graph **(can start now)** | S | `causes.graph(world, contract)` returns the chain's evidence as nodes and its `caused_by` links as edges, as JSON. Useful today for M15's map and M25's wiki. |
+| M55.1 Cross-region edges | M | When a region's input shortage traces to goods that stopped arriving, the walk continues into the sending region through the transit ledger's records. Bounded by depth and by the number of regions visited. |
+| M55.2 Link failure shock | S | A shock kind that closes one route (a bridge or a road) for N days, with its own evidence. |
+| M55.3 Dependency ranking | M | For a chosen site, fork the world once per nearby link, cut that link for 30 days and measure the site's loss (hungry NPC-days, output). Rank links by loss and cache the result per run. |
+| M55.4 Maintenance quests | M | The top-ranked links attract funded maintenance contracts (R4); the evidence cites the loss from the forked replay. |
+| M55.5 Dependency view | S | A ranked list and a map overlay of the critical links for the selected site. |
+
+**Tests:** a three-region bridge cut gives a chain crossing at least two regions that re-verifies
+at every step; the top-ranked link matches the largest forked-replay loss; the graph export
+round-trips through JSON.
+
+**Pitfalls:** ranking forks the world once per link. Limit it to links within K hops and run it on
+demand or weekly, never every tick.
+
 ### M42: privacy as code
 
 **Where:** new `privacy/` folder (`data_inventory.toml`, `DPIA_TEMPLATE.md` in `docs/`),
@@ -809,6 +958,51 @@ lessons.
 | M45.4 Signed export | M | A JSON credential signed with an Ed25519 key in production; the engine defines the format and uses HMAC (stdlib) for tests. Marked non-transferable. |
 | M45.5 Teacher view | S | Aggregates over consenting students only, with the 5-contributor rule from M25. |
 
+### M50: told history versus the log
+
+**Where:** new `src/questless/history/` (`claims.py`, `retelling.py`, `legends.py`), M49's belief
+network, `player.py` (`fact_check`), `config.py` (`[history]`), M25 wiki pages.
+
+**Design in one paragraph:** a claim is always derived from one real evidence record, so it can be
+wrong but never invented. When an NPC is affected by an event (it went hungry, its guild funded a
+contract), it starts a claim with the measured value. Claims spread along the same network as M49's
+beliefs, and each retelling applies a fixed distortion rule for that kind of event. Players check
+claims against `measure()`. Claims that are retold often enough become legends with a wiki page and
+a verdict.
+
+| Task | Size | How |
+|---|---|---|
+| M50.1 Claim record | M | `Claim(id, event_ref, teller, stated_value, told_tick, retellings)`, on `World` and in `state_dict()`. `event_ref` points to a real evidence record; `stated_value` starts as its measured value. |
+| M50.2 Retelling rules | M | Per evidence kind, a distortion from config (losses grow by a factor, credit shifts to the teller's guild), drawn from a `retelling` RNG stream. Rules never change `event_ref`. |
+| M50.3 Spreading | S | Claims travel along M49's network: with merchants between sites and within guilds. |
+| M50.4 `fact_check` action | S | `fact_check(claim_id)` (R5) compares `stated_value` with `measure(event_ref)`; a correction pays a small town-funded reward and marks the claim. |
+| M50.5 Legends | M | A claim retold more than N times becomes a named legend with a wiki page (M25): the told version, the measured version and a verdict (true within 10%, partly true or false). |
+| M50.6 Narration adapter (optional) | S | An interface that phrases a claim in prose, with a template-based test implementation. The adapter receives the numbers and returns text; it can't change either. |
+
+**Tests:** every claim's `event_ref` is a real evidence id; retelling never changes the event; a
+fact check recovers the measured value; replay produces the same legends.
+
+**Pitfalls:** claims multiply fast. Cap claims per event and drop the least-retold ones first.
+
+### M51: records that decay
+
+**Where:** new `src/questless/history/archive.py`, `config.py` (`[archive]`), M33 theme strings,
+`contracts/` (a RECOVER kind, R4), M25 wiki, M30 audit.
+
+| Task | Size | How |
+|---|---|---|
+| M51.1 Archive records | S | One record per notable event (shocks, posted contracts, M50 legends) with a `condition` in [0, 1]. Records are information, not goods, so they are not ledger assets. |
+| M51.2 Decay and upkeep | M | Condition falls daily by a config rate. An institution account, funded by the town or a guild through ordinary transfers (reason `archive upkeep`), restores condition up to its budget, oldest-used records last. |
+| M51.3 Loss | S | At condition 0 a record is lost; its wiki page keeps only the told history (M50) with a "record lost on day N" note. |
+| M51.4 RECOVER contracts | M | A contract kind (R4) to recover a lost record from a site (ruins, an abandoned town, another region); fulfilment restores it at partial condition. The evidence cites the loss. |
+| M51.5 Institution names **(good first issue)** | S | Theme-pack strings (M33): library, scholars, academy or college in fantasy; a data vault or archive in sci-fi. |
+
+**Tests:** an unfunded archive loses records in the documented order; a recovery restores one; the
+M30 audit verifies the developer log across every loss.
+
+**Pitfalls:** in-world loss must never touch the engine's own journal or the evidence `verify()`
+reads. The archive is a separate, in-world copy.
+
 ### M46: docs and v0.5.0
 
 Update PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT with what was built; changelog; tag v0.5.0.
@@ -838,7 +1032,7 @@ open an issue with a short design first.
 | Research grants | R1 | Persistent shortages unlock a funded research contract that adds a new recipe to the config at runtime (logged). |
 | Elected mayor | M20, M29 | Guild members vote each season; the winner sets the levy within bounds. |
 | Seasons and climate | Shocks | Periodic modifiers on farm output from config. |
-| Rumours and imperfect information | M25 | NPCs act on a public view with noise and delay instead of true state. |
+| Rumours and imperfect information | M49 | Now M49, beliefs and rumours. |
 | Births, bankruptcy and succession | M17 | Bankrupt NPCs sell assets; new NPCs arrive when the town prospers. |
 | Contract feed for companion apps | M25 | A public-tier JSON feed of open contracts; a webhook per new contract. |
 | Fog of cause | M25 | Chain steps carry a visibility tier per player; investigation actions reveal them. |
