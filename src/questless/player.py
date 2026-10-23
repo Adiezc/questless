@@ -105,8 +105,13 @@ def deliver(world: World, contract_id: str) -> str:
     if c.kind.value != "transport" and world.ledger.balance(PLAYER, c.good) < c.qty:
         have = world.ledger.balance(PLAYER, c.good)
         raise ActionError(f"{contract_id} needs {c.qty} {c.good}; you have {have}")
-    world.contracts.fulfil(world, contract_id, PLAYER)
-    adjust_reputation(world, c, +c.rep_reward)
+    try:
+        world.contracts.fulfil(world, contract_id, PLAYER)
+    except ValueError as exc:
+        raise ActionError(str(exc)) from exc
+    hauled = c.outcome.get("hauled", c.qty)
+    rep_earned = (c.rep_reward * hauled) // c.qty if c.qty > 0 else c.rep_reward
+    adjust_reputation(world, c, +rep_earned)
     return contract_id
 
 
@@ -180,7 +185,15 @@ def quote_contract(world: World, contract: Contract) -> Quote | None:
     market or importing them by caravan in time. ``None`` if neither can source them. Only an
     estimate: buying moves the price, and other buyers may get there first."""
     if contract.kind is ContractKind.TRANSPORT:  # the player hauls what is already there
-        return Quote("haul", 0, contract.reward)
+        current_backlog = sum(
+            min(qty, world.ledger.balance(world.npcs[nid].site_account, contract.good))
+            for nid, qty in contract.beneficiaries.items()
+            if nid in world.npcs
+        )
+        if current_backlog <= 0:
+            return None
+        est_reward = (contract.reward * current_backlog) // contract.qty
+        return Quote("haul", 0, est_reward)
     missing = max(contract.qty - world.ledger.balance(PLAYER, contract.good), 0)
     if not missing:
         return Quote("in hand", 0, contract.reward)

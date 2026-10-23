@@ -162,21 +162,43 @@ class ContractBoard:
         if world.tick >= c.deadline_tick:
             raise ValueError(f"{contract_id} is past its deadline")
         if c.kind is ContractKind.TRANSPORT:
+            hauled = 0
             for npc_id, qty in sorted(c.beneficiaries.items()):
                 npc = world.npcs[npc_id]
                 haul = min(qty, world.ledger.balance(npc.site_account, c.good))
+                if haul > 0:
+                    world.ledger.transfer(
+                        npc.site_account, npc.account, c.good, haul, tick=world.tick, reason=c.id
+                    )
+                    hauled += haul
+            if hauled == 0:
+                raise ValueError(f"{c.id} has nothing left to haul")
+            player_pay = (c.reward * hauled) // c.qty
+            funder_refund = c.reward - player_pay
+            world.ledger.transfer(
+                ESCROW, player, Asset.COIN, player_pay, tick=world.tick, reason=c.id
+            )
+            if funder_refund > 0:
                 world.ledger.transfer(
-                    npc.site_account, npc.account, c.good, haul, tick=world.tick, reason=c.id
+                    ESCROW,
+                    c.funder,
+                    Asset.COIN,
+                    funder_refund,
+                    tick=world.tick,
+                    reason=f"refund unhauled {c.id}",
                 )
         else:
+            hauled = c.qty
             if world.ledger.balance(player, c.good) < c.qty:
                 raise ValueError(f"{player} holds fewer than {c.qty} {c.good}")
             for npc_id, qty in sorted(c.beneficiaries.items()):
                 world.ledger.transfer(player, npc_id, c.good, qty, tick=world.tick, reason=c.id)
-        world.ledger.transfer(ESCROW, player, Asset.COIN, c.reward, tick=world.tick, reason=c.id)
+            world.ledger.transfer(
+                ESCROW, player, Asset.COIN, c.reward, tick=world.tick, reason=c.id
+            )
         c.status = Status.FULFILLED
         c.closed_tick = world.tick
-        c.outcome = {"before": _outcome_snapshot(world, c), "after": None}
+        c.outcome = {"before": _outcome_snapshot(world, c), "after": None, "hauled": hauled}
         return c
 
     def measure_outcomes(self, world: World) -> None:
