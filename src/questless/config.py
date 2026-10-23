@@ -107,6 +107,18 @@ class TransportConfig:
 
 
 @dataclass(frozen=True)
+class LegitimacyConfig:
+    """M48: the town's authority, and levy evasion when it is low. Off unless ``enabled``."""
+
+    enabled: bool = False
+    start: float = 1.0
+    fall_rate: float = 0.2  # share of the gap to the target closed per day when falling
+    recover_rate: float = 0.02  # ... and when recovering
+    hunger_window: int = 7  # days of hunger averaged into the pressure
+    min_compliance: float = 0.5  # chance an NPC pays the levy at legitimacy 0
+
+
+@dataclass(frozen=True)
 class ContractsConfig:
     max_open: int  # global cap on OPEN + ACCEPTED contracts
     max_new_per_tick: int
@@ -164,6 +176,7 @@ class ScenarioConfig:
     caravan_markup: float  # imports cost base price x this
     outside: Mapping[Asset, int]
     shocks: tuple[ShockConfig, ...] = ()
+    legitimacy: LegitimacyConfig = LegitimacyConfig()
     # [founding.bounds]: knobs a colony may change from its parent, as (knob, low, high) (M54)
     founding_bounds: tuple[tuple[str, float, float], ...] = ()
 
@@ -232,7 +245,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "town",
             "player",
         },
-        optional={"outside", "shocks", "founding"},
+        optional={"outside", "shocks", "founding", "legitimacy"},
     )
 
     sc = data["scenario"]
@@ -474,6 +487,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         outside=_holdings(data.get("outside", {}), "outside"),
         shocks=tuple(shocks),
         founding_bounds=_founding_bounds(data.get("founding", {}), set(guilds)),
+        legitimacy=_legitimacy(data.get("legitimacy", {})),
     )
     if cfg.population <= 0:
         raise ConfigError("population is zero")
@@ -558,6 +572,29 @@ def _founding_bounds(founding: Any, guild_ids: set[str]) -> tuple[tuple[str, flo
             raise ConfigError(f"{where}: low must not exceed high")
         out.append((knob, low, high))
     return tuple(out)
+
+
+def _legitimacy(table: Any) -> LegitimacyConfig:
+    fields = {"enabled", "start", "fall_rate", "recover_rate", "hunger_window", "min_compliance"}
+    _keys(table, "legitimacy", required=set(), optional=fields)
+    default = LegitimacyConfig()
+    enabled = table.get("enabled", default.enabled)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"legitimacy.enabled: expected true or false, got {enabled!r}")
+    return LegitimacyConfig(
+        enabled=enabled,
+        start=_fraction(table.get("start", default.start), "legitimacy.start"),
+        fall_rate=_fraction(table.get("fall_rate", default.fall_rate), "legitimacy.fall_rate"),
+        recover_rate=_fraction(
+            table.get("recover_rate", default.recover_rate), "legitimacy.recover_rate"
+        ),
+        hunger_window=_pos_int(
+            table.get("hunger_window", default.hunger_window), "legitimacy.hunger_window"
+        ),
+        min_compliance=_fraction(
+            table.get("min_compliance", default.min_compliance), "legitimacy.min_compliance"
+        ),
+    )
 
 
 def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
@@ -710,6 +747,7 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
         "market": {**asdict(cfg.market), "effort": list(cfg.market.effort)},
         "transport": asdict(cfg.transport),
         "contracts": asdict(cfg.contracts),
+        "legitimacy": asdict(cfg.legitimacy),
         "guilds": {
             gid: {
                 "name": gc.name,

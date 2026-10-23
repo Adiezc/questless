@@ -201,6 +201,16 @@ upkeep_exempt = 60
 # threshold = 500
 # rate = 0.05
 
+# Legitimacy (M48): the town's authority, 0-1. Unpaid wages and hunger lower it; while it is low,
+# NPCs evade the upkeep levy. Off in the baseline so v0.1 results stay comparable.
+[legitimacy]
+enabled = false
+start = 1.0
+fall_rate = 0.2          # share of the gap to the target closed per day when falling
+recover_rate = 0.02      # ... and when recovering: legitimacy falls fast and returns slowly
+hunger_window = 7        # days of hunger averaged into the pressure
+min_compliance = 0.5     # chance an NPC pays the levy at legitimacy 0
+
 [player]
 wallet = 600
 caravan_markup = 1.25    # caravan imports cost base price x this and take contracts.caravan_days
