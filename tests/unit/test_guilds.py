@@ -12,7 +12,7 @@ from questless.api import Simulation
 from questless.sim.entities import OUTSIDE
 from questless.sim.guilds import collect_dues, provide_relief, working_capital
 from questless.sim.ledger import Asset
-from questless.sim.world import build_world
+from questless.sim.world import TickStats, build_world
 from tests.conftest import SCENARIOS
 
 
@@ -147,3 +147,46 @@ def test_treasury_card_matches_chart_after_escrow():
             assert series["escrowed"][gid][-1] == locked
             saw_escrow |= locked > 0
     assert saw_escrow, "no guild funded a contract, so the test proved nothing"
+
+
+def _cap_guilds(cfg, cap):
+    guilds = {
+        gid: dataclasses.replace(g, policy=dataclasses.replace(g.policy, max_treasury=cap))
+        for gid, g in cfg.guilds.items()
+    }
+    return dataclasses.replace(cfg, guilds=guilds)
+
+
+def test_guild_above_max_treasury_pays_upkeep_on_the_excess(baseline):
+    """#48: coin above ``max_treasury`` pays the town levy; at or below it, nothing."""
+    world = build_world(_cap_guilds(baseline, 1000))
+    _fund_outside(world)
+    rich, *others = sorted(world.guilds)
+    _set_coin(world, world.guilds[rich].account, 3000)
+    for gid in others:
+        _set_coin(world, world.guilds[gid].account, 1000)
+    town = _coin(world, "town")
+    stats = TickStats(0)
+    paid = world._collect_upkeep(stats)
+    expected = int(2000 * baseline.town.upkeep_rate)
+    assert paid == {rich: expected, **{gid: 0 for gid in others}}
+    assert _coin(world, world.guilds[rich].account) == 3000 - expected
+    assert _coin(world, "town") == town + stats.upkeep  # NPC and guild levy both reach the town
+    world.ledger.check_conservation()
+
+
+def test_guilds_without_max_treasury_are_exempt(baseline):
+    world = build_world(_cap_guilds(baseline, None))
+    _fund_outside(world)
+    for gid in world.guilds:
+        _set_coin(world, world.guilds[gid].account, 20_000)
+    assert world._collect_upkeep(TickStats(0)) == {}
+    assert all(_coin(world, g.account) == 20_000 for g in world.guilds.values())
+
+
+def test_guild_upkeep_is_reported(baseline):
+    world = build_world(_cap_guilds(baseline, 0))
+    world.step(3)
+    reports = world.stats[-1].guilds.values()
+    assert any(r.upkeep > 0 for r in reports)
+    world.check_invariants()

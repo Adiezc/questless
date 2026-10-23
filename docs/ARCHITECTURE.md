@@ -43,7 +43,8 @@ ends. The engine never imports the UI.
    are recorded on the NPC's `DailyRecord`.
 2. **Transport:** off-market output moves from `npc@site` to `npc`, limited by merchant capacity.
    Haulage fees are pooled and split.
-3. **Town:** the upkeep levy on idle coin, then guard wages.
+3. **Town:** the upkeep levy on idle coin (NPC wallets, and guild treasuries above their ceiling),
+   then guard wages.
 4. **Guild relief:** members who can't afford to keep working are topped up, before the market
    opens.
 5. **Market:** each good clears. Unfilled demand (scarcity) and unaffordable demand (poverty) are

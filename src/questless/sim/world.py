@@ -106,12 +106,13 @@ class World:
             equipment = self.config.professions[npc.profession].equipment
             prof["broken"] += equipment is not None and rec.unmet.get(equipment, 0) > 0
         stats.transport = ship(self)
-        self._collect_upkeep(stats)
+        guild_upkeep = self._collect_upkeep(stats)
         self._pay_wages(stats)
         relief = provide_relief(self)  # before the market, so relief buys food today
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
-        stats.guilds = guild_reports(self, collect_dues(self, start_coin, relief), relief)
+        dues = collect_dues(self, start_coin, relief)
+        stats.guilds = guild_reports(self, dues, relief, guild_upkeep)
         self.stats.append(stats)
         self.needs.update(self)
         stats.contracts = self.contracts.step(self)
@@ -122,9 +123,11 @@ class World:
         if self.check_every_tick:
             self.check_invariants()
 
-    def _collect_upkeep(self, stats: TickStats) -> None:
+    def _collect_upkeep(self, stats: TickStats) -> dict[str, int]:
         """Town levy on idle coin. Closes the money loop: coin that pools with one profession
-        flows back to the town, which pays guards, who buy food and weapons."""
+        flows back to the town, which pays guards, who buy food and weapons. Guild treasuries
+        above their ``max_treasury`` pay the same rate on the excess, so dues can't pool there
+        forever. Returns the levy paid by each guild."""
         rate, exempt = self.config.town.upkeep_rate, self.config.town.upkeep_exempt
         for npc in self.npcs_in_order():
             levy = int(max(self.ledger.balance(npc.account, Asset.COIN) - exempt, 0) * rate)
@@ -132,6 +135,18 @@ class World:
                 npc.account, TOWN, Asset.COIN, levy, tick=self.tick, reason="upkeep"
             )
             stats.upkeep += levy
+        paid: dict[str, int] = {}
+        for gid, guild in sorted(self.guilds.items()):
+            cap = guild.policy.max_treasury
+            if cap is None:
+                continue
+            levy = int(max(self.ledger.balance(guild.account, Asset.COIN) - cap, 0) * rate)
+            self.ledger.transfer(
+                guild.account, TOWN, Asset.COIN, levy, tick=self.tick, reason="guild upkeep"
+            )
+            paid[gid] = levy
+            stats.upkeep += levy
+        return paid
 
     def _pay_wages(self, stats: TickStats) -> None:
         wage = self.config.town.guard_wage

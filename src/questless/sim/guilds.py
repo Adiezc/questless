@@ -34,6 +34,7 @@ class GuildReport:
     relief_recipients: int
     treasury: int  # end of day, after today's contracts took or returned escrow
     escrowed: int = 0  # coin this guild has locked in live contracts, end of day
+    upkeep: int = 0  # town levy paid today on coin above ``policy.max_treasury``
 
 
 def provide_relief(world: World) -> dict[str, dict[str, int]]:
@@ -104,7 +105,10 @@ def collect_dues(
 
 
 def reports(
-    world: World, dues: dict[str, int], relief: dict[str, dict[str, int]]
+    world: World,
+    dues: dict[str, int],
+    relief: dict[str, dict[str, int]],
+    upkeep: dict[str, int] | None = None,
 ) -> dict[str, GuildReport]:
     return {
         gid: GuildReport(
@@ -113,6 +117,7 @@ def reports(
             relief=sum(relief.get(gid, {}).values()),
             relief_recipients=len(relief.get(gid, {})),
             treasury=world.ledger.balance(guild.account, Asset.COIN),
+            upkeep=(upkeep or {}).get(gid, 0),
         )
         for gid, guild in sorted(world.guilds.items())
     }
