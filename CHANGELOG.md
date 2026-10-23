@@ -71,6 +71,13 @@ All notable changes to this project are documented here. The format follows
   so an iron-ore contract no longer quotes the tools figures (M13.6, #50, thanks @Golden007-prog).
 - When the town can't afford every guard's wage, the guards it pays rotate from day to day instead
   of the same ones always going unpaid (#52, thanks @jay23606).
+- Transport contracts pay only for the units actually hauled; the unhauled share of the reward
+  goes back to the funder, reputation scales the same way, and a contract with nothing left to
+  haul can't be delivered. Quest cards estimate the reward from what is still there (M13.5, #43,
+  #57, thanks @RajGahoi).
+- A guild pool contract leaves out members who already have their own live contract for the same
+  good, so no one is funded twice; the board check now fails if anyone is (M13.7, #45, #59,
+  thanks @RajGahoi).
 
 ## [0.1.0] - 2026-10-21
 
