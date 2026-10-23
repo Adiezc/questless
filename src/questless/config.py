@@ -130,6 +130,18 @@ class TownConfig:
     market_tax: float
     upkeep_rate: float  # daily levy on NPC coin above upkeep_exempt; recycles idle coin
     upkeep_exempt: int
+    # Higher brackets as (threshold, rate), ascending: coin above each threshold pays that rate
+    # instead of the one below it. Empty means one flat rate above upkeep_exempt (M58.3).
+    levy_brackets: tuple[tuple[int, float], ...] = ()
+
+    def levy(self, coin: int) -> int:
+        """The day's upkeep on ``coin``, each bracket taxing only the coin that falls in it."""
+        bands = [(self.upkeep_exempt, self.upkeep_rate), *self.levy_brackets]
+        owed = 0.0
+        for i, (threshold, rate) in enumerate(bands):
+            top = bands[i + 1][0] if i + 1 < len(bands) else coin
+            owed += max(min(coin, top) - threshold, 0) * rate
+        return int(owed)
 
 
 @dataclass(frozen=True)
@@ -428,6 +440,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         town,
         "town",
         required={"treasury", "guard_wage", "market_tax", "upkeep_rate", "upkeep_exempt"},
+        optional={"levy_brackets"},
     )
     player = data["player"]
     _keys(player, "player", required={"wallet", "caravan_markup"})
@@ -452,6 +465,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             market_tax=_fraction(town["market_tax"], "town.market_tax"),
             upkeep_rate=_fraction(town["upkeep_rate"], "town.upkeep_rate"),
             upkeep_exempt=_nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt"),
+            levy_brackets=_levy_brackets(town),
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
         caravan_markup=_at_least(player["caravan_markup"], 1.0, "player.caravan_markup"),
@@ -500,6 +514,23 @@ def _int(value: Any, where: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise ConfigError(f"{where}: expected an integer, got {value!r}")
     return value
+
+
+def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
+    raw = town.get("levy_brackets", [])
+    if not isinstance(raw, list):
+        raise ConfigError("town.levy_brackets: expected an array of tables")
+    out: list[tuple[int, float]] = []
+    below = _nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt")
+    for i, b in enumerate(raw):
+        where = f"town.levy_brackets[{i}]"
+        _keys(b, where, required={"threshold", "rate"})
+        threshold = _nonneg_int(b["threshold"], f"{where}.threshold")
+        if threshold <= below:
+            raise ConfigError(f"{where}.threshold: must be above the bracket before it ({below})")
+        out.append((threshold, _fraction(b["rate"], f"{where}.rate")))
+        below = threshold
+    return tuple(out)
 
 
 def _nonneg_int(value: Any, where: str) -> int:
@@ -646,8 +677,16 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
             }
             for gid, gc in cfg.guilds.items()
         },
-        "town": asdict(cfg.town),
+        "town": _town_dict(cfg.town),
         "player": {"wallet": cfg.player_wallet, "caravan_markup": cfg.caravan_markup},
         "outside": holdings(cfg.outside),
         "shocks": shocks,
     }
+
+
+def _town_dict(town: TownConfig) -> dict[str, Any]:
+    d = asdict(town)
+    brackets = d.pop("levy_brackets")
+    if brackets:
+        d["levy_brackets"] = [{"threshold": t, "rate": r} for t, r in brackets]
+    return d

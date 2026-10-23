@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Progressive upkeep levy: optional `[[town.levy_brackets]]` (threshold, rate) above the flat
+  `upkeep_rate`, each bracket taxing only the coin that falls in it (M58.3). Without brackets the
+  levy and every state hash are unchanged.
 - `causes.graph(world, contract)` and `Simulation.graph(contract_id)` export a quest's causal chain
   as JSON: evidence as nodes (with their sentence and measure keys) and cause-to-effect edges
   (M55.0). Ready for the map (M15) and the wiki (M25).
