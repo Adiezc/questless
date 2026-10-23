@@ -32,6 +32,8 @@ All notable changes to this project are documented here. The format follows
   told history versus the log (M50) and records that decay (M51).
 - Research evidence for roadmap milestones (docs/RESEARCH.md), starting with M58, fairness for
   late joiners: findings by lever from 34 peer-reviewed papers, with APA references and DOIs.
+- Research evidence for the proposed respectful-play milestone: what harms players (pressure to
+  play, not hours played) and which levers help, from 27 peer-reviewed papers.
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
