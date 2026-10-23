@@ -18,6 +18,7 @@ with DOI links. Link to it from the milestone in [ROADMAP.md](ROADMAP.md).
 ## Contents
 
 - [M58: fairness for late joiners](#m58-fairness-for-late-joiners) (searched 2026-10-23)
+- [Respectful play (proposed)](#respectful-play-proposed) (searched 2026-10-23)
 
 ## M58: fairness for late joiners
 
@@ -264,3 +265,229 @@ Wenner, F. (2018). Sustainable urban development and land value taxation: The ca
 Zewde, N. (2019). Universal baby bonds reduce Black-White wealth inequality, progressively raise
 net worth of all young adults. *The Review of Black Political Economy, 47*(1), 3–19.
 https://doi.org/10.1177/0034644619885321
+
+## Respectful play (proposed)
+
+A proposed milestone, not yet on the roadmap (drafted as "M60"). Its aim: players feel rewarded,
+but never feel they must give up work, family or friends to keep up. The draft would run the bot
+league with players on different schedules (a weekend player, a shift worker, a parent with 30
+minutes a day, a daily grinder) and fail the economy check (M23) when a change makes absence
+costlier or rewards streaks, short windows or fixed appointments.
+
+The question for the research: what actually harms players, and which design levers help?
+
+### What the evidence changes in the design
+
+1. **Hours played are the wrong target.** Studies that link players' well-being to logged play
+   data find little or no effect of time played (Vuorre et al., 2022; Ballou et al., 2024;
+   Ballou et al., 2025; Larrieu et al., 2023), a small positive one (Johannes et al., 2021), or a
+   positive causal effect (Egami et al., 2024). Hard caps on time also have a weak record
+   (Zendle et al., 2023). So the check should **not** cap or penalise hours. It should measure
+   the pressure to play.
+2. **The harm is "having to" rather than "wanting to".** Obsessive passion, the feeling that play
+   is compelled, goes with tension, low enjoyment and lower well-being; harmonious passion does
+   not (Przybylski et al., 2009). Obsessive passion is predicted by unmet needs in the rest of
+   life (Johnson et al., 2022), and players experience daily engagement rewards both as motivation
+   and as an obligation or chore that feeds fear of missing out (Frommel & Mandryk, 2022). The
+   measures that matter are the ones that create obligation: cost of absence, streaks,
+   appointments and short windows.
+3. **Social play is good, social obligation is not.** Playing with others builds social capital
+   through harmonious passion (Perry et al., 2018), and harmonious passion in World of Warcraft
+   reduces loneliness (Mandryk et al., 2020). But among MMORPG players, the effect of social
+   identity on game addiction runs through fear of missing out (Duman & Ozkara, 2019). Group
+   content should therefore be asynchronous, and no group should be penalised for one member's
+   absence.
+4. **Known rewards, not random ones.** Paying for loot boxes is consistently linked to problem
+   gambling (Garea et al., 2021; Spicer et al., 2021; Zendle et al., 2020), including in
+   adolescents after controlling for gambling (Hing et al., 2022), and reward variability is a
+   proposed route to addictive potential (Clark & Zack, 2023). Questless contracts already escrow
+   a fixed, visible reward before they exist; the check should keep it that way and flag any
+   random reward schedule tied to play time or spending.
+
+### Findings by lever
+
+#### Time played and well-being
+
+| Finding | Design consequence |
+|---|---|
+| Linking well-being surveys to play logs from Electronic Arts and Nintendo, play time had a small positive relation with affective well-being (Johannes et al., 2021). | Don't treat playing more as a harm in itself. |
+| Six weeks of logged play from 38,935 players across seven publishers showed little to no evidence of a causal link between play time and well-being; motivations mattered (Vuorre et al., 2022). | Measure motivation-related pressures, not hours. |
+| A preregistered 12-week Xbox panel found no practically significant link between logged play time and well-being in either direction (Ballou et al., 2024). | Same. |
+| Across 150 Nintendo Switch games, hours did not predict well-being, but how well gaming fits into players' lives ("gaming life fit") did (Ballou et al., 2025). | The target is how play fits a life, which is what schedule fairness and safe stopping measure. |
+| Winning a console lottery in Japan, and the extra play it brought, improved mental well-being (Egami et al., 2024). | Play can help; the goal is not less play. |
+| Among intensive gamers, logged play time was not related to quality of life; gaming-disorder symptoms and quality of life shared risk factors such as impulsivity (Larrieu et al., 2023). | Intensive play is not in itself a problem; avoid designs that target vulnerable players. |
+| Evening gaming helped employees recover from work through detachment and mastery, more so with harmonious passion (Koçak et al., 2023). | Short, evening-sized sessions with a natural end support the "real life first" goal. |
+
+#### Obligation and passion
+
+| Finding | Design consequence |
+|---|---|
+| Low need satisfaction goes with obsessive passion, more play, tension after play and low enjoyment; high play hurt well-being only for obsessively passionate players (Przybylski et al., 2009). | Measure what makes play feel compulsory. |
+| Obsessive passion is predicted by low need satisfaction in general life, not just in the game (Johnson et al., 2022). | The game can't fix life, but it must not exploit those gaps: no penalties for being away. |
+| Self-regulation explains the link between passion and well-being better than play time (Luxford et al., 2022). | Offer tools that support self-regulation: player-set goals and an optional, judgement-free play summary. |
+
+#### Engagement rewards, streaks and appointments
+
+| Finding | Design consequence |
+|---|---|
+| Players experience daily login rewards and repeatable challenges as motivation, as fear of missing out, or as an obligation or chore (Frommel & Mandryk, 2022). | Streak dependence and daily-only rewards are measured and capped near zero. |
+| An ethnography of World of Warcraft shows how design features and community norms together produce routines and expectations about when to play (Rapp, 2021). | Check both the mechanics and the norms they create, for example raid times. |
+| "Playing by appointment", forcing play at specific times through rewards or punishments, and grinding are among the most common dark patterns in profitable casual games (Dahlan & Susanty, 2022). | Fixed-time events need a catch-up path; grinding gets diminishing returns. |
+| Across 1,496 games, dark patterns appear even in games seen as healthy (Niknejad et al., 2024). | Every change is checked, not only the obviously monetised ones. |
+| Players reported 35 unfair or aggressive monetisation techniques in eight domains, several of which fall outside UK consumer law (Petrovskaya & Zendle, 2021). | Use the list as a checklist for the proposed regulator and researcher view. |
+
+#### Fear of missing out and social pressure
+
+| Finding | Design consequence |
+|---|---|
+| Among 318 MMORPG players, the effect of social identity on game addiction was fully mediated by fear of missing out, more strongly for those with a high need to belong (Duman & Ozkara, 2019). | Guild and group mechanics must not turn belonging into attendance pressure. |
+| A systematic review of 13 studies confirms a correlation, and a direct effect, of fear of missing out on gaming disorder (Caba-Machado et al., 2024). | Count offers that last under a week or have no catch-up path, and fail the check above a threshold. |
+| Playing with friends and strangers builds social capital through harmonious passion (Perry et al., 2018); harmonious passion in World of Warcraft reduced loneliness while obsessive passion increased it (Mandryk et al., 2020). | Keep social play, remove the obligation: asynchronous group contracts with flexible windows. |
+
+#### Paid randomness
+
+| Finding | Design consequence |
+|---|---|
+| Meta-analysis: loot box spending correlates with problem gambling (r = 0.26) and excessive gaming (r = 0.25) (Garea et al., 2021). | No paid random rewards, ever. |
+| Systematic review: 12 of 13 publications found a positive loot box–problem gambling link (mean r = .27) (Spicer et al., 2021). | Same. |
+| The link holds whatever the loot box's features, if it is sold for real money (Zendle et al., 2020). | Don't try to design a "safe" loot box. |
+| In adolescents, recent loot box purchasing raised the odds of problem gambling 3.7 to 6.0 times after controlling for gambling (Hing et al., 2022). | Same, especially for young players. |
+| Reward variability and frequency may give non-drug rewards addictive potential (Clark & Zack, 2023). | Keep contract rewards fixed and known in advance (they are escrowed); keep randomness in world events, not reward schedules. |
+
+#### Hard limits imposed from outside
+
+| Finding | Design consequence |
+|---|---|
+| Telemetry covering over seven billion hours found no credible reduction in heavy play after China's 2019 playtime limits for minors (Zendle et al., 2023). | Don't rely on hard caps. |
+| After the 2021 limits, a minority of heavy adolescent gamers got around them with other people's accounts, and 59% shifted to watching short videos (Zhou et al., 2024). | Caps can move the time elsewhere; design for less pressure instead. |
+| The same restrictions did reduce underage spending, including on loot boxes (Xiao, 2022). | Spending protections can work even where time limits don't. |
+
+### What the evidence does not settle
+
+- Most loot-box and fear-of-missing-out studies are cross-sectional, so the direction of cause is
+  unclear (Spicer et al., 2021; Caba-Machado et al., 2024).
+- Evidence on China's limits conflicts: industry telemetry shows no reduction in heavy play
+  (Zendle et al., 2023), while a survey after the 2021 rules found most heavy adolescent gamers
+  complying (Zhou et al., 2024).
+- Studies of play time and well-being mostly cover adults and single platforms; equivalence tests
+  were sometimes inconclusive (Ballou et al., 2025).
+
+### Gaps not yet searched
+
+- Notifications and interruptions, and their effect on stress outside play.
+- Catch-up mechanics such as rested bonuses, and whether they reduce pressure.
+- Children's design codes (for example the UK Age Appropriate Design Code) and consumer law on
+  dark patterns.
+- How guild and raid scheduling norms form, beyond a single ethnography.
+
+### References
+
+Ballou, N., Sewall, C. J. R., Ratcliffe, J., Zendle, D., Tokarchuk, L., & Deterding, S. (2024).
+Registered report evidence suggests no relationship between objectively tracked video game
+playtime and well-being over 3 months. *Technology, Mind, and Behavior, 5*(1), 28–42.
+https://doi.org/10.1037/tmb0000124
+
+Ballou, N., Vuorre, M., Hakman, T., Magnusson, K., & Przybylski, A. K. (2025). Perceived value of
+video games, but not hours played, predicts mental well-being in casual adult Nintendo players.
+*Royal Society Open Science, 12*(3), Article 241174. https://doi.org/10.1098/rsos.241174
+
+Caba-Machado, V., Díaz-López, A., Machimbarrena, J. M., & González-Cabrera, J. (2024). Fear of
+missing out, gaming disorder and internet gaming disorder: Systematic review. *Current Addiction
+Reports, 11*(6), 1006–1015. https://doi.org/10.1007/s40429-024-00595-7
+
+Clark, L., & Zack, M. (2023). Engineered highs: Reward variability and frequency as potential
+prerequisites of behavioural addiction. *Addictive Behaviors, 140*, Article 107626.
+https://doi.org/10.1016/j.addbeh.2023.107626
+
+Dahlan, R. P., & Susanty, M. (2022). Finding dark patterns in casual mobile games using heuristic
+evaluation. *PETIR, 15*(2), 185–195. https://doi.org/10.33322/petir.v15i2.1151
+
+Duman, H., & Ozkara, B. Y. (2019). The impact of social identity on online game addiction: The
+mediating role of the fear of missing out (FoMO) and the moderating role of the need to belong.
+*Current Psychology, 40*(9), 4571–4580. https://doi.org/10.1007/s12144-019-00392-w
+
+Egami, H., Rahman, M. S., Yamamoto, T., Egami, C., & Wakabayashi, T. (2024). Causal effect of
+video gaming on mental well-being in Japan 2020–2022. *Nature Human Behaviour, 8*(10),
+1943–1956. https://doi.org/10.1038/s41562-024-01948-y
+
+Frommel, J., & Mandryk, R. L. (2022). Daily quests or daily pests? The benefits and pitfalls of
+engagement rewards in games. *Proceedings of the ACM on Human-Computer Interaction, 6*(CHI PLAY),
+1–23. https://doi.org/10.1145/3549489
+
+Garea, S. S., Drummond, A., Sauer, J. D., Hall, L. C., & Williams, M. N. (2021). Meta-analysis of
+the relationship between problem gambling, excessive gaming and loot box spending.
+*International Gambling Studies, 21*(3), 460–479. https://doi.org/10.1080/14459795.2021.1914705
+
+Hing, N., Rockloff, M., Russell, A. M. T., Browne, M., Newall, P., Greer, N., King, D. L., &
+Thorne, H. (2022). Loot box purchasing is linked to problem gambling in adolescents when
+controlling for monetary gambling participation. *Journal of Behavioral Addictions*.
+https://doi.org/10.1556/2006.2022.00015
+
+Johannes, N., Vuorre, M., & Przybylski, A. K. (2021). Video game play is positively correlated
+with well-being. *Royal Society Open Science, 8*(2), Article 202049.
+https://doi.org/10.1098/rsos.202049
+
+Johnson, D., Formosa, J., Perry, R., Lalande, D., Türkay, S., Obst, P., & Mandryk, R. (2022).
+Unsatisfied needs as a predictor of obsessive passion for videogame play. *Psychology of Popular
+Media, 11*(1), 47–55. https://doi.org/10.1037/ppm0000299
+
+Koçak, Ö. E., Gorgievski, M., & Bakker, A. B. (2023). Recovery from work by playing video games.
+*Applied Psychology, 73*(3), 1331–1360. https://doi.org/10.1111/apps.12519
+
+Larrieu, M., Fombouchet, Y., Billieux, J., & Decamps, G. (2023). How gaming motives affect the
+reciprocal relationships between video game use and quality of life: A prospective study using
+objective playtime indicators. *Computers in Human Behavior, 147*, Article 107824.
+https://doi.org/10.1016/j.chb.2023.107824
+
+Luxford, E., Türkay, S., Frommel, J., Tobin, S. J., Mandryk, R. L., Formosa, J., & Johnson, D.
+(2022). Self-regulation as a mediator of the associations between passion for video games and
+well-being. *Cyberpsychology, Behavior, and Social Networking, 25*(5), 310–315.
+https://doi.org/10.1089/cyber.2021.0321
+
+Mandryk, R. L., Frommel, J., Armstrong, A., & Johnson, D. (2020). How passion for playing World
+of Warcraft predicts in-game social capital, loneliness, and wellbeing. *Frontiers in Psychology,
+11*, Article 2165. https://doi.org/10.3389/fpsyg.2020.02165
+
+Niknejad, S., Mildner, T., Zargham, N., Putze, S., & Malaka, R. (2024). Level up or game over:
+Exploring how dark patterns shape mobile games. In *Proceedings of the International Conference
+on Mobile and Ubiquitous Multimedia* (pp. 148–156). https://doi.org/10.1145/3701571.3701604
+
+Perry, R., Drachen, A., Kearney, A., Kriglstein, S., Nacke, L. E., Sifa, R., Wallner, G., &
+Johnson, D. (2018). Online-only friends, real-life friends or strangers? Differential
+associations with passion and social capital in video game play. *Computers in Human Behavior,
+79*, 202–210. https://doi.org/10.1016/j.chb.2017.10.032
+
+Petrovskaya, E., & Zendle, D. (2021). Predatory monetisation? A categorisation of unfair,
+misleading and aggressive monetisation techniques in digital games from the player perspective.
+*Journal of Business Ethics, 181*(4), 1065–1081. https://doi.org/10.1007/s10551-021-04970-6
+
+Przybylski, A. K., Weinstein, N., Ryan, R. M., & Rigby, C. S. (2009). Having to versus wanting to
+play: Background and consequences of harmonious versus obsessive engagement in video games.
+*CyberPsychology & Behavior, 12*(5), 485–492. https://doi.org/10.1089/cpb.2009.0083
+
+Rapp, A. (2021). Time, engagement and video games: How game design elements shape the
+temporalities of play in massively multiplayer online role-playing games. *Information Systems
+Journal, 32*(1), 5–32. https://doi.org/10.1111/isj.12328
+
+Spicer, S. G., Nicklin, L. L., Uther, M., Lloyd, J., Lloyd, H., & Close, J. (2021). Loot boxes,
+problem gambling and problem video gaming: A systematic review and meta-synthesis. *New Media &
+Society, 24*(4), 1001–1022. https://doi.org/10.1177/14614448211027175
+
+Vuorre, M., Johannes, N., Magnusson, K., & Przybylski, A. K. (2022). Time spent playing video
+games is unlikely to impact well-being. *Royal Society Open Science, 9*(7), Article 220411.
+https://doi.org/10.1098/rsos.220411
+
+Xiao, L. Y. (2022). Reserve your judgment on "Draconian" Chinese video gaming restrictions on
+children. *Journal of Behavioral Addictions*. https://doi.org/10.1556/2006.2022.00022
+
+Zendle, D., Cairns, P., Barnett, H., & McCall, C. (2020). Paying for loot boxes is linked to
+problem gambling, regardless of specific features like cash-out and pay-to-win. *Computers in
+Human Behavior, 102*, 181–191. https://doi.org/10.1016/j.chb.2019.07.003
+
+Zendle, D., Flick, C., Gordon-Petrovskaya, E., Ballou, N., Xiao, L. Y., & Drachen, A. (2023). No
+evidence that Chinese playtime mandates reduced heavy gaming in one segment of the video games
+industry. *Nature Human Behaviour, 7*(10), 1753–1766. https://doi.org/10.1038/s41562-023-01669-8
+
+Zhou, X., Liao, M., Gorowska, M., Chen, X., & Li, Y. (2024). Compliance and alternative behaviors
+of heavy gamers in adolescents to Chinese online gaming restriction policy. *Journal of
+Behavioral Addictions, 13*(2), 687–692. https://doi.org/10.1556/2006.2024.00021
