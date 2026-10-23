@@ -191,7 +191,7 @@ def label(metric: str) -> str:
     kind, _, good = metric.partition(".")
     good = good.replace("_", " ")
     return {
-        "price_index": f"{good.capitalize()} price",
+        "price_index": f"{good.capitalize()} price (× base price)",
         "shortage_days": f"{good.capitalize()} shortage days",
     }.get(kind, metric)
 
@@ -298,9 +298,16 @@ def check_gates(changes: list[Change], gates: dict[str, dict[str, float]]) -> li
                 out.append(
                     f"{label(c.metric)} in {_scenario_title(c.scenario)} is {ratio:.2f}× the base "
                     f"({_num(c.base_mean)} → {_num(c.head_mean)}); gate `{pattern}` allows "
-                    f"{limits.get('min_ratio', 0)}-{limits.get('max_ratio', 'any')}×"
+                    f"{_allowed(limits)}"
                 )
     return out
+
+
+def _allowed(limits: dict[str, float]) -> str:
+    low, high = limits.get("min_ratio"), limits.get("max_ratio")
+    if low is not None and high is not None:
+        return f"{low}× to {high}×"
+    return f"up to {high}×" if high is not None else f"at least {low}×"
 
 
 def invariant_problems(rows: list[dict[str, Any]]) -> list[str]:
