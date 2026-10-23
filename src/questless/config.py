@@ -145,14 +145,19 @@ class TownConfig:
     # Higher brackets as (threshold, rate), ascending: coin above each threshold pays that rate
     # instead of the one below it. Empty means one flat rate above upkeep_exempt (M58.3).
     levy_brackets: tuple[tuple[int, float], ...] = ()
+    # Reserve target (#72): while the town holds less than ``reserve_days`` of guard wages, every
+    # levy rate rises by ``reserve_rate``. 0 days turns it off.
+    reserve_days: int = 0
+    reserve_rate: float = 0.0
 
-    def levy(self, coin: int) -> int:
-        """The day's upkeep on ``coin``, each bracket taxing only the coin that falls in it."""
+    def levy(self, coin: int, surcharge: float = 0.0) -> int:
+        """The day's upkeep on ``coin``, each bracket taxing only the coin that falls in it.
+        ``surcharge`` is added to every bracket's rate (the reserve top-up)."""
         bands = [(self.upkeep_exempt, self.upkeep_rate), *self.levy_brackets]
         owed = 0.0
         for i, (threshold, rate) in enumerate(bands):
             top = bands[i + 1][0] if i + 1 < len(bands) else coin
-            owed += max(min(coin, top) - threshold, 0) * rate
+            owed += max(min(coin, top) - threshold, 0) * (rate + surcharge)
         return int(owed)
 
 
@@ -455,7 +460,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         town,
         "town",
         required={"treasury", "guard_wage", "market_tax", "upkeep_rate", "upkeep_exempt"},
-        optional={"levy_brackets"},
+        optional={"levy_brackets", "reserve_days", "reserve_rate"},
     )
     player = data["player"]
     _keys(player, "player", required={"wallet", "caravan_markup"})
@@ -481,6 +486,8 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             upkeep_rate=_fraction(town["upkeep_rate"], "town.upkeep_rate"),
             upkeep_exempt=_nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt"),
             levy_brackets=_levy_brackets(town),
+            reserve_days=_nonneg_int(town.get("reserve_days", 0), "town.reserve_days"),
+            reserve_rate=_reserve_rate(town),
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
         caravan_markup=_at_least(player["caravan_markup"], 1.0, "player.caravan_markup"),
@@ -612,6 +619,15 @@ def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
         out.append((threshold, _fraction(b["rate"], f"{where}.rate")))
         below = threshold
     return tuple(out)
+
+
+def _reserve_rate(town: Mapping[str, Any]) -> float:
+    """The top-up must keep every bracket's rate at or below 1."""
+    extra = _fraction(town.get("reserve_rate", 0.0), "town.reserve_rate")
+    top = max([town["upkeep_rate"], *(b["rate"] for b in town.get("levy_brackets", []))])
+    if top + extra > 1:
+        raise ConfigError(f"town.reserve_rate: {top} + {extra} would levy more than all the coin")
+    return extra
 
 
 def _nonneg_int(value: Any, where: str) -> int:

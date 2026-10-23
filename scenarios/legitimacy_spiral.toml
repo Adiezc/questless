@@ -11,6 +11,7 @@ days = 180
 
 [town]
 treasury = 300
+reserve_days = 0  # the baseline's reserve target (#72) lifts the town out; off to show the trap
 
 [legitimacy]
 enabled = true

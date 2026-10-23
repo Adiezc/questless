@@ -111,7 +111,7 @@ def test_crafting_never_uses_inputs_the_smith_does_not_have(world):
 
 
 def test_town_pays_guards_until_its_treasury_runs_out(baseline):
-    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0)
+    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0, reserve_days=0)
     world = build_world(dataclasses.replace(baseline, town=no_upkeep))
     wage = baseline.town.guard_wage
     guards = baseline.professions[Profession.GUARD].count
@@ -132,7 +132,7 @@ def test_town_pays_guards_until_its_treasury_runs_out(baseline):
 
 
 def test_unaffordable_guard_wages_rotate_between_guards(baseline):
-    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0)
+    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0, reserve_days=0)
     world = build_world(dataclasses.replace(baseline, town=no_upkeep, player_wallet=10000))
     guards = world.npcs_by_profession(Profession.GUARD)
     wage = baseline.town.guard_wage

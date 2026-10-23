@@ -133,13 +133,15 @@ class World:
         """Town levy on idle coin. Closes the money loop: coin that pools with one profession
         flows back to the town, which pays guards, who buy food and weapons. Guild treasuries
         above their ``max_treasury`` pay the same rate on the excess, so dues can't pool there
-        forever. Returns the levy paid by each guild."""
+        forever. Below its reserve target (#72) the town raises every rate by ``reserve_rate``.
+        Returns the levy paid by each guild."""
         town = self.config.town
-        rate = town.upkeep_rate
+        surcharge = town.reserve_rate if self._below_reserve() else 0.0
+        rate = town.upkeep_rate + surcharge
         evading = self.config.legitimacy.enabled
         pays = legitimacy.compliance(self) if evading else 1.0
         for npc in self.npcs_in_order():
-            levy = town.levy(self.ledger.balance(npc.account, Asset.COIN))
+            levy = town.levy(self.ledger.balance(npc.account, Asset.COIN), surcharge)
             if evading and levy and self.rng.stream("levy").random() >= pays:
                 stats.levy_evaded += levy  # the coin stays in the NPC's wallet
                 continue
@@ -159,6 +161,11 @@ class World:
             paid[gid] = levy
             stats.upkeep += levy
         return paid
+
+    def _below_reserve(self) -> bool:
+        town = self.config.town
+        floor = town.reserve_days * town.guard_wage * len(self.npcs_by_profession(Profession.GUARD))
+        return self.ledger.balance(TOWN, Asset.COIN) < floor
 
     def _pay_wages(self, stats: TickStats) -> None:
         wage = self.config.town.guard_wage

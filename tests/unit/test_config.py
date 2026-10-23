@@ -144,3 +144,38 @@ def test_levy_brackets_round_trip_through_saves(raw):
 
     cfg = parse_scenario(_with_brackets(raw, [{"threshold": 500, "rate": 0.05}]))
     assert parse_scenario(to_dict(cfg)) == cfg
+
+
+def test_reserve_target_parses_and_round_trips(raw):
+    """#72: the reserve target is optional; without it the levy never changes."""
+    off = copy.deepcopy(raw)
+    off["town"].pop("reserve_days", None)
+    off["town"].pop("reserve_rate", None)
+    town = parse_scenario(off).town
+    assert (town.reserve_days, town.reserve_rate) == (0, 0.0)
+    on = copy.deepcopy(raw)
+    on["town"].update(reserve_days=10, reserve_rate=0.02)
+    cfg = parse_scenario(on)
+    assert cfg.town.levy(1060, surcharge=0.02) == int(1000 * 0.05)
+    from questless.config import to_dict
+
+    assert parse_scenario(to_dict(cfg)) == cfg
+
+
+@pytest.mark.parametrize(
+    "town, message",
+    [
+        ({"reserve_days": -1}, "reserve_days: must be >= 0"),
+        ({"reserve_rate": 1.5}, "between 0 and 1"),
+        ({"upkeep_rate": 0.5, "reserve_rate": 0.6}, "more than all the coin"),
+        (
+            {"levy_brackets": [{"threshold": 500, "rate": 0.9}], "reserve_rate": 0.2},
+            "more than all the coin",
+        ),
+    ],
+)
+def test_bad_reserve_target_fails_loudly(raw, town, message):
+    raw = copy.deepcopy(raw)
+    raw["town"].update(town)
+    with pytest.raises(ConfigError, match=message):
+        parse_scenario(raw)

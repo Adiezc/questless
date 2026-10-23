@@ -88,6 +88,13 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- The town no longer runs dry in long runs (M13.12, #72). Guard wages were 10-12 coin a day more
+  than the levy and market tax brought in, so on seed 3 the treasury hit 0 by day 632 and guards
+  went unpaid on 341 of 2,000 days. The baseline now has a reserve target: while the town holds
+  less than `town.reserve_days` (10) days of wages, every levy rate rises by `town.reserve_rate`
+  (2%) until it recovers. On seeds 1-5 over 2,000 days the town stays above 1,790 coin after day
+  365 and no guard goes unpaid, with legitimacy on or off; so does Mine Disaster moved to day
+  1,015. `reserve_days = 0` turns it off; `legitimacy_spiral.toml` does, to keep showing the trap.
 - Saves of worlds whose guilds have no `max_treasury` load again; the absent ceiling was written
   as `None`, which the loader rejected.
 - Guild treasuries no longer hoard the town's coin in long runs. A guild's coin above its new
