@@ -207,3 +207,23 @@ def test_only_shocks_that_cut_output_and_overlap_are_cited(earlier):
         assert verify(world, c) == [], c.id
     summaries = [summarise(world, c) for c in later if c.kind is ContractKind.TRANSPORT]
     assert summaries and not any(earlier.name in s for s in summaries)
+
+
+@pytest.mark.parametrize("name", SCENARIOS)
+def test_chain_graph_round_trips_through_json(worlds, name):
+    """M55.0: every chain exports as nodes and cause-to-effect edges that survive JSON."""
+    import json
+
+    from questless.contracts.causes import graph
+
+    world = worlds[name]
+    for c in world.contracts.contracts.values():
+        g = graph(world, c)
+        assert json.loads(json.dumps(g)) == g, c.id
+        chain = c.provenance.chain
+        assert [n["kind"] for n in g["nodes"]] == [e.kind for e in chain]
+        assert len(g["edges"]) == sum(len(e.caused_by) for e in chain)
+        for edge in g["edges"]:
+            assert edge["from"] < edge["to"], (c.id, edge)  # causes come earlier in the chain
+        assert g["roots"] == [i for i, e in enumerate(chain) if not e.caused_by]
+        assert g["parent"] == c.parent_id
