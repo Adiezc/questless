@@ -641,7 +641,8 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
                 "professions": [str(p) for p in gc.professions],
                 "treasury": gc.treasury,
                 "dues_rate": gc.dues_rate,
-                "policy": asdict(gc.policy),
+                # An absent ceiling is left out, as in the TOML, so the save loads again.
+                "policy": {k: v for k, v in asdict(gc.policy).items() if v is not None},
             }
             for gid, gc in cfg.guilds.items()
         },

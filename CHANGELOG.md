@@ -52,6 +52,8 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Saves of worlds whose guilds have no `max_treasury` load again; the absent ceiling was written
+  as `None`, which the loader rejected.
 - Guild treasuries no longer hoard the town's coin in long runs. A guild's coin above its new
   `policy.max_treasury` (3,000 in the baseline) pays the daily upkeep levy to the town, reported
   as `GuildReport.upkeep`. Over 2,000 days on seeds 42 and 7, unpaid guard days fall from 899 and
