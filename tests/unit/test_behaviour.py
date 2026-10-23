@@ -163,3 +163,16 @@ def test_unaffordable_guard_wages_rotate_between_guards(baseline):
         assert stats.wages_unpaid == (len(guards) - daily_budget // wage) * wage
 
     assert len(paid) == len(guards), f"paid guards: {sorted(paid)} of {len(guards)}"
+
+
+def test_levy_brackets_conserve_coin_and_collect_more(baseline):
+    """M58.3: a steeper top bracket moves more coin to the town and keeps every invariant."""
+    steep = dataclasses.replace(baseline.town, levy_brackets=((200, 0.10),))
+    flat_world, steep_world = (
+        build_world(baseline),
+        build_world(dataclasses.replace(baseline, town=steep)),
+    )
+    flat_world.step(60)
+    steep_world.step(60)
+    steep_world.check_invariants()
+    assert sum(s.upkeep for s in steep_world.stats) > sum(s.upkeep for s in flat_world.stats)

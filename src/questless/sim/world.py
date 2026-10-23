@@ -128,9 +128,10 @@ class World:
         flows back to the town, which pays guards, who buy food and weapons. Guild treasuries
         above their ``max_treasury`` pay the same rate on the excess, so dues can't pool there
         forever. Returns the levy paid by each guild."""
-        rate, exempt = self.config.town.upkeep_rate, self.config.town.upkeep_exempt
+        town = self.config.town
+        rate = town.upkeep_rate
         for npc in self.npcs_in_order():
-            levy = int(max(self.ledger.balance(npc.account, Asset.COIN) - exempt, 0) * rate)
+            levy = town.levy(self.ledger.balance(npc.account, Asset.COIN))
             self.ledger.transfer(
                 npc.account, TOWN, Asset.COIN, levy, tick=self.tick, reason="upkeep"
             )

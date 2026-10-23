@@ -195,6 +195,11 @@ guard_wage = 7           # coin per guard per day, paid by the town
 market_tax = 0.05        # share of each trade's value paid to the town
 upkeep_rate = 0.03       # daily levy on each NPC's coin above upkeep_exempt
 upkeep_exempt = 60
+# Optional higher brackets (M58.3): coin above each threshold pays that rate instead. Thresholds
+# rise from upkeep_exempt; no exemptions and no cap by design. For example:
+# [[town.levy_brackets]]
+# threshold = 500
+# rate = 0.05
 
 [player]
 wallet = 600

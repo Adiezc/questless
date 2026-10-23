@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Progressive upkeep levy: optional `[[town.levy_brackets]]` (threshold, rate) above the flat
+  `upkeep_rate`, each bracket taxing only the coin that falls in it (M58.3). Without brackets the
+  levy and every state hash are unchanged.
 - CONTRIBUTING: "Giving everyone a turn". One claimed issue and one open pull request per
   person at a time, `good first issue` tasks kept for first-time contributors, and every bug fix
   needs a test shown to fail without the fix. The pull request template asks for both.

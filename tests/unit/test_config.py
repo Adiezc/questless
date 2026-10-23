@@ -98,3 +98,49 @@ def test_non_finite_toml_floats_are_rejected(tmp_path, token):
     )
     with pytest.raises(ConfigError, match=r"shocks\[0\]\.factor: must be a finite number"):
         load_scenario(path)
+
+
+def _with_brackets(raw, brackets):
+    raw = copy.deepcopy(raw)
+    raw["town"]["levy_brackets"] = brackets
+    return raw
+
+
+def test_levy_brackets_tax_only_the_coin_in_each_band(raw):
+    """M58.3: 3% on 60-500, 5% on 500-2000, 10% above 2000."""
+    town = parse_scenario(
+        _with_brackets(raw, [{"threshold": 500, "rate": 0.05}, {"threshold": 2000, "rate": 0.10}])
+    ).town
+    assert town.levy(60) == 0
+    assert town.levy(400) == int(340 * 0.03)
+    assert town.levy(1000) == int(440 * 0.03 + 500 * 0.05)
+    assert town.levy(3000) == int(440 * 0.03 + 1500 * 0.05 + 1000 * 0.10)
+
+
+def test_one_bracket_matches_the_flat_levy(baseline):
+    town = baseline.town
+    assert town.levy_brackets == ()
+    for coin in (0, 59, 60, 61, 999, 12_345):
+        assert town.levy(coin) == int(max(coin - town.upkeep_exempt, 0) * town.upkeep_rate)
+
+
+@pytest.mark.parametrize(
+    "brackets, message",
+    [
+        ([{"threshold": 50, "rate": 0.05}], "above the bracket before it"),
+        ([{"threshold": 500, "rate": 0.05}, {"threshold": 500, "rate": 0.1}], "above the bracket"),
+        ([{"threshold": 500, "rate": 1.5}], "between 0 and 1"),
+        ([{"threshold": 500}], "missing"),
+        ({"threshold": 500, "rate": 0.05}, "array of tables"),
+    ],
+)
+def test_bad_levy_brackets_fail_loudly(raw, brackets, message):
+    with pytest.raises(ConfigError, match=message):
+        parse_scenario(_with_brackets(raw, brackets))
+
+
+def test_levy_brackets_round_trip_through_saves(raw):
+    from questless.config import to_dict
+
+    cfg = parse_scenario(_with_brackets(raw, [{"threshold": 500, "rate": 0.05}]))
+    assert parse_scenario(to_dict(cfg)) == cfg
