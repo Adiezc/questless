@@ -33,6 +33,7 @@ RULES = (
     "legitimacy.",
     "transport.fee_rate",
     "player.caravan_markup",  # an import tariff
+    "player.max_buy_share",
     "guilds.*.dues_rate",
     "guilds.*.policy.",
 )

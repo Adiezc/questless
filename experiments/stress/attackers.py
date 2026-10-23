@@ -12,7 +12,8 @@ Every move goes through the player actions, so each run is a replayable save.
   cancelled when the need goes away, so the reward is still paid after prices fall.
 - ``Hoarder`` (buy on the news of a shock): the day a shock to a site is announced, spends half its
   coin on that site's goods, then fulfils the contracts the shortage creates from its own stock.
-  Before #93 it read the schedule and bought the day before.
+  Before #93 it read the schedule and bought the day before; the daily purchase cap
+  (``player.max_buy_share``) now limits how much it can take.
 - ``Flipper`` (accept and abandon): accepts every open contract it can afford, keeps the ones it
   can source at or below base price that day and abandons the rest, so it never holds a losing
   contract for long.

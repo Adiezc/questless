@@ -60,14 +60,14 @@ EXPLOIT_MARGIN = 1.25  # an attacker earning 25% more than honest on most seeds 
 FINDINGS = """
 ## Findings (10 seeds, written by hand from the tables above)
 
-- **No large exploit.** No attacker beats the better honest player by 25% on most seeds in more
-  than one scenario.
-- **Buying before a known shock** (hoarder) beats honest on 6/10 seeds in Iron Shortage, by a small
-  margin (median 4.8 against 4.2 coin/day), and adds a median 40 hungry NPC-days: the ore it buys
-  up is ore smiths can't. It earns nothing extra in the other scenarios. The shock schedule is in
-  the scenario file, so a player can read it.
-- **Claim and wait** (squatter) wins on 4/10 seeds everywhere. Accepted contracts aren't cancelled
-  when the need goes away, but waiting for cheap prices doesn't pay enough to matter today.
+- **No exploit.** No attacker beats the better honest player by 25% on most seeds anywhere.
+- **Buying on the news of a shock** (hoarder) beats honest on 2/10 seeds in Iron Shortage. Before
+  #93 it won on 6/10 by reading the schedule and buying the day before (12/20 when it bought on
+  the announcement instead), adding 40-87 hungry NPC-days. The schedule is now hidden and a player
+  may buy at most 25% of a good's sellable stock a day (`player.max_buy_share`).
+- **Claim and wait** (squatter) wins on at most half the seeds in every scenario. Accepted
+  contracts aren't cancelled when the need goes away, but waiting for cheap prices doesn't pay
+  enough to matter today.
 - **Accept and abandon** (flipper) earns nothing: each abandon costs reputation (median -300) and
   a guild pays a distrusted player less.
 - **Deliver before sourcing** (prober) earns nothing except honest transport fees in Bandits: no

@@ -149,7 +149,7 @@ the no-shock run on the same seed. Full write-up: [docs/RESULTS.md](docs/RESULTS
 | Finding | Number |
 |---|---|
 | Invalid contracts across all runs | **0 of 180 runs** |
-| Iron shortage: days with >10% demand unmet, no player vs scripted player | **37 → 18-19** |
+| Iron shortage: days with >10% demand unmet, no player vs scripted player | **37 → 18** |
 | Iron shortage: recovery after the mine reopens, no player vs player | 3 → 2 days |
 | Mine disaster: seeds that recover (any arm) | 0-2 of 10: an economic trap contracts can't fix |
 | Hungry NPC-days with guilds on vs off (iron / disaster / drought) | 6 vs 176 · 843 vs 1423 · 466 vs 573 |

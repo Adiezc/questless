@@ -54,15 +54,20 @@ def accept(world: World, contract_id: str) -> str:
 
 
 def buy(world: World, good: str, qty: int) -> int:
-    """Buy up to ``qty`` from NPCs holding more than they need. Returns units bought."""
+    """Buy up to ``qty`` from NPCs holding more than they need. Returns units bought. A player may
+    buy at most ``max_buy_share`` of the day's sellable stock (#93), so one buyer can't corner a
+    good the moment a shock is announced."""
     asset = _good(good)
     qty = _positive(qty)
     price = world.unit_price(asset)
     affordable = world.ledger.balance(PLAYER, Asset.COIN) // price
     asks = _asks(world, asset)
-    want = min(qty, affordable)
+    want = min(qty, affordable, _buy_allowance(world, asset, asks))
     if not asks or want <= 0:
-        raise ActionError(f"nobody is selling {good} (or you cannot afford it at {price})")
+        raise ActionError(
+            f"nobody is selling {good} (or you cannot afford it at {price}, "
+            "or you've bought today's share)"
+        )
     sold = allocate(want, asks, world.rng.stream("player"))
     tax_rate = world.config.town.market_tax
     for seller, units in sorted(sold.items()):
@@ -234,6 +239,23 @@ def _asks(world: World, asset: Asset) -> list[tuple[str, int]]:
         if surplus > 0:
             asks.append((npc.id, surplus))
     return asks
+
+
+def _buy_allowance(world: World, asset: Asset, asks: list[tuple[str, int]]) -> int:
+    """Units the player may still buy today: ``max_buy_share`` of the day's sellable stock (what
+    is on offer now plus what the player already bought today), at least 1 while any is on offer."""
+    share = world.config.max_buy_share
+    on_offer = sum(units for _, units in asks)
+    if share >= 1:
+        return on_offer
+    bought = 0
+    for e in reversed(world.ledger.journal):
+        if e.tick < world.tick:
+            break
+        if e.asset is asset and e.dst == PLAYER and e.reason == "sale to player":
+            bought += e.qty
+    cap = max(int(share * (on_offer + bought)), 1)
+    return max(cap - bought, 0)
 
 
 def _caravan_cost(world: World, asset: Asset, qty: int) -> int:

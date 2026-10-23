@@ -7,31 +7,31 @@ Median (range) over 5 seeds, 120 days played, same shock timing relative to join
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 377 (255 to 535) | 950 (306 to 1318) |
-| contracts fulfilled | 8 (6 to 11) | 6 (4 to 7) |
+| profit | 287 (236 to 445) | 950 (263 to 1318) |
+| contracts fulfilled | 8 (5 to 10) | 6 (4 to 7) |
 | days to first contract | 34 (33 to 35) | 29 (26 to 32) |
-| reputation | 80 (50 to 100) | 60 (40 to 70) |
-| contracts posted | 15 (11 to 37) | 10 (8 to 38) |
-| town treasury | 1934 (1933 to 2042) | 1988 (1929 to 2800) |
+| reputation | 80 (30 to 100) | 60 (40 to 70) |
+| contracts posted | 13 (11 to 18) | 10 (8 to 42) |
+| town treasury | 1934 (1933 to 1997) | 2016 (1929 to 2800) |
 
 ## Mine Disaster
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 375 (259 to 577) | 1943 (724 to 2575) |
+| profit | 412 (363 to 577) | 1943 (744 to 2575) |
 | contracts fulfilled | 10 (5 to 12) | 10 (7 to 12) |
 | days to first contract | 32 (31 to 34) | 29 (26 to 31) |
-| reputation | 60 (30 to 100) | 100 (70 to 100) |
+| reputation | 80 (30 to 100) | 100 (70 to 100) |
 | contracts posted | 113 (80 to 125) | 13 (11 to 72) |
-| town treasury | 2043 (1709 to 2717) | 1940 (1088 to 2017) |
+| town treasury | 2043 (1820 to 2717) | 1940 (1088 to 2017) |
 
 ## Drought
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 691 (490 to 1071) | 782 (559 to 1350) |
-| contracts fulfilled | 12 (9 to 15) | 12 (5 to 14) |
+| profit | 691 (463 to 1071) | 782 (559 to 1294) |
+| contracts fulfilled | 11 (10 to 15) | 12 (5 to 14) |
 | days to first contract | 28 (28 to 29) | 26 (25 to 27) |
-| reputation | 70 (60 to 110) | 80 (20 to 90) |
-| contracts posted | 17 (10 to 37) | 18 (5 to 25) |
-| town treasury | 1967 (1948 to 2007) | 1998 (1963 to 2808) |
+| reputation | 80 (70 to 100) | 70 (20 to 90) |
+| contracts posted | 14 (10 to 17) | 18 (5 to 23) |
+| town treasury | 2006 (1948 to 2070) | 1998 (1963 to 2950) |

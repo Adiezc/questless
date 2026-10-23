@@ -107,6 +107,13 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- A player can no longer corner a good ahead of a shock (#93). The exploit hunt found that buying
+  iron ore before the scheduled Iron Shortage out-earned honest play on most seeds and left smiths
+  hungry. `Simulation.config` no longer shows the shock schedule; `Simulation.shocks()` lists
+  shocks once they start, without saying how long they last. Hiding dates alone made it worse
+  (buying on the announcement won on 12/20 seeds), so a player may now also buy at most
+  `player.max_buy_share` (25% in the baseline) of a good's sellable stock each day. The hoarder
+  now beats honest play on 3/20 seeds in Iron Shortage and none elsewhere.
 - Pools no longer block members they give nothing to (M13.8, #46). A partly funded guild or town
   pool listed every short member, even those it gave 0 units, and suppressed their own contracts
   until it closed; so did members who ran short after the pool was posted. Pools now list only
