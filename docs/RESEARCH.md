@@ -18,7 +18,7 @@ with DOI links. Link to it from the milestone in [ROADMAP.md](ROADMAP.md).
 ## Contents
 
 - [M58: fairness for late joiners](#m58-fairness-for-late-joiners) (searched 2026-10-23)
-- [Respectful play (proposed)](#respectful-play-proposed) (searched 2026-10-23)
+- [M59: respectful play](#m59-respectful-play) (searched 2026-10-23)
 
 ## M58: fairness for late joiners
 
@@ -266,13 +266,13 @@ Zewde, N. (2019). Universal baby bonds reduce Black-White wealth inequality, pro
 net worth of all young adults. *The Review of Black Political Economy, 47*(1), 3–19.
 https://doi.org/10.1177/0034644619885321
 
-## Respectful play (proposed)
+## M59: respectful play
 
-A proposed milestone, not yet on the roadmap (drafted as "M60"). Its aim: players feel rewarded,
-but never feel they must give up work, family or friends to keep up. The draft would run the bot
-league with players on different schedules (a weekend player, a shift worker, a parent with 30
-minutes a day, a daily grinder) and fail the economy check (M23) when a change makes absence
-costlier or rewards streaks, short windows or fixed appointments.
+Evidence for [M59](ROADMAP.md#m59-respectful-play-6-h) (first drafted as "M60"). Its aim:
+players feel rewarded, but never feel they must give up work, family or friends to keep up. M59
+runs the bot league with players on different schedules (a weekend player, a shift worker, a
+parent with 30 minutes a day, a daily grinder) and fails the economy check (M23) when a change
+makes absence costlier or rewards streaks, short windows or fixed appointments.
 
 The question for the research: what actually harms players, and which design levers help?
 

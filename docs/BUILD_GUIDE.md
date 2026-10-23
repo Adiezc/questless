@@ -32,7 +32,7 @@ guarantees, propose it in the issue before building it.
     [M32](#m32-elections-and-a-campaign-finance-register) ·
     [M48](#m48-legitimacy-and-levy-evasion) · [M49](#m49-beliefs-and-rumours) ·
     [M52](#m52-policy-stress-tests) · [M56](#m56-unpaid-guards-turn-bandit) ·
-    [M57](#m57-amnesty-and-debt-jubilee)
+    [M57](#m57-amnesty-and-debt-jubilee) · [M59](#m59-respectful-play)
   - v0.4: [M33](#m33-theme-packs-and-world-topology) · [M34](#m34-regions-and-simulation-level-of-detail) ·
     [M35](#m35-a-map-shaped-by-the-economy) · [M36](#m36-ecology-and-the-commons) ·
     [M37](#m37-legal-automation-standing-orders) · [M38](#m38-players-post-quests) ·
@@ -749,6 +749,41 @@ registry's forgiven amounts; a jubilee replays exactly; an amnesty returns every
 
 **Pitfalls:** a jubilee that fires every time legitimacy dips teaches lenders never to lend. Keep a
 long cooldown and let the experiment show the trade-off rather than tuning it away.
+
+### M59: respectful play
+
+**Where:** new `experiments/schedules.py` (schedule bots and the harness), `metrics.py` (pressure
+measures), `player.py` and `contracts/engine.py` (hand-back and lapse levers), `config.py`
+(`[respect]`), M23's `.questless/ci.toml` gates and pull-request comment. Evidence and references:
+[RESEARCH.md](RESEARCH.md#m59-respectful-play).
+
+**Design in one paragraph:** a schedule is a list of the days and minutes a bot plays; outside
+them it takes no action at all. Each schedule bot wraps the same strategy (the scripted player
+from `experiments/shock_vs_baseline.py` until M31's bot league exists), so any difference between
+them comes from the schedule. The harness runs every schedule over the same seeds and compares
+them at equal hours played. Pressure measures are read from the ledger and the contract history,
+never from the bots' own reports, so they re-verify like everything else. Levers are knobs in
+`[respect]`, off in the baseline, so the baseline hash is unchanged until a scenario turns one on.
+
+| Task | Size | How |
+|---|---|---|
+| M59.1 Schedule bots **(good first issue, can start now)** | S | `Schedule(name, days)` with five presets: grinder, parent, shift worker, weekend, returner. A wrapper that calls the strategy's `act()` only on scheduled days, budgeted by minutes (one action is one minute, as a stand-in). |
+| M59.2 Harness **(can start now)** | M | Seeds × schedules on the shipped scenarios, one player per run until M31 lands. Report reward per hour, contracts finished and reputation at equal hours played. |
+| M59.3 Pressure measures | M | Per run: cost of absence (reputation lost to lapsed contracts plus rewards that closed while the returner was away), share of contracts with a window under 7 days, share of reward from consecutive-day play, and any reward whose amount is random. All in `TickStats` or derived from the contract history. |
+| M59.4 Hand-back lever | S | `respect.free_handback_share`: abandoning before that share of the window has passed costs no reputation. `respect.lapse_penalty`: a multiplier on the reputation lost when an accepted contract lapses. Both default to today's behaviour. |
+| M59.5 Group and catch-up levers | M | For pooled contracts (guild and town supply), let each member deliver their share on any day in the window; a time-limited offer records a `catch_up_id` linking the later path to the same reward. |
+| M59.6 CI gates | S | `[respect]` limits in `.questless/ci.toml`: schedule fairness bound, cost-of-absence bound, zero paid random rewards. A planted daily streak bonus and a planted random reward must both fail the check. |
+| M59.7 Report with evidence | S | Each measure's section in the report quotes its research finding from RESEARCH.md and states what the model leaves out (real lives are not schedules; minutes are a stand-in for effort). |
+
+**Tests:** with every lever off the baseline hash is unchanged; a schedule bot never acts outside
+its schedule; the returner's cost of absence is zero when no contract was live while it was away;
+the planted streak bonus and random reward are flagged on every seed; every measure re-verifies
+from `TickStats` and the contract history.
+
+**Pitfalls:** don't turn the check into a cap on hours, which the evidence says doesn't help.
+Diminishing returns on grinding should lower the grinder's reward per extra hour, not make the
+others' hours worth more than they earn. A free hand-back is something a bot can farm by claiming
+everything and giving it back; check it against M52's claim-and-wait attacker before enabling it.
 
 ### M33: theme packs and world topology
 
