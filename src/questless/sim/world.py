@@ -13,6 +13,7 @@ from questless.config import ScenarioConfig
 from questless.contracts.engine import ContractBoard, ContractTickReport
 from questless.contracts.needs import NeedTracker
 from questless.contracts.validation import check_board
+from questless.sim import legitimacy
 from questless.sim.entities import (
     ESCROW,
     IN_TRANSIT,
@@ -52,6 +53,8 @@ class TickStats:
     # Per profession: "count", "idle", "hungry", "broken" (worked without usable equipment).
     by_profession: dict[Profession, Counter[str]] = field(default_factory=dict)
     upkeep: int = 0
+    levy_evaded: int = 0  # upkeep NPCs didn't pay because legitimacy was low (M48)
+    legitimacy: float | None = None  # end of day; None while the feature is off
     wages_paid: int = 0
     wages_unpaid: int = 0
     market: dict[Asset, MarketReport] = field(default_factory=dict)
@@ -76,6 +79,7 @@ class World:
     actions: list[dict] = field(default_factory=list)  # player action log, for replay
     pending_caravans: list[tuple[int, str, int]] = field(default_factory=list)
     tick: int = 0
+    legitimacy: float = 1.0  # the town's authority, 0-1; only moves when enabled (M48)
     check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
 
     def step(self, days: int = 1) -> None:
@@ -108,6 +112,8 @@ class World:
         stats.transport = ship(self)
         guild_upkeep = self._collect_upkeep(stats)
         self._pay_wages(stats)
+        if self.config.legitimacy.enabled:
+            legitimacy.update(self, stats)
         relief = provide_relief(self)  # before the market, so relief buys food today
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
@@ -130,8 +136,13 @@ class World:
         forever. Returns the levy paid by each guild."""
         town = self.config.town
         rate = town.upkeep_rate
+        evading = self.config.legitimacy.enabled
+        pays = legitimacy.compliance(self) if evading else 1.0
         for npc in self.npcs_in_order():
             levy = town.levy(self.ledger.balance(npc.account, Asset.COIN))
+            if evading and levy and self.rng.stream("levy").random() >= pays:
+                stats.levy_evaded += levy  # the coin stays in the NPC's wallet
+                continue
             self.ledger.transfer(
                 npc.account, TOWN, Asset.COIN, levy, tick=self.tick, reason="upkeep"
             )
@@ -211,6 +222,8 @@ class World:
             "caravans": sorted(self.pending_caravans),
             "actions": len(self.actions),
             "rng": repr(self.rng.getstate()),
+            # Only when on, so worlds without the feature keep their hashes.
+            **({"legitimacy": round(self.legitimacy, 9)} if self.config.legitimacy.enabled else {}),
         }
 
     def state_hash(self) -> str:
@@ -282,6 +295,7 @@ def build_world(config: ScenarioConfig) -> World:
         guilds=guilds,
         prices={asset: float(gc.base_price) for asset, gc in config.goods.items()},
         modifiers=Modifiers([Shock.from_config(s) for s in config.shocks]),
+        legitimacy=config.legitimacy.start,
     )
     world.check_invariants()
     return world

@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Legitimacy and levy evasion (M48.1, M48.2), off by default. With `[legitimacy] enabled = true`
+  the town's authority falls fast when guard wages go unpaid or NPCs go hungry and recovers slowly;
+  while it is low, NPCs evade the upkeep levy and keep the coin, so nothing is created or
+  destroyed. Recorded as `TickStats.legitimacy` and `TickStats.levy_evaded`.
 - Economy diff core (M23.1, M23.2, M23.4): `questless.diff` measures a run (price index and
   shortage days per good, hungry NPC-days, recovery days, contracts posted and delivered, coin by
   sector, invariant failures), runs a scenario × seed grid in one or several processes with
