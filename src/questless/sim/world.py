@@ -135,7 +135,10 @@ class World:
 
     def _pay_wages(self, stats: TickStats) -> None:
         wage = self.config.town.guard_wage
-        for guard in self.npcs_by_profession(Profession.GUARD):
+        guards = self.npcs_by_profession(Profession.GUARD)
+        if self.ledger.balance(TOWN, Asset.COIN) < wage * len(guards):
+            self.rng.stream("wages").shuffle(guards)
+        for guard in guards:
             if self.ledger.balance(TOWN, Asset.COIN) >= wage:
                 self.ledger.transfer(
                     TOWN, guard.account, Asset.COIN, wage, tick=self.tick, reason="guard wage"

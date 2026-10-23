@@ -5,9 +5,9 @@ import dataclasses
 import pytest
 
 from questless.sim.behaviour import eat, maintain, run_npc_day
-from questless.sim.entities import OUTSIDE, TOWN, DailyRecord, NPCState, Profession
+from questless.sim.entities import OUTSIDE, PLAYER, TOWN, DailyRecord, NPCState, Profession
 from questless.sim.ledger import Asset
-from questless.sim.world import build_world
+from questless.sim.world import TickStats, build_world
 
 
 @pytest.fixture
@@ -129,3 +129,37 @@ def test_town_pays_guards_until_its_treasury_runs_out(baseline):
     assert stats.wages_paid == paid_guards * wage
     assert stats.wages_unpaid == (guards - paid_guards) * wage
     assert world.ledger.balance(TOWN, Asset.COIN) >= 0  # never overdrawn
+
+
+def test_unaffordable_guard_wages_rotate_between_guards(baseline):
+    no_upkeep = dataclasses.replace(baseline.town, upkeep_rate=0.0)
+    world = build_world(dataclasses.replace(baseline, town=no_upkeep, player_wallet=10000))
+    guards = world.npcs_by_profession(Profession.GUARD)
+    wage = baseline.town.guard_wage
+    daily_budget = len(guards) // 2 * wage
+    paid = set()
+
+    for _ in range(60):
+        world.ledger.transfer(
+            TOWN,
+            OUTSIDE,
+            Asset.COIN,
+            world.ledger.balance(TOWN, Asset.COIN),
+            tick=world.tick,
+            reason="test",
+        )
+        world.ledger.transfer(
+            PLAYER, TOWN, Asset.COIN, daily_budget, tick=world.tick, reason="test"
+        )
+        stats = TickStats(tick=world.tick)
+        journal_start = len(world.ledger.journal)
+        world._pay_wages(stats)
+        paid.update(
+            entry.dst.removeprefix("npc_")
+            for entry in list(world.ledger.journal)[journal_start:]
+            if entry.reason == "guard wage" and entry.dst is not None
+        )
+        assert stats.wages_paid == daily_budget
+        assert stats.wages_unpaid == (len(guards) - daily_budget // wage) * wage
+
+    assert len(paid) == len(guards), f"paid guards: {sorted(paid)} of {len(guards)}"
