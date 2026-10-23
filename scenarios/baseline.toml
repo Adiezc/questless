@@ -221,3 +221,9 @@ weapons = 1000
 # start = 10                 # tick the shock begins
 # duration = 20
 # factor = 0.3
+
+# Civilization DNA (M54): knobs a colony may change from its parent, each within [low, high].
+# Only institutional knobs are allowed (see MUTABLE_KNOBS in config.py); "*" means every guild.
+# [founding.bounds]
+# "town.upkeep_rate" = [0.02, 0.05]
+# "guilds.*.dues_rate" = [0.03, 0.08]

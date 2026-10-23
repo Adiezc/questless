@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Civilization DNA groundwork (M54.1): `questless.founding.mutate(cfg, rng)` returns a colony's
+  config, nudging only the knobs listed in an optional `[founding.bounds]` table within their
+  ranges, and `mutations(parent, child)` lists what changed. Only institutional knobs may be
+  listed (levy, wages, market tax, guild dues and relief); the strict loader checks the result.
 - Experiment: `experiments/late_joiners.py` runs the scripted player joining a fresh world and a
   world that has run 1,000 days, with the shock moved to the same point in the player's time, and
   compares them at equal days played (M58.2). First results: the old world doesn't treat a
