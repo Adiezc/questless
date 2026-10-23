@@ -28,6 +28,7 @@ from typing import Any
 
 from questless import persistence
 from questless.config import ScenarioConfig, load_scenario
+from questless.contracts import causes
 from questless.contracts.model import Contract, Status
 from questless.contracts.provenance import series, verify
 from questless.contracts.summary import summarise
@@ -158,6 +159,10 @@ class Simulation:
         if ev.measure is None:
             raise ValueError(f"step {step} of {contract_id} ({ev.kind}) is not a measured value")
         return series(self.world, ev.measure[0])
+
+    def graph(self, contract_id: str) -> dict[str, Any]:
+        """The causal chain as JSON-ready nodes (evidence) and edges (cause to effect)."""
+        return causes.graph(self.world, self.contract(contract_id))
 
     def lineage(self, contract_id: str) -> dict[str, list[str]]:
         board = self.world.contracts

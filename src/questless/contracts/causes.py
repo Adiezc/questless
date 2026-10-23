@@ -19,7 +19,7 @@ contract for an upstream good becomes this contract's *parent*: the quest lineag
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from questless.config import ShockEffect
 from questless.contracts.model import ContractKind
@@ -29,6 +29,7 @@ from questless.sim.ledger import Asset
 
 if TYPE_CHECKING:
     from questless.contracts.engine import Candidate
+    from questless.contracts.model import Contract
     from questless.sim.world import World
 
 LOOKBACK = 60  # days searched for shocks and parent contracts
@@ -256,3 +257,45 @@ def _note_parent(walk: _Walk, upstream: Asset) -> None:
     ]
     if recent:
         walk.parent = max(recent, key=lambda c: (c.created_tick, c.id)).id
+
+
+def graph(world: World, contract: Contract) -> dict[str, Any]:
+    """The contract's causal chain as a graph of plain JSON values (M55.0).
+
+    Nodes are the chain's evidence, in chain order, with their rendered sentence and the measure
+    keys ``verify()`` re-checks. Edges run from cause to effect, one per ``caused_by`` link, so a
+    map (M15) or wiki page (M25) can draw the chain without knowing the engine's types."""
+    names = {n.id: n.name for n in world.npcs.values()}
+    chain = contract.provenance.chain
+    nodes = [
+        {
+            "id": i,
+            "tick": ev.tick,
+            "kind": ev.kind,
+            "subject": ev.subject,
+            "metric": ev.metric,
+            "value": ev.value,
+            "threshold": ev.threshold,
+            "baseline": ev.baseline,
+            "text": ev.render(names),
+            "measure": _jsonable(ev.measure),
+            "baseline_measure": _jsonable(ev.baseline_measure),
+        }
+        for i, ev in enumerate(chain)
+    ]
+    edges = [{"from": j, "to": i} for i, ev in enumerate(chain) for j in ev.caused_by]
+    return {
+        "contract": contract.id,
+        "good": str(contract.good),
+        "parent": contract.provenance.parent_contract,
+        "roots": [i for i, ev in enumerate(chain) if not ev.caused_by],
+        "nodes": nodes,
+        "edges": edges,
+    }
+
+
+def _jsonable(value: Any) -> Any:
+    """Tuples (measure keys) become lists, so the graph survives a JSON round trip unchanged."""
+    if isinstance(value, tuple | list):
+        return [_jsonable(v) for v in value]
+    return value

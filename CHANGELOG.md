@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `causes.graph(world, contract)` and `Simulation.graph(contract_id)` export a quest's causal chain
+  as JSON: evidence as nodes (with their sentence and measure keys) and cause-to-effect edges
+  (M55.0). Ready for the map (M15) and the wiki (M25).
 - CONTRIBUTING: "Giving everyone a turn". One claimed issue and one open pull request per
   person at a time, `good first issue` tasks kept for first-time contributors, and every bug fix
   needs a test shown to fail without the fix. The pull request template asks for both.
