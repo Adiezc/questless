@@ -194,9 +194,11 @@ class ContractBoard:
     def generate(self, world: World, report: ContractTickReport) -> None:
         cfg = world.config.contracts
         for cand in _candidates(world, self):
-            if cand.covered_by and self.live_for(cand.covered_by):
-                report.suppressed["covered_by_pool"] += 1
-                continue
+            if cand.covered_by:
+                live_pool = self.live_for(cand.covered_by)
+                if live_pool and live_pool.beneficiaries.get(cand.requester, 0) > 0:
+                    report.suppressed["covered_by_pool"] += 1
+                    continue
             if self.live_for(cand.key):
                 report.suppressed["duplicate"] += 1
                 continue
@@ -243,7 +245,9 @@ class ContractBoard:
         if reward < cfg.min_reward:
             report.suppressed["too_small"] += 1
             return None
-        beneficiaries = allocate(qty, sorted(cand.beneficiaries.items()))
+        beneficiaries = {
+            k: v for k, v in allocate(qty, sorted(cand.beneficiaries.items())).items() if v > 0
+        }
         world.ledger.transfer(
             funder, ESCROW, Asset.COIN, reward, tick=world.tick, reason="contract escrow"
         )
@@ -515,4 +519,5 @@ def _reason(world: World, cand: Candidate, qty: int) -> str:
 def _need_resolved(world: World, c: Contract, resolve_days: int) -> bool:
     if c.kind is ContractKind.TRANSPORT:
         return world.needs.calm_days(TRANSPORT, c.good) >= resolve_days
-    return all(world.needs.calm_days(n, c.good) >= resolve_days for n in c.beneficiaries)
+    recipients = [n for n, q in c.beneficiaries.items() if q > 0]
+    return all(world.needs.calm_days(n, c.good) >= resolve_days for n in recipients)

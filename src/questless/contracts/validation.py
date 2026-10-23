@@ -57,6 +57,8 @@ def check_board(world: World, board: ContractBoard) -> None:
             problems.append(f"{c.id} has no provenance")
         if c.reward <= 0 or c.qty <= 0:
             problems.append(f"{c.id} has non-positive reward or quantity")
+        if any(qty <= 0 for qty in c.beneficiaries.values()):
+            problems.append(f"{c.id} has non-positive quantity for a beneficiary")
         if sum(c.beneficiaries.values()) != c.qty:
             problems.append(f"{c.id} beneficiaries do not add up to qty")
     if problems:
