@@ -1,181 +1,181 @@
 scenario,arm,seed,shortage_days,recovery_days,late_output_pct,hungry_npc_days,contracts_posted,contracts_fulfilled,contracts_expired,invalid_contracts,player_profit,ms_per_tick
-iron_shortage,baseline,1,6,0,100.0,153,0,0,0,0,0,1.97
-iron_shortage,shock,1,50,5,144.2,78,49,0,18,0,0,2.3
-iron_shortage,shock+importer,1,18,2,121.6,112,10,10,0,0,366,2.32
+iron_shortage,baseline,1,6,0,100.0,153,0,0,0,0,0,1.81
+iron_shortage,shock,1,50,5,144.2,78,49,0,18,0,0,2.18
+iron_shortage,shock+importer,1,18,2,121.6,112,10,10,0,0,366,1.76
 iron_shortage,shock+local,1,24,2,124.8,112,11,6,0,0,287,1.85
-iron_shortage,"shock, no guilds",1,30,6,65.6,367,65,0,28,0,0,2.06
-iron_shortage,"shock+local, no guilds",1,32,3,79.9,383,51,3,25,0,26,2.02
-iron_shortage,baseline,2,8,0,100.0,21,0,0,0,0,0,1.68
+iron_shortage,"shock, no guilds",1,30,6,65.6,367,65,0,28,0,0,2.16
+iron_shortage,"shock+local, no guilds",1,49,3,149.9,254,27,4,6,0,26,1.82
+iron_shortage,baseline,2,8,0,100.0,21,0,0,0,0,0,1.66
 iron_shortage,shock,2,35,3,111.6,0,31,0,5,0,0,1.9
-iron_shortage,shock+importer,2,19,2,100.2,113,13,13,0,0,541,1.89
-iron_shortage,shock+local,2,19,2,104.2,113,15,10,0,0,441,1.72
-iron_shortage,"shock, no guilds",2,19,2,94.9,235,38,0,17,0,0,1.81
-iron_shortage,"shock+local, no guilds",2,17,2,44.6,385,66,7,25,0,80,2.0
-iron_shortage,baseline,3,6,0,100.0,104,0,0,0,0,0,2.12
-iron_shortage,shock,3,36,5,104.4,0,28,0,9,0,0,2.06
-iron_shortage,shock+importer,3,17,2,102.8,113,11,11,0,0,360,2.02
-iron_shortage,shock+local,3,17,2,104.8,113,13,8,0,0,255,2.13
-iron_shortage,"shock, no guilds",3,19,3,110.7,141,26,0,7,0,0,2.02
-iron_shortage,"shock+local, no guilds",3,32,2,112.9,170,26,6,2,0,36,1.79
-iron_shortage,baseline,4,24,0,100.0,87,0,0,0,0,0,1.69
-iron_shortage,shock,4,44,3,120.9,2,31,0,9,0,0,2.0
-iron_shortage,shock+importer,4,15,2,110.4,118,11,10,1,0,199,1.93
-iron_shortage,shock+local,4,19,2,104.3,226,31,6,5,0,377,2.41
-iron_shortage,"shock, no guilds",4,36,2,123.6,190,33,0,5,0,0,1.87
-iron_shortage,"shock+local, no guilds",4,18,2,20.9,868,94,6,37,0,99,2.4
-iron_shortage,baseline,5,14,0,100.0,93,2,0,0,0,0,2.15
-iron_shortage,shock,5,24,3,125.1,22,30,0,7,0,0,2.11
-iron_shortage,shock+importer,5,19,2,120.9,165,12,12,0,0,639,1.95
-iron_shortage,shock+local,5,30,2,112.0,266,37,11,6,0,535,1.95
-iron_shortage,"shock, no guilds",5,39,3,140.1,77,23,0,5,0,0,1.85
-iron_shortage,"shock+local, no guilds",5,34,2,131.4,106,26,7,4,0,108,1.82
-iron_shortage,baseline,6,0,0,100.0,120,0,0,0,0,0,1.89
-iron_shortage,shock,6,27,3,122.7,10,36,0,18,0,0,2.11
-iron_shortage,shock+importer,6,17,1,126.1,171,15,15,0,0,468,2.64
-iron_shortage,shock+local,6,17,1,120.2,191,17,6,1,0,172,2.04
-iron_shortage,"shock, no guilds",6,36,2,131.5,174,37,0,8,0,0,1.94
-iron_shortage,"shock+local, no guilds",6,17,2,69.2,370,55,9,26,0,148,2.04
-iron_shortage,baseline,7,5,0,100.0,117,0,0,0,0,0,1.78
-iron_shortage,shock,7,38,3,147.4,25,39,0,10,0,0,2.07
-iron_shortage,shock+importer,7,18,2,134.0,179,15,14,1,0,545,1.94
-iron_shortage,shock+local,7,18,2,117.1,221,20,11,1,0,499,1.83
-iron_shortage,"shock, no guilds",7,50,4,162.8,251,33,0,15,0,0,1.91
-iron_shortage,"shock+local, no guilds",7,37,4,100.5,316,32,3,20,0,43,2.02
-iron_shortage,baseline,8,0,0,100.0,151,0,0,0,0,0,1.8
-iron_shortage,shock,8,42,4,116.8,1,24,0,10,0,0,2.28
-iron_shortage,shock+importer,8,19,3,99.2,118,15,15,0,0,560,2.03
-iron_shortage,shock+local,8,20,2,107.5,117,14,11,1,0,517,2.04
-iron_shortage,"shock, no guilds",8,45,5,124.8,147,35,0,13,0,0,1.99
-iron_shortage,"shock+local, no guilds",8,19,3,60.9,356,53,6,23,0,85,1.87
+iron_shortage,shock+importer,2,19,2,100.2,113,13,13,0,0,541,2.2
+iron_shortage,shock+local,2,19,2,104.2,113,15,10,0,0,441,1.77
+iron_shortage,"shock, no guilds",2,19,2,94.9,235,38,0,17,0,0,1.83
+iron_shortage,"shock+local, no guilds",2,39,2,114.5,242,39,6,11,0,18,1.9
+iron_shortage,baseline,3,6,0,100.0,104,0,0,0,0,0,1.72
+iron_shortage,shock,3,36,5,104.4,0,28,0,9,0,0,1.87
+iron_shortage,shock+importer,3,17,2,102.8,113,11,11,0,0,360,1.8
+iron_shortage,shock+local,3,17,2,104.8,113,13,8,0,0,255,1.83
+iron_shortage,"shock, no guilds",3,19,3,110.7,141,26,0,7,0,0,1.74
+iron_shortage,"shock+local, no guilds",3,32,2,112.9,170,26,6,2,0,36,1.75
+iron_shortage,baseline,4,24,0,100.0,87,0,0,0,0,0,1.68
+iron_shortage,shock,4,44,3,120.9,2,31,0,9,0,0,1.88
+iron_shortage,shock+importer,4,15,2,110.4,118,11,10,1,0,199,1.79
+iron_shortage,shock+local,4,17,2,120.7,175,18,5,5,0,236,1.9
+iron_shortage,"shock, no guilds",4,36,2,123.6,190,33,0,5,0,0,1.82
+iron_shortage,"shock+local, no guilds",4,18,2,20.9,868,94,6,37,0,99,2.27
+iron_shortage,baseline,5,14,0,100.0,93,2,0,0,0,0,1.59
+iron_shortage,shock,5,24,3,125.1,22,30,0,7,0,0,1.88
+iron_shortage,shock+importer,5,19,2,120.9,165,12,12,0,0,639,1.78
+iron_shortage,shock+local,5,20,2,121.5,117,11,9,1,0,445,1.82
+iron_shortage,"shock, no guilds",5,39,3,140.1,77,23,0,5,0,0,1.79
+iron_shortage,"shock+local, no guilds",5,35,2,134.0,119,25,5,5,0,98,1.82
+iron_shortage,baseline,6,0,0,100.0,120,0,0,0,0,0,1.69
+iron_shortage,shock,6,27,3,122.7,10,36,0,18,0,0,1.8
+iron_shortage,shock+importer,6,17,1,126.1,171,15,15,0,0,468,1.84
+iron_shortage,shock+local,6,17,1,120.2,191,17,6,1,0,172,1.86
+iron_shortage,"shock, no guilds",6,36,2,131.5,174,37,0,8,0,0,1.85
+iron_shortage,"shock+local, no guilds",6,17,2,69.2,370,55,9,26,0,148,1.97
+iron_shortage,baseline,7,5,0,100.0,117,0,0,0,0,0,1.68
+iron_shortage,shock,7,38,3,147.4,25,39,0,10,0,0,1.96
+iron_shortage,shock+importer,7,18,2,134.0,179,15,14,1,0,545,1.88
+iron_shortage,shock+local,7,18,2,115.1,117,14,8,2,0,387,1.7
+iron_shortage,"shock, no guilds",7,50,4,162.8,251,33,0,15,0,0,1.83
+iron_shortage,"shock+local, no guilds",7,35,4,150.4,251,33,5,9,0,127,1.89
+iron_shortage,baseline,8,0,0,100.0,151,0,0,0,0,0,1.71
+iron_shortage,shock,8,42,4,116.8,1,24,0,10,0,0,1.87
+iron_shortage,shock+importer,8,19,3,99.2,118,15,15,0,0,560,1.87
+iron_shortage,shock+local,8,19,3,97.9,155,16,10,0,0,388,1.87
+iron_shortage,"shock, no guilds",8,45,5,124.8,147,35,0,13,0,0,1.71
+iron_shortage,"shock+local, no guilds",8,19,3,60.9,356,53,6,23,0,85,1.96
 iron_shortage,baseline,9,4,0,100.0,90,0,0,0,0,0,1.7
-iron_shortage,shock,9,47,5,127.5,2,38,0,11,0,0,2.03
-iron_shortage,shock+importer,9,17,3,94.3,44,7,7,0,0,275,1.78
-iron_shortage,shock+local,9,21,3,93.9,103,16,8,2,0,278,1.86
-iron_shortage,"shock, no guilds",9,38,5,108.3,179,30,0,10,0,0,1.86
-iron_shortage,"shock+local, no guilds",9,35,4,80.4,306,47,8,16,0,96,2.05
-iron_shortage,baseline,10,6,0,100.0,135,0,0,0,0,0,1.62
-iron_shortage,shock,10,19,3,114.0,12,36,0,17,0,0,1.99
-iron_shortage,shock+importer,10,18,2,89.4,143,15,15,0,0,534,1.84
-iron_shortage,shock+local,10,18,2,93.6,100,15,8,1,0,294,1.84
+iron_shortage,shock,9,47,5,127.5,2,38,0,11,0,0,1.97
+iron_shortage,shock+importer,9,17,3,94.3,44,7,7,0,0,275,1.8
+iron_shortage,shock+local,9,18,3,90.7,169,12,9,1,0,351,1.85
+iron_shortage,"shock, no guilds",9,38,5,108.3,179,30,0,10,0,0,1.81
+iron_shortage,"shock+local, no guilds",9,35,4,80.4,306,47,8,16,0,96,1.81
+iron_shortage,baseline,10,6,0,100.0,135,0,0,0,0,0,1.7
+iron_shortage,shock,10,19,3,114.0,12,36,0,17,0,0,1.98
+iron_shortage,shock+importer,10,18,2,89.4,143,15,15,0,0,534,1.85
+iron_shortage,shock+local,10,18,2,92.1,102,15,8,1,0,297,1.86
 iron_shortage,"shock, no guilds",10,29,3,99.2,174,31,0,7,0,0,1.83
-iron_shortage,"shock+local, no guilds",10,18,2,19.7,661,82,5,43,0,81,2.2
-mine_disaster,baseline,1,6,0,100.0,153,0,0,0,0,0,1.76
-mine_disaster,shock,1,31,,21.1,918,106,0,64,0,0,2.47
-mine_disaster,shock+importer,1,29,,22.6,747,67,41,15,0,3694,2.25
-mine_disaster,shock+local,1,31,,22.1,930,125,5,60,0,375,2.65
+iron_shortage,"shock+local, no guilds",10,18,2,19.7,661,82,5,43,0,81,2.22
+mine_disaster,baseline,1,6,0,100.0,153,0,0,0,0,0,1.74
+mine_disaster,shock,1,31,,21.1,918,106,0,64,0,0,2.46
+mine_disaster,shock+importer,1,29,,22.6,747,67,41,15,0,3694,2.26
+mine_disaster,shock+local,1,31,,22.1,930,125,5,60,0,375,2.74
 mine_disaster,"shock, no guilds",1,29,,0.0,1495,102,0,56,0,0,2.48
-mine_disaster,"shock+local, no guilds",1,26,,0.0,1493,100,5,59,0,61,2.54
-mine_disaster,baseline,2,8,0,100.0,21,0,0,0,0,0,1.74
-mine_disaster,shock,2,32,,0.0,1325,114,0,70,0,0,2.69
-mine_disaster,shock+importer,2,29,,20.6,678,78,48,17,0,3697,2.28
-mine_disaster,shock+local,2,29,,48.0,355,80,10,29,0,499,2.3
-mine_disaster,"shock, no guilds",2,32,,0.0,1427,128,0,61,0,0,2.57
-mine_disaster,"shock+local, no guilds",2,24,,0.0,1455,121,8,64,0,121,2.59
+mine_disaster,"shock+local, no guilds",1,26,,0.0,1493,100,5,59,0,61,2.55
+mine_disaster,baseline,2,8,0,100.0,21,0,0,0,0,0,1.71
+mine_disaster,shock,2,32,,0.0,1325,114,0,70,0,0,2.68
+mine_disaster,shock+importer,2,29,,20.6,678,78,48,17,0,3697,2.3
+mine_disaster,shock+local,2,29,,48.0,355,80,10,29,0,499,2.32
+mine_disaster,"shock, no guilds",2,32,,0.0,1427,128,0,61,0,0,2.59
+mine_disaster,"shock+local, no guilds",2,24,,0.0,1455,121,8,64,0,121,2.63
 mine_disaster,baseline,3,6,0,100.0,104,0,0,0,0,0,1.73
-mine_disaster,shock,3,31,,0.0,1300,110,0,83,0,0,2.61
+mine_disaster,shock,3,31,,0.0,1300,110,0,83,0,0,2.62
 mine_disaster,shock+importer,3,27,,0.2,1234,100,56,23,0,5033,2.66
-mine_disaster,shock+local,3,27,,18.1,832,113,10,68,0,363,2.57
+mine_disaster,shock+local,3,27,,18.1,832,113,10,68,0,363,2.63
 mine_disaster,"shock, no guilds",3,29,,0.0,1390,108,0,58,0,0,2.51
-mine_disaster,"shock+local, no guilds",3,24,,0.0,1416,103,6,62,0,78,2.52
+mine_disaster,"shock+local, no guilds",3,24,,0.0,1440,98,7,61,0,105,2.51
 mine_disaster,baseline,4,24,0,100.0,87,0,0,0,0,0,1.71
-mine_disaster,shock,4,30,,0.0,1388,97,0,78,0,0,2.56
-mine_disaster,shock+importer,4,26,,21.6,798,76,43,17,0,3701,2.29
-mine_disaster,shock+local,4,29,,19.6,820,119,7,56,0,259,2.9
-mine_disaster,"shock, no guilds",4,27,,0.0,1490,89,0,54,0,0,2.55
-mine_disaster,"shock+local, no guilds",4,21,,0.0,1502,100,4,61,0,78,2.66
-mine_disaster,baseline,5,14,0,100.0,93,2,0,0,0,0,2.25
-mine_disaster,shock,5,78,55,107.6,88,87,0,36,0,0,2.56
-mine_disaster,shock+importer,5,30,,31.2,505,68,39,16,0,3144,2.36
-mine_disaster,shock+local,5,30,,29.6,588,106,12,47,0,577,2.57
-mine_disaster,"shock, no guilds",5,33,,0.0,1419,108,0,53,0,0,2.71
-mine_disaster,"shock+local, no guilds",5,33,,0.0,1459,101,5,49,0,135,2.72
-mine_disaster,baseline,6,0,0,100.0,120,0,0,0,0,0,1.81
-mine_disaster,shock,6,30,,23.2,768,116,0,64,0,0,2.67
-mine_disaster,shock+importer,6,29,,4.4,1252,86,53,16,0,4434,2.67
-mine_disaster,shock+local,6,29,,0.0,1324,104,11,69,0,604,2.88
-mine_disaster,"shock, no guilds",6,30,,0.0,1416,113,0,65,0,0,2.58
-mine_disaster,"shock+local, no guilds",6,25,,0.0,1428,104,12,51,0,203,2.65
-mine_disaster,baseline,7,5,0,100.0,117,0,0,0,0,0,1.83
-mine_disaster,shock,7,30,,0.0,1415,110,0,80,0,0,2.68
-mine_disaster,shock+importer,7,29,,27.8,597,68,36,15,0,3169,2.91
-mine_disaster,shock+local,7,31,,27.3,699,96,10,48,0,563,2.53
-mine_disaster,"shock, no guilds",7,26,,0.0,1502,116,0,65,0,0,2.48
-mine_disaster,"shock+local, no guilds",7,16,,0.0,1543,115,7,63,0,113,2.79
-mine_disaster,baseline,8,0,0,100.0,151,0,0,0,0,0,1.64
-mine_disaster,shock,8,49,,64.4,304,70,0,37,0,0,2.29
-mine_disaster,shock+importer,8,30,,20.3,646,73,39,17,0,2745,2.28
-mine_disaster,shock+local,8,30,,20.1,681,107,11,48,0,396,2.5
-mine_disaster,"shock, no guilds",8,31,,23.4,822,85,0,40,0,0,2.25
-mine_disaster,"shock+local, no guilds",8,30,,0.0,1474,100,9,65,0,158,2.53
-mine_disaster,baseline,9,4,0,100.0,90,0,0,0,0,0,1.75
-mine_disaster,shock,9,74,,50.7,307,76,0,47,0,0,2.29
-mine_disaster,shock+importer,9,30,,1.4,1352,98,57,14,0,4995,2.56
-mine_disaster,shock+local,9,30,,0.0,1375,109,12,71,0,661,2.71
-mine_disaster,"shock, no guilds",9,30,,0.0,1459,117,0,65,0,0,2.53
-mine_disaster,"shock+local, no guilds",9,25,,0.0,1486,115,12,53,0,202,2.56
-mine_disaster,baseline,10,6,0,100.0,135,0,0,0,0,0,1.76
+mine_disaster,shock,4,30,,0.0,1388,97,0,78,0,0,2.58
+mine_disaster,shock+importer,4,26,,21.6,798,76,43,17,0,3701,2.28
+mine_disaster,shock+local,4,26,,20.0,918,125,10,59,0,412,2.72
+mine_disaster,"shock, no guilds",4,27,,0.0,1490,89,0,54,0,0,2.42
+mine_disaster,"shock+local, no guilds",4,22,,0.0,1513,107,5,63,0,36,2.59
+mine_disaster,baseline,5,14,0,100.0,93,2,0,0,0,0,1.72
+mine_disaster,shock,5,78,55,107.6,88,87,0,36,0,0,2.32
+mine_disaster,shock+importer,5,30,,31.2,505,68,39,16,0,3144,2.19
+mine_disaster,shock+local,5,30,,29.6,588,106,12,47,0,577,2.53
+mine_disaster,"shock, no guilds",5,33,,0.0,1419,108,0,53,0,0,2.55
+mine_disaster,"shock+local, no guilds",5,29,,0.0,1460,102,6,42,0,140,2.62
+mine_disaster,baseline,6,0,0,100.0,120,0,0,0,0,0,1.73
+mine_disaster,shock,6,30,,23.2,768,116,0,64,0,0,2.5
+mine_disaster,shock+importer,6,29,,4.4,1252,86,53,16,0,4434,2.52
+mine_disaster,shock+local,6,29,,0.0,1324,104,11,69,0,604,2.72
+mine_disaster,"shock, no guilds",6,30,,0.0,1416,113,0,65,0,0,2.46
+mine_disaster,"shock+local, no guilds",6,25,,0.0,1428,104,12,51,0,203,2.58
+mine_disaster,baseline,7,5,0,100.0,117,0,0,0,0,0,1.73
+mine_disaster,shock,7,30,,0.0,1415,110,0,80,0,0,2.55
+mine_disaster,shock+importer,7,29,,27.8,597,68,36,15,0,3169,2.18
+mine_disaster,shock+local,7,31,,27.3,699,96,10,48,0,563,2.46
+mine_disaster,"shock, no guilds",7,26,,0.0,1502,116,0,65,0,0,2.45
+mine_disaster,"shock+local, no guilds",7,16,,0.0,1543,115,7,63,0,113,2.54
+mine_disaster,baseline,8,0,0,100.0,151,0,0,0,0,0,1.69
+mine_disaster,shock,8,49,,64.4,304,70,0,37,0,0,2.23
+mine_disaster,shock+importer,8,30,,20.3,646,73,39,17,0,2745,2.24
+mine_disaster,shock+local,8,30,,20.1,681,107,11,48,0,396,2.54
+mine_disaster,"shock, no guilds",8,31,,23.4,822,85,0,40,0,0,2.2
+mine_disaster,"shock+local, no guilds",8,30,,0.0,1474,100,9,65,0,158,2.52
+mine_disaster,baseline,9,4,0,100.0,90,0,0,0,0,0,1.74
+mine_disaster,shock,9,74,,50.7,307,76,0,47,0,0,2.71
+mine_disaster,shock+importer,9,30,,1.4,1352,98,57,14,0,4995,2.61
+mine_disaster,shock+local,9,29,,0.0,1387,113,11,69,0,625,2.76
+mine_disaster,"shock, no guilds",9,30,,0.0,1459,117,0,65,0,0,2.48
+mine_disaster,"shock+local, no guilds",9,25,,0.0,1486,115,12,53,0,202,2.6
+mine_disaster,baseline,10,6,0,100.0,135,0,0,0,0,0,1.73
 mine_disaster,shock,10,82,63,64.3,270,65,0,41,0,0,2.24
-mine_disaster,shock+importer,10,29,,19.1,676,83,42,21,0,3375,2.32
+mine_disaster,shock+importer,10,29,,19.1,676,83,42,21,0,3375,2.31
 mine_disaster,shock+local,10,29,,17.8,763,124,11,61,0,404,2.64
-mine_disaster,"shock, no guilds",10,32,,0.0,1419,105,0,64,0,0,2.47
-mine_disaster,"shock+local, no guilds",10,26,,0.0,1454,104,7,54,0,120,2.53
-drought,baseline,1,0,0,100.0,153,0,0,0,0,0,1.72
+mine_disaster,"shock, no guilds",10,32,,0.0,1419,105,0,64,0,0,2.44
+mine_disaster,"shock+local, no guilds",10,26,,0.0,1454,104,7,54,0,120,2.6
+drought,baseline,1,0,0,100.0,153,0,0,0,0,0,1.73
 drought,shock,1,41,2,98.8,529,32,0,9,0,0,2.02
-drought,shock+importer,1,25,2,101.3,474,11,11,0,0,940,1.94
-drought,shock+local,1,43,2,102.0,514,37,12,9,0,623,2.1
+drought,shock+importer,1,25,2,101.3,474,11,11,0,0,940,1.92
+drought,shock+local,1,25,2,100.9,423,13,11,2,0,466,1.92
 drought,"shock, no guilds",1,26,2,100.3,582,11,0,1,0,0,1.78
-drought,"shock+local, no guilds",1,25,2,99.3,551,8,8,0,0,620,1.82
-drought,baseline,2,0,0,100.0,21,0,0,0,0,0,1.76
-drought,shock,2,50,2,84.5,393,67,0,26,0,0,2.09
-drought,shock+importer,2,24,2,97.2,453,10,10,0,0,691,1.74
+drought,"shock+local, no guilds",1,25,2,99.3,551,8,8,0,0,620,1.81
+drought,baseline,2,0,0,100.0,21,0,0,0,0,0,1.6
+drought,shock,2,50,2,84.5,393,67,0,26,0,0,2.27
+drought,shock+importer,2,24,2,97.2,453,10,10,0,0,691,1.84
 drought,shock+local,2,24,2,97.2,453,10,10,0,0,691,1.85
-drought,"shock, no guilds",2,48,2,74.4,624,51,0,22,0,0,2.05
-drought,"shock+local, no guilds",2,24,2,100.6,506,11,10,1,0,251,1.81
-drought,baseline,3,0,0,100.0,104,0,0,0,0,0,1.86
-drought,shock,3,24,2,100.5,434,8,0,3,0,0,2.04
-drought,shock+importer,3,24,2,100.4,384,12,12,0,0,777,2.0
-drought,shock+local,3,24,2,97.1,373,10,9,1,0,490,1.83
-drought,"shock, no guilds",3,24,2,98.6,507,4,0,1,0,0,2.31
-drought,"shock+local, no guilds",3,24,2,102.4,481,7,6,1,0,122,1.92
-drought,baseline,4,0,0,100.0,87,0,0,0,0,0,1.82
-drought,shock,4,26,2,98.6,462,19,0,6,0,0,2.13
-drought,shock+importer,4,42,2,95.3,602,74,38,13,0,1971,2.67
-drought,shock+local,4,27,2,104.3,450,17,15,1,0,1071,2.18
-drought,"shock, no guilds",4,26,2,97.8,517,14,0,2,0,0,2.03
-drought,"shock+local, no guilds",4,25,2,97.2,507,8,7,1,0,671,1.77
-drought,baseline,5,0,0,100.0,93,2,0,0,0,0,1.78
-drought,shock,5,46,2,91.4,479,31,0,6,0,0,2.53
-drought,shock+importer,5,24,2,103.2,472,18,17,0,0,879,2.03
-drought,shock+local,5,30,2,102.2,494,17,15,1,0,900,1.96
-drought,"shock, no guilds",5,27,2,96.4,599,11,0,4,0,0,1.84
-drought,"shock+local, no guilds",5,24,2,99.5,565,10,9,1,0,579,1.88
-drought,baseline,6,0,0,100.0,120,0,0,0,0,0,1.66
-drought,shock,6,25,2,100.1,449,20,0,7,0,0,2.0
-drought,shock+importer,6,24,2,97.5,423,10,10,0,0,973,1.94
-drought,shock+local,6,29,2,99.5,423,14,10,0,0,991,1.94
-drought,"shock, no guilds",6,25,2,96.7,586,9,0,1,0,0,1.79
-drought,"shock+local, no guilds",6,24,2,97.0,543,8,7,1,0,591,1.79
-drought,baseline,7,0,0,100.0,117,0,0,0,0,0,1.76
-drought,shock,7,33,2,97.4,523,20,0,5,0,0,1.82
-drought,shock+importer,7,40,2,103.5,445,38,31,3,0,1386,2.11
-drought,shock+local,7,50,2,80.8,646,72,13,26,0,809,2.36
-drought,"shock, no guilds",7,30,2,96.7,664,10,0,3,0,0,1.79
-drought,"shock+local, no guilds",7,25,2,100.0,546,13,13,0,0,760,1.8
-drought,baseline,8,0,0,100.0,151,0,0,0,0,0,1.75
-drought,shock,8,30,2,101.8,469,15,0,8,0,0,1.95
-drought,shock+importer,8,36,2,97.2,458,12,11,0,0,610,1.99
-drought,shock+local,8,46,2,80.0,618,65,13,12,0,705,2.29
-drought,"shock, no guilds",8,24,2,101.1,564,10,0,3,0,0,1.64
-drought,"shock+local, no guilds",8,24,2,96.1,600,8,7,1,0,563,1.63
-drought,baseline,9,0,0,100.0,90,0,0,0,0,0,1.73
-drought,shock,9,26,2,98.8,433,17,0,4,0,0,1.94
-drought,shock+importer,9,44,2,101.5,442,51,37,7,0,1835,2.19
-drought,shock+local,9,47,2,83.8,576,76,15,19,0,949,2.34
-drought,"shock, no guilds",9,26,2,98.4,510,8,0,1,0,0,1.79
-drought,"shock+local, no guilds",9,25,2,97.6,535,11,11,0,0,706,1.83
-drought,baseline,10,0,0,100.0,135,0,0,0,0,0,1.82
-drought,shock,10,48,2,88.3,523,56,0,15,0,0,2.04
-drought,shock+importer,10,43,2,101.1,442,36,29,1,0,1408,2.09
-drought,shock+local,10,40,2,104.6,484,39,16,7,0,1092,2.1
-drought,"shock, no guilds",10,46,2,95.4,563,48,0,24,0,0,2.0
-drought,"shock+local, no guilds",10,44,2,104.5,606,36,12,11,0,716,2.02
+drought,"shock, no guilds",2,48,2,74.4,624,51,0,22,0,0,2.01
+drought,"shock+local, no guilds",2,41,2,101.9,583,33,11,7,0,694,1.95
+drought,baseline,3,0,0,100.0,104,0,0,0,0,0,1.75
+drought,shock,3,24,2,100.5,434,8,0,3,0,0,1.89
+drought,shock+importer,3,24,2,100.4,384,12,12,0,0,777,1.75
+drought,shock+local,3,24,2,98.4,406,14,11,1,0,463,1.87
+drought,"shock, no guilds",3,24,2,98.6,507,4,0,1,0,0,1.73
+drought,"shock+local, no guilds",3,24,2,101.6,479,6,6,0,0,477,1.76
+drought,baseline,4,0,0,100.0,87,0,0,0,0,0,1.72
+drought,shock,4,26,2,98.6,462,19,0,6,0,0,1.98
+drought,shock+importer,4,42,2,95.3,602,74,38,13,0,1971,2.31
+drought,shock+local,4,27,2,104.3,450,17,15,1,0,1071,1.98
+drought,"shock, no guilds",4,26,2,97.8,517,14,0,2,0,0,1.66
+drought,"shock+local, no guilds",4,25,2,99.0,512,9,8,1,0,679,1.77
+drought,baseline,5,0,0,100.0,93,2,0,0,0,0,1.75
+drought,shock,5,46,2,91.4,479,31,0,6,0,0,2.03
+drought,shock+importer,5,24,2,103.2,472,18,17,0,0,879,1.93
+drought,shock+local,5,24,2,97.9,473,16,13,2,0,934,1.91
+drought,"shock, no guilds",5,27,2,96.4,599,11,0,4,0,0,1.82
+drought,"shock+local, no guilds",5,24,2,99.1,565,10,9,1,0,550,1.8
+drought,baseline,6,0,0,100.0,120,0,0,0,0,0,1.61
+drought,shock,6,25,2,100.1,449,20,0,7,0,0,1.94
+drought,shock+importer,6,24,2,97.5,423,10,10,0,0,973,1.86
+drought,shock+local,6,24,2,102.0,422,15,13,2,0,673,1.91
+drought,"shock, no guilds",6,25,2,96.7,586,9,0,1,0,0,1.77
+drought,"shock+local, no guilds",6,24,2,97.0,543,8,7,1,0,591,1.82
+drought,baseline,7,0,0,100.0,117,0,0,0,0,0,1.75
+drought,shock,7,33,2,97.4,523,20,0,5,0,0,1.78
+drought,shock+importer,7,40,2,103.5,445,38,31,3,0,1386,2.09
+drought,shock+local,7,49,2,81.8,656,75,12,28,0,505,2.38
+drought,"shock, no guilds",7,30,2,96.7,664,10,0,3,0,0,1.76
+drought,"shock+local, no guilds",7,25,2,102.3,548,15,15,0,0,781,1.83
+drought,baseline,8,0,0,100.0,151,0,0,0,0,0,1.72
+drought,shock,8,30,2,101.8,469,15,0,8,0,0,1.92
+drought,shock+importer,8,36,2,97.2,458,12,11,0,0,610,1.96
+drought,shock+local,8,30,2,101.4,475,10,9,1,0,704,1.87
+drought,"shock, no guilds",8,24,2,101.1,564,10,0,3,0,0,1.84
+drought,"shock+local, no guilds",8,24,2,96.4,597,8,7,1,0,563,1.78
+drought,baseline,9,0,0,100.0,90,0,0,0,0,0,1.7
+drought,shock,9,26,2,98.8,433,17,0,4,0,0,1.9
+drought,shock+importer,9,44,2,101.5,442,51,37,7,0,1835,2.18
+drought,shock+local,9,40,2,102.8,431,34,17,5,0,1024,2.1
+drought,"shock, no guilds",9,26,2,98.4,510,8,0,1,0,0,1.82
+drought,"shock+local, no guilds",9,25,2,96.6,550,10,9,1,0,662,1.66
+drought,baseline,10,0,0,100.0,135,0,0,0,0,0,1.72
+drought,shock,10,48,2,88.3,523,56,0,15,0,0,2.12
+drought,shock+importer,10,43,2,101.1,442,36,29,1,0,1408,2.06
+drought,shock+local,10,44,2,101.2,515,58,20,13,0,982,2.29
+drought,"shock, no guilds",10,46,2,95.4,563,48,0,24,0,0,2.06
+drought,"shock+local, no guilds",10,40,2,104.2,604,32,12,8,0,795,1.99

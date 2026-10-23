@@ -6,7 +6,7 @@ Reproduce with:
 uv run --extra experiments python experiments/shock_vs_baseline.py --seeds 10
 ```
 
-That takes about 45 seconds. Last regenerated on 2026-10-23, after the town reserve (#72) and the pool fix (#46). The generated tables are in [`experiments/results/summary.md`](../experiments/results/summary.md), with raw rows in [`runs.csv`](../experiments/results/runs.csv).
+That takes about 45 seconds. Last regenerated on 2026-10-23, after the town reserve (#72), the pool fix (#46) and the daily purchase cap (#93). The generated tables are in [`experiments/results/summary.md`](../experiments/results/summary.md), with raw rows in [`runs.csv`](../experiments/results/runs.csv).
 
 ## Setup
 
@@ -31,7 +31,7 @@ That takes about 45 seconds. Last regenerated on 2026-10-23, after the town rese
 |---|---|---|
 | no player | 37 | 3 days |
 | importer | 18 | 2 days |
-| local | 19 | 2 days |
+| local | 18 | 2 days |
 
 **3. Player contracts do not break an economic trap.** In the mine disaster, ore output stays at about 20% of the no-shock run whether or not the player helps. At most 2 of 10 seeds recover (2 with no player, none with one). Broke miners can't buy tools, and contracts move goods but don't restore their purchasing power. Getting out of a liquidity trap needs a different instrument, such as loans, subsidies or a relief program. That's a design finding, not a tuning problem.
 
@@ -42,11 +42,11 @@ That takes about 45 seconds. Last regenerated on 2026-10-23, after the town rese
 | guilds on | 6 | 843 | 466 |
 | guilds off | 176 | 1423 | 573 |
 
-**5. Quests have side effects, and the engine shows them.** With an active player, hunger rose in the iron shortage (6 → 115-118 NPC-days). Two mechanisms, both visible in the data:
-- **Profit leaves circulation.** The bot earns 335-500 coin per run in the iron shortage (median) and never spends it in town. Every coin it keeps is a coin the town no longer has.
+**5. Quests have side effects, and the engine shows them.** With an active player, hunger rose in the iron shortage (6 → 117-118 NPC-days). Two mechanisms, both visible in the data:
+- **Profit leaves circulation.** The bot earns 324-500 coin per run in the iron shortage (median) and never spends it in town. Every coin it keeps is a coin the town no longer has.
 - **Imports crowd out local producers.** An earlier version of this experiment, before traders could also buy the town's surplus, showed this most starkly. A bot importing finished tools left miners with 37 coin between them, against 1,103 without the bot. Imported tools replaced local smiths' sales, so smiths bought less ore. The current engine routes caravan coin back into the town as purchases of its surplus, which softens the effect but doesn't remove it.
 
-**6. The drought shows no player effect beyond noise** on shortage days: 32 (no player) vs 30-35 (with player), with heavily overlapping ranges. Food contracts are small and many, and the market recovers 2 days after the rain returns, so there's little left for a player to fix.
+**6. The drought shows no player effect beyond noise** on shortage days: 32 (no player) vs 26-30 (with player), with heavily overlapping ranges. Food contracts are small and many, and the market recovers 2 days after the rain returns, so there's little left for a player to fix.
 
 ## What this means for a design
 
@@ -57,7 +57,7 @@ That takes about 45 seconds. Last regenerated on 2026-10-23, after the town rese
 
 ## See also
 
-- **Exploit hunt (M52):** scripted attackers against honest play on the same scenarios, in [`experiments/results/exploit_hunt.md`](../experiments/results/exploit_hunt.md). No large exploit; buying ore before a scheduled shock wins narrowly in Iron Shortage and adds hunger (#93).
+- **Exploit hunt (M52):** scripted attackers against honest play on the same scenarios, in [`experiments/results/exploit_hunt.md`](../experiments/results/exploit_hunt.md). No exploit since #93, which hid the shock schedule from players and capped how much of a good they can buy in a day; before that, buying ore ahead of the Iron Shortage won on most seeds and added hunger.
 - **Late joiners (M58.2):** a newcomer to a 1,000-day-old world, in [`experiments/results/late_joiners.md`](../experiments/results/late_joiners.md).
 
 ## Limitations

@@ -184,6 +184,8 @@ class ScenarioConfig:
     legitimacy: LegitimacyConfig = LegitimacyConfig()
     # [founding.bounds]: knobs a colony may change from its parent, as (knob, low, high) (M54)
     founding_bounds: tuple[tuple[str, float, float], ...] = ()
+    # Most of a good's sellable stock the player may buy in one day (#93). 1 means no cap.
+    max_buy_share: float = 1.0
 
     @property
     def population(self) -> int:
@@ -463,7 +465,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         optional={"levy_brackets", "reserve_days", "reserve_rate"},
     )
     player = data["player"]
-    _keys(player, "player", required={"wallet", "caravan_markup"})
+    _keys(player, "player", required={"wallet", "caravan_markup"}, optional={"max_buy_share"})
 
     cfg = ScenarioConfig(
         name=str(sc["name"]),
@@ -491,6 +493,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         ),
         player_wallet=_nonneg_int(player["wallet"], "player.wallet"),
         caravan_markup=_at_least(player["caravan_markup"], 1.0, "player.caravan_markup"),
+        max_buy_share=_buy_share(player.get("max_buy_share", 1.0)),
         outside=_holdings(data.get("outside", {}), "outside"),
         shocks=tuple(shocks),
         founding_bounds=_founding_bounds(data.get("founding", {}), set(guilds)),
@@ -619,6 +622,13 @@ def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
         out.append((threshold, _fraction(b["rate"], f"{where}.rate")))
         below = threshold
     return tuple(out)
+
+
+def _buy_share(value: Any) -> float:
+    share = _fraction(value, "player.max_buy_share")
+    if share <= 0:
+        raise ConfigError("player.max_buy_share: must be above 0 (1 means no cap)")
+    return share
 
 
 def _reserve_rate(town: Mapping[str, Any]) -> float:
@@ -776,7 +786,11 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
             for gid, gc in cfg.guilds.items()
         },
         "town": _town_dict(cfg.town),
-        "player": {"wallet": cfg.player_wallet, "caravan_markup": cfg.caravan_markup},
+        "player": {
+            "wallet": cfg.player_wallet,
+            "caravan_markup": cfg.caravan_markup,
+            **({"max_buy_share": cfg.max_buy_share} if cfg.max_buy_share < 1 else {}),
+        },
         "outside": holdings(cfg.outside),
         "shocks": shocks,
         **(
