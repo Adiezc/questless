@@ -7,31 +7,31 @@ Median (range) over 5 seeds, 120 days played, same shock timing relative to join
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 309 (265 to 413) | 740 (-86 to 990) |
-| contracts fulfilled | 5 (4 to 9) | 6 (4 to 6) |
-| days to first contract | 34 (33 to 35) | 30 (29 to 32) |
-| reputation | 40 (40 to 90) | 50 (40 to 60) |
-| contracts posted | 10 (4 to 32) | 10 (8 to 90) |
-| town treasury | 789 (292 to 1740) | 613 (91 to 2966) |
+| profit | 377 (255 to 535) | 950 (306 to 1318) |
+| contracts fulfilled | 8 (6 to 11) | 6 (4 to 7) |
+| days to first contract | 34 (33 to 35) | 29 (26 to 32) |
+| reputation | 80 (50 to 100) | 60 (40 to 70) |
+| contracts posted | 15 (11 to 37) | 10 (8 to 38) |
+| town treasury | 1934 (1933 to 2042) | 1988 (1929 to 2800) |
 
 ## Mine Disaster
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 437 (391 to 593) | 2230 (50 to 2480) |
-| contracts fulfilled | 8 (6 to 11) | 8 (6 to 10) |
-| days to first contract | 32 (31 to 34) | 29 (28 to 31) |
-| reputation | 80 (40 to 100) | 60 (40 to 100) |
-| contracts posted | 96 (54 to 105) | 23 (11 to 85) |
-| town treasury | 1640 (1234 to 2704) | 45 (8 to 2303) |
+| profit | 375 (259 to 577) | 1943 (724 to 2575) |
+| contracts fulfilled | 10 (5 to 12) | 10 (7 to 12) |
+| days to first contract | 32 (31 to 34) | 29 (26 to 31) |
+| reputation | 60 (30 to 100) | 100 (70 to 100) |
+| contracts posted | 113 (80 to 125) | 13 (11 to 72) |
+| town treasury | 2043 (1709 to 2717) | 1940 (1088 to 2017) |
 
 ## Drought
 
 | Metric | Joins day 0 | Joins day 1000 |
 |---|---|---|
-| profit | 716 (528 to 1058) | 659 (304 to 1485) |
-| contracts fulfilled | 14 (8 to 17) | 12 (7 to 15) |
+| profit | 691 (490 to 1071) | 782 (559 to 1350) |
+| contracts fulfilled | 12 (9 to 15) | 12 (5 to 14) |
 | days to first contract | 28 (28 to 29) | 26 (25 to 27) |
-| reputation | 90 (50 to 120) | 80 (40 to 90) |
-| contracts posted | 15 (9 to 51) | 22 (14 to 38) |
-| town treasury | 1187 (734 to 1523) | 1450 (431 to 2493) |
+| reputation | 70 (60 to 110) | 80 (20 to 90) |
+| contracts posted | 17 (10 to 37) | 18 (5 to 25) |
+| town treasury | 1967 (1948 to 2007) | 1998 (1963 to 2808) |
