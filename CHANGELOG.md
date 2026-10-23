@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Exploit hunters (M52.0): `experiments/stress/hunt.py` runs three scripted attackers (claim and
+  wait, buy before a scheduled shock, accept and abandon) against two honest players on the four
+  shock scenarios, 10 seeds each, and reports gain per day and the hunger each one adds. No
+  large exploit: hoarding iron before Iron Shortage wins narrowly on 6/10 seeds and adds hunger;
+  the others don't beat honest play. Results in `experiments/results/exploit_hunt.md`.
 - Economy checks on every pull request (M23): `questless diff --base <ref>` runs every scenario
   on 10 seeds on the base commit (in a temporary git worktree, with its own engine) and on your
   working tree, then writes `economy-diff.md` and `.json`. Significant changes are listed in plain
