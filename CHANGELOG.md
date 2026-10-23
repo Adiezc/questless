@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Scenario `legitimacy_spiral.toml` (M48.5): a town that starts with 300 coin and legitimacy on
+  stays trapped, with legitimacy near 0.45, levy evasion and unpaid wages, on 10 of 10 seeds. The
+  normally funded baseline with legitimacy on stays near 0.96 for a year with no unpaid days.
 - Legitimacy and levy evasion (M48.1, M48.2), off by default. With `[legitimacy] enabled = true`
   the town's authority falls fast when guard wages go unpaid or NPCs go hungry and recovers slowly;
   while it is low, NPCs evade the upkeep levy and keep the coin, so nothing is created or
