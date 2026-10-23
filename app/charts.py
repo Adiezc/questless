@@ -15,6 +15,7 @@ import math
 import random
 
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from questless.contracts.provenance import _label as subject_label
 from questless.sim.ledger import Asset
@@ -230,6 +231,101 @@ def goods_lines(
         fig.add_hline(y=100, line=dict(color=MUTED, width=1, dash="dot"))
         fig.update_yaxes(ticksuffix="%", rangemode="tozero")
     return _layout(fig, height, title)
+
+
+def small_multiples(
+    series: dict,
+    key: str,
+    title: str,
+    shocks,
+    height: int = 420,
+    percent: bool = False,
+    index: bool = False,
+) -> go.Figure:
+    """One compact chart per good in a 2x2 grid with shared x-axes and independent y-axes."""
+    days = series["day"]
+    suffix = "%" if percent or index else ""
+    goods = list(GOOD_LABELS.keys())  # food, iron_ore, tools, weapons
+    titles = [GOOD_LABELS[g] for g in goods]
+
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        shared_xaxes=True,
+        subplot_titles=titles,
+        vertical_spacing=0.14,
+        horizontal_spacing=0.08,
+    )
+
+    positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
+    for (r, c), good in zip(positions, goods, strict=True):
+        values = series[key].get(good, [])
+        fig.add_trace(
+            go.Scatter(
+                x=days,
+                y=values,
+                mode="lines",
+                name=GOOD_LABELS[good],
+                line=dict(color=GOOD_COLORS[good], width=2),
+                hovertemplate=f"{GOOD_LABELS[good]}: %{{y}}{suffix}<extra></extra>",
+                showlegend=False,
+            ),
+            row=r,
+            col=c,
+        )
+
+    day_max = days[-1] if days else 0
+    if day_max >= 0:
+        fig.add_vrect(
+            x0=0,
+            x1=min(9, day_max) + 0.5,
+            fillcolor=WARMUP_SHADE,
+            line_width=0,
+            layer="below",
+            row="all",
+            col="all",
+        )
+    for s in shocks:
+        if s.start > day_max:
+            continue
+        fig.add_vrect(
+            x0=s.start,
+            x1=min(s.end, day_max + 1) - 0.5,
+            fillcolor=SHOCK_SHADE,
+            line_width=1,
+            line_color=MUTED,
+            line_dash="dot",
+            layer="below",
+            row="all",
+            col="all",
+        )
+        fig.add_annotation(
+            x=s.start,
+            y=1.02,
+            yref="paper",
+            text=s.name,
+            showarrow=False,
+            xanchor="left",
+            yanchor="bottom",
+            font=dict(size=10, color=INK_2),
+        )
+
+    fig.update_layout(hovermode="x unified")
+    fig.for_each_annotation(
+        lambda a: a.update(font=dict(size=11, color=INK_2)) if a.yref != "paper" else None
+    )
+
+    if percent:
+        ticks = [0, 25, 50, 75, 100]
+        fig.update_yaxes(range=[-3, 103], tickvals=ticks, ticktext=[f"{t}%" for t in ticks])
+    elif index:
+        fig.add_hline(y=100, row="all", col="all", line=dict(color=MUTED, width=1, dash="dot"))
+        fig.update_yaxes(ticksuffix="%", rangemode="tozero")
+    else:
+        fig.update_yaxes(rangemode="tozero")
+
+    fig.update_xaxes(row=2, title=dict(text="day", font=dict(size=11, color=MUTED)))
+    return _layout(fig, height, title, legend=False)
 
 
 def single_line(days, values, title: str, color: str, shocks, height: int = 220) -> go.Figure:

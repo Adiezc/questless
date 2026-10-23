@@ -457,40 +457,53 @@ econ, npcs_tab, guilds_tab, log_tab, about_tab = st.tabs(
 
 with econ:
     # Index view needs the reference window (days 10-14) to have passed; until then show units.
-    indexed = st.toggle(
-        "Show as % of normal",
-        key="indexed",
-        help="Each good relative to its average over days 10-14, after warm-up and before shocks.",
-    ) and any(v is not None for values in series["price_index"].values() for v in values)
+    controls_left, controls_right = st.columns([1, 1])
+    with controls_left:
+        indexed = st.toggle(
+            "Show as % of normal",
+            key="indexed",
+            help="Relative to days 10-14 average, after warm-up and before shocks.",
+        ) and any(v is not None for values in series["price_index"].values() for v in values)
+    with controls_right:
+        split_goods = st.toggle(
+            "Separate charts per good",
+            key="split_goods",
+            help="Show each good in its own small chart with independent y-axes.",
+        )
+    draw_goods = charts.small_multiples if split_goods else charts.goods_lines
+    chart_h = 420 if split_goods else 260
     a, b = st.columns(2)
     with a:
         st.plotly_chart(
-            charts.goods_lines(
+            draw_goods(
                 series,
                 "produced_index" if indexed else "produced",
                 "Production (% of normal)" if indexed else "Production per day",
                 shocks,
+                height=chart_h,
                 index=indexed,
             ),
             config={"displayModeBar": False},
         )
         st.plotly_chart(
-            charts.goods_lines(
+            draw_goods(
                 series,
                 "unfilled_pct",
                 "Unmet demand (% of buyers who could pay)",
                 shocks,
+                height=chart_h,
                 percent=True,
             ),
             config={"displayModeBar": False},
         )
     with b:
         st.plotly_chart(
-            charts.goods_lines(
+            draw_goods(
                 series,
                 "price_index" if indexed else "price",
                 "Prices (% of normal)" if indexed else "Prices (coin)",
                 shocks,
+                height=chart_h,
                 index=indexed,
             ),
             config={"displayModeBar": False},
