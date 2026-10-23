@@ -315,16 +315,23 @@ def _candidates(world: World, board: ContractBoard) -> list[Candidate]:
                 covered[(state.subject, good)] = (account, str(kind), str(good))
             # Share among members who use the good at all (farmers, not merchants, need tools).
             if len(states) / max(len(_users(world, members, good)), 1) >= threshold:
-                pooled_cands.append(
-                    Candidate(
-                        kind,
-                        account,
-                        good,
-                        {s.subject: _shortfall(world, s.subject, good) for s in states},
-                        states,
-                        gid,
+                # Omit members with a live individual procurement contract for this good (M13.7)
+                pool_ben = {
+                    s.subject: _shortfall(world, s.subject, good)
+                    for s in states
+                    if not board.live_for((s.subject, ContractKind.PROCUREMENT.value, str(good)))
+                }
+                if pool_ben:
+                    pooled_cands.append(
+                        Candidate(
+                            kind,
+                            account,
+                            good,
+                            pool_ben,
+                            states,
+                            gid,
+                        )
                     )
-                )
 
     transport_cands = []
     for state in needs:

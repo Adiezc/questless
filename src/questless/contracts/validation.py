@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from questless.contracts.model import ContractKind
 from questless.sim.entities import ESCROW, OUTSIDE
 from questless.sim.ledger import Asset
 from questless.sim.market import stock_target
@@ -52,6 +53,16 @@ def check_board(world: World, board: ContractBoard) -> None:
     keys = [c.dedup_key for c in live]
     if len(keys) != len(set(keys)):
         problems.append("duplicate live contracts for the same need")
+    # No NPC is a non-zero beneficiary of two live non-transport contracts for the same good (M13.7)
+    beneficiary_pairs: list[tuple[str, Asset]] = [
+        (npc_id, c.good)
+        for c in live
+        if c.kind is not ContractKind.TRANSPORT
+        for npc_id, qty in c.beneficiaries.items()
+        if qty > 0
+    ]
+    if len(beneficiary_pairs) != len(set(beneficiary_pairs)):
+        problems.append("NPC is a beneficiary of multiple live contracts for the same good")
     for c in board.contracts.values():
         if not c.provenance.chain:
             problems.append(f"{c.id} has no provenance")
