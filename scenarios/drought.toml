@@ -16,3 +16,7 @@ site = "farms"
 start = 15
 duration = 25
 factor = 0.4
+
+# Throwaway test of the economy check: halve farm output. Do not merge.
+[professions.farmer]
+output = { food = 1.65 }
