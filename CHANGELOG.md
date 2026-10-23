@@ -49,6 +49,8 @@ All notable changes to this project are documented here. The format follows
   message such as "unknown contract 'C-9999'" (M13.4, #24, thanks @ZeeEmn).
 - Quest summaries name the good each quoted number belongs to, preferring the contract's own good,
   so an iron-ore contract no longer quotes the tools figures (M13.6, #50, thanks @Golden007-prog).
+- When the town can't afford every guard's wage, the guards it pays rotate from day to day instead
+  of the same ones always going unpaid (#52, thanks @jay23606).
 
 ## [0.1.0] - 2026-10-21
 
