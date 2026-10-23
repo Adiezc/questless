@@ -66,5 +66,5 @@ def test_invariants_survive_a_chaos_player(seed):
 
 def test_chaos_session_replays_exactly():
     sim, _ = _chaos_session(seed=4, days=80)
-    rebuilt = replay(sim.config, sim.world.actions, sim.day)
+    rebuilt = replay(sim.world.config, sim.world.actions, sim.day)
     assert rebuilt.state_hash() == sim.world.state_hash()

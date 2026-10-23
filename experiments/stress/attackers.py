@@ -3,14 +3,16 @@
 """Exploit hunters (M52.0): scripted players that try to earn more than an honest one.
 
 Each attacker sees only what a player sees, through ``Simulation``: the public board, prices, its
-own wallet and the scenario (including its shock schedule, which the scenario file publishes).
+own wallet, the scenario's rules and the shocks announced so far (``sim.shocks()``; the schedule
+itself is hidden since #93).
 Every move goes through the player actions, so each run is a replayable save.
 
 - ``Squatter`` (claim and wait): accepts many contracts at once, buys only when the good is at or
   below its base price, and delivers just before the deadline. Accepted contracts are never
   cancelled when the need goes away, so the reward is still paid after prices fall.
-- ``Hoarder`` (buy before a scheduled shock): the day before a shock hits a site, spends half its
+- ``Hoarder`` (buy on the news of a shock): the day a shock to a site is announced, spends half its
   coin on that site's goods, then fulfils the contracts the shortage creates from its own stock.
+  Before #93 it read the schedule and bought the day before.
 - ``Flipper`` (accept and abandon): accepts every open contract it can afford, keeps the ones it
   can source at or below base price that day and abandons the rest, so it never holds a losing
   contract for long.
@@ -22,7 +24,6 @@ Every move goes through the player actions, so each run is a replayable save.
 
 from __future__ import annotations
 
-from questless.config import ShockEffect
 from questless.contracts.model import ContractKind
 from questless.player import ActionError
 
@@ -85,7 +86,7 @@ class Squatter:
 
 
 class Hoarder:
-    """Buy before a scheduled shock, then sell into the shortage through contracts."""
+    """Buy on the news of a shock, then sell into the shortage through contracts."""
 
     def __init__(self, sim, honest_cls, share: float = 0.5) -> None:
         self.sim, self.share = sim, share
@@ -93,9 +94,9 @@ class Hoarder:
 
     def act(self) -> None:
         sim = self.sim
-        for shock in sim.config.shocks:
-            if shock.effect is ShockEffect.SITE_OUTPUT and shock.start - 1 == sim.day:
-                for good in SITE_GOODS.get(str(shock.site), ()):
+        for shock in sim.shocks():
+            if shock["effect"] == "site_output" and shock["started"] == sim.day:
+                for good in SITE_GOODS.get(shock["site"], ()):
                     price = max(1, round(sim.prices()[good]))
                     _try(sim.buy, good, int(sim.player()["coin"] * self.share) // price)
         _deliver_ready(sim)

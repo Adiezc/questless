@@ -76,7 +76,25 @@ class Simulation:
 
     @property
     def config(self) -> ScenarioConfig:
-        return self.world.config
+        """The scenario's rules as a player sees them: the shock schedule is left out (#93), so a
+        player can't buy ahead of a disaster nobody in town could know about. ``shocks()`` lists
+        the ones that have started. The full config is ``world.config``."""
+        return dataclasses.replace(self.world.config, shocks=())
+
+    def shocks(self) -> list[dict[str, Any]]:
+        """Shocks announced so far: those that have started, scenario or user. How long one will
+        last isn't announced; ``ended`` is the day it ended, once it has."""
+        return [
+            {
+                "name": s.name,
+                "effect": str(s.effect),
+                "site": str(s.site) if s.site else None,
+                "started": s.start,
+                "ended": s.end if s.end <= self.day else None,
+            }
+            for s in self.world.modifiers.shocks
+            if s.start <= self.day
+        ]
 
     @property
     def day(self) -> int:
