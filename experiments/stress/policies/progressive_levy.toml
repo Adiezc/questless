@@ -1,0 +1,15 @@
+# Policy: a steeper levy on the richest NPCs during an iron shortage. Two brackets above the
+# baseline's flat 3%: 6% on coin above 500 and 10% above 2,000.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "../../../scenarios/iron_shortage.toml"
+name = "Iron Shortage, progressive levy"
+
+[[town.levy_brackets]]
+threshold = 500
+rate = 0.06
+
+[[town.levy_brackets]]
+threshold = 2000
+rate = 0.10
