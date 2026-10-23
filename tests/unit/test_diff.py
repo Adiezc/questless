@@ -101,7 +101,7 @@ def test_comment_lists_significant_changes_in_plain_words_biggest_first():
     bullets = [line for line in text.splitlines() if line.startswith("- ")]
     assert bullets[0] == "- Invariant broken"
     assert bullets[1] == "- Hungry NPC-days in Drought: 100 → 250 (**2.5×**)"
-    assert bullets[2] == "- Tools price in Drought: 1 → 1.1 (**+10%**)"
+    assert bullets[2] == "- Tools price (× base price) in Drought: 1 → 1.1 (**+10%**)"
     assert "| Drought | Contracts posted | 10 | 10.2 | +2.0% | no |" in text
 
 
@@ -115,9 +115,11 @@ def test_gates_fail_only_significant_changes_outside_their_limits(tmp_path):
     )
     gates = load_gates(path)
     assert check_gates([_change("hungry_npc_days", 100, 110)], gates) == []
-    assert len(check_gates([_change("hungry_npc_days", 100, 130)], gates)) == 1
+    [message] = check_gates([_change("hungry_npc_days", 100, 130)], gates)
+    assert message.endswith("gate `hungry_npc_days` allows up to 1.2×")
     assert check_gates([_change("hungry_npc_days", 100, 130, significant=False)], gates) == []
-    assert len(check_gates([_change("price_index.food", 1.0, 0.8)], gates)) == 1
+    [message] = check_gates([_change("price_index.food", 1.0, 0.8)], gates)
+    assert message.endswith("allows 0.9× to 1.2×")
     assert load_gates(tmp_path / "missing.toml") == {}
     path.write_text('[gates]\n"x" = { most = 2 }\n')
     with pytest.raises(ValueError, match="max_ratio"):
