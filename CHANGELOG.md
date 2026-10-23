@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Bug reports that replay themselves (M28.1, M28.2): `Simulation.bug_report(note, observation)`
+  bundles the save with a checkable observation (metric, day, operator, value), and
+  `questless repro bug.json` replays it and says **reproduced**, **not reproduced** or **replay
+  mismatch** (exit 1, 0 and 2, ready for `git bisect run`).
 - Scenario `legitimacy_spiral.toml` (M48.5): a town that starts with 300 coin and legitimacy on
   stays trapped, with legitimacy near 0.45, levy evasion and unpaid wages, on 10 of 10 seeds. The
   normally funded baseline with legitimacy on stays near 0.96 for a year with no unpaid days.
