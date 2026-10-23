@@ -30,6 +30,8 @@ All notable changes to this project are documented here. The format follows
   tests (M52), unpaid guards turning bandit (M56) and amnesty and debt jubilee (M57); v0.4 the
   invisible border (M53), civilization DNA (M54) and infrastructure dependency maps (M55); v0.5
   told history versus the log (M50) and records that decay (M51).
+- Research evidence for roadmap milestones (docs/RESEARCH.md), starting with M58, fairness for
+  late joiners: findings by lever from 34 peer-reviewed papers, with APA references and DOIs.
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so

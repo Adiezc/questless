@@ -674,9 +674,10 @@ and long supply chains emerge from the same ledger.
 | M53 | **The invisible border** | M34, M48 | 6 h |
 | M54 | **Civilization DNA** | M34 (the mutation can be built earlier) | 6 h |
 | M55 | **Infrastructure dependency maps** | M34 | 8 h |
+| M58 | **Fairness for late joiners** (evidence in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners)) | M17, M31; M34 for migration between regions | 8 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
-- **Total:** about 97 h, roughly 12 working days; plan for **16 days**.
+- **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
 - **Critical path:** M33 → M34 → M35/M36/M39/M53-M55. M37 and M38 can run in parallel once M31
   lands.
 - **Cut order if behind:** the surrogate experiment (M40), sanctions (keep treaties and
@@ -872,6 +873,50 @@ evidence with a measure key.
 **Accept when:** cutting one bridge in a three-region scenario produces a chain that crosses at
 least two regions and re-verifies at every step, and the dependency view's top-ranked link matches
 the largest loss in the forked replays.
+
+## M58: fairness for late joiners (8 h)
+
+**Goal:** a player who joins in year 10 can still do well. In a world that has run for a decade,
+newcomers face incumbents who have had years to build wealth, reputation, land and influence. M58
+measures that head start, shows where it comes from, and gives designers levers that keep it
+within a bound without driving veterans away. The levers and their defaults rest on peer-reviewed
+evidence collected in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners).
+
+**Measure at equal time played, not equal calendar date.** Bot players with the same strategy join
+on day 0 and on day 3,650 and are compared after the same number of days played:
+- the **income gap** at equal tenure, and the **time to a first worthwhile contract**;
+- **access**: the share of the quest board a newcomer may claim;
+- **concentration** (Gini, top 10% share) and **mobility** (how much wealth rankings change from
+  year to year), plotted against each other across seeds, the game's own Great Gatsby curve;
+- **r − g**: capital income against wage income, by asset type, since the evidence points to land
+  and housing as the main long-run driver.
+
+**Where the head start comes from**, reported separately so designers fix causes, not symptoms:
+reputation gates, capital returns (M17, M18), land and claims, offices and donations (M32), and
+better information (M49).
+
+**Levers**, each a config knob, off in the baseline:
+1. **A ledger-based progressive levy with no exemptions and no liability cap.** Real wealth taxes
+   lose most to misreporting and exemptions; the ledger rules out the first, and the design rules
+   out the second. Avoidance is measured as migration between regions (M34).
+2. **A land value tax on claims**, which the game can value exactly from the unworked output of
+   each claim.
+3. **A resource dividend:** mine royalties paid equally to every character, as Alaska does.
+4. **Guild entry fees and licences** with a real quality signal, so the trade-off between
+   protection and exclusion is measurable.
+5. **Residents voting on building permits** (M32, M35) in growing towns, with a residency period
+   before newcomers can vote.
+6. **Apprentice and mixed newcomer–veteran group contracts**, because the evidence says early
+   exposure and contact with better-off peers matter most.
+7. **A starting grant** for every new character, graded inversely to family wealth once
+   dynasties exist, and funded by inheritance tax.
+8. **Reputation that weights recent work**, and **paid mentors** measured by their mentee's
+   results (with mobility checked, since mentoring can also pass advantage on).
+
+**Accept when:** the income gap at equal time played stays below a configured bound across seeds;
+veterans' reward per hour stays above a second bound; M52's attacker bots find no way to farm the
+newcomer levers with alts; and each lever's report states the research finding it is modelled on
+and what the model leaves out.
 
 ## M41: docs, both skins and v0.4.0 (3 h)
 

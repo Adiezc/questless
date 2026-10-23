@@ -38,7 +38,8 @@ guarantees, propose it in the issue before building it.
     [M37](#m37-legal-automation-standing-orders) · [M38](#m38-players-post-quests) ·
     [M39](#m39-treaties-sanctions-and-embargoes) · [M40](#m40-surrogate-fast-forward-experiment) ·
     [M41](#m41-docs-both-skins-and-v040) · [M53](#m53-the-invisible-border) ·
-    [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps)
+    [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps) ·
+    [M58](#m58-fairness-for-late-joiners)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
     [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
@@ -953,6 +954,39 @@ round-trips through JSON.
 
 **Pitfalls:** ranking forks the world once per link. Limit it to links within K hops and run it on
 demand or weekly, never every tick.
+
+### M58: fairness for late joiners
+
+**Where:** `metrics.py` (concentration and mobility), `sim/world.py` (`_collect_upkeep`),
+`config.py` (`[fairness]`), new `src/questless/fairness/` (`claims_tax.py`, `dividend.py`,
+`grants.py`), `contracts/engine.py` (apprentice contracts), M31's bot league,
+`experiments/late_joiners.py`. Evidence and references:
+[RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners).
+
+**Design in one paragraph:** the experiment harness runs identical bot strategies that join at
+different days and compares them at equal time played. The report breaks the gap down by channel
+(reputation, capital, land, power, information), so a designer can see which lever targets which
+cause. Every lever is a knob in `[fairness]`, off in the baseline, and every coin it moves is an
+ordinary ledger transfer with its own reason (`levy`, `claims tax`, `dividend`, `grant`).
+
+| Task | Size | How |
+|---|---|---|
+| M58.1 Concentration metrics **(good first issue, can start now)** | S | Gini coefficient and top-10% share of coin (and later of land) per day in `metrics.py`, charted on the economy tab. |
+| M58.2 Late-joiner harness **(can start now)** | M | Run the scripted player from `experiments/shock_vs_baseline.py` joining on day 0 in one run and day 1,000 in another; compare income, contracts claimed and wealth at equal days played. Multi-player comparison in one world follows once M31 lands. |
+| M58.3 Levy brackets **(can start now)** | S | Turn the flat `upkeep_rate` into `[[town.levy_brackets]]` (threshold, rate). The baseline keeps one bracket, so its state hash is unchanged. No exemptions and no cap by design. |
+| M58.4 Gap report | M | Per run: income gap at equal tenure, time to first worthwhile contract, board access share, mobility (rank correlation of wealth year to year), r − g by asset type, and the gap split by channel. |
+| M58.5 Claims tax and dividend | M | Tax each claim on its unworked potential output (measurable from site config); pay mine royalties into a fund that pays every character equally. Both are evidence records with measure keys. |
+| M58.6 Entry and start levers | M | Guild entry fees and quotas, apprentice contracts (R4) reserved for low-tenure players, and a starting grant graded by family wealth (once dynasties exist). |
+| M58.7 Lever reports with evidence | S | Each lever's section in the report quotes its research finding from RESEARCH.md and its "what the model leaves out" note. |
+
+**Tests:** with every lever off the baseline hash is unchanged; levy brackets, claims tax, dividend
+and grants all conserve coin; the gap report re-verifies from `TickStats`; an attacker that funnels
+newcomer rewards to a main through alts is caught (M52, M31).
+
+**Pitfalls:** apprentice lanes and starting grants are exactly what alts farm, so don't enable them
+before M31's one-person-one-character safeguards. Don't tune the levers until veterans' rewards
+collapse: the second acceptance bound exists to stop that. Keep each lever's effect separately
+measurable; turning on five at once makes the report unreadable.
 
 ### M42: privacy as code
 

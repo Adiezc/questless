@@ -201,7 +201,8 @@ integration.
 
 Background reading: [blueprint](docs/BLUEPRINT.md) ·
 [crypto and blockchain assessment](docs/BLOCKCHAIN.md) (why there are no tokens or NFTs) ·
-[privacy and identity](docs/PRIVACY_AND_IDENTITY.md) · [real-world skills](docs/SKILLS.md).
+[privacy and identity](docs/PRIVACY_AND_IDENTITY.md) · [real-world skills](docs/SKILLS.md) ·
+[research evidence](docs/RESEARCH.md) (peer-reviewed findings behind the levers).
 
 **Known limitations:**
 - Producers in the same trade pause in sync when unsold stock builds up.
