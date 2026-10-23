@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Economy diff core (M23.1, M23.2, M23.4): `questless.diff` measures a run (price index and
+  shortage days per good, hungry NPC-days, recovery days, contracts posted and delivered, coin by
+  sector, invariant failures), runs a scenario × seed grid in one or several processes with
+  identical results, and compares two grids paired by seed, flagging only changes beyond
+  seed-to-seed noise and at least 3%.
 - Civilization DNA groundwork (M54.1): `questless.founding.mutate(cfg, rng)` returns a colony's
   config, nudging only the knobs listed in an optional `[founding.bounds]` table within their
   ranges, and `mutations(parent, child)` lists what changed. Only institutional knobs may be
