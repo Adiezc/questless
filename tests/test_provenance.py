@@ -8,9 +8,11 @@ import re
 
 import pytest
 
+from questless.config import ShockConfig, ShockEffect
 from questless.contracts.model import ContractKind
 from questless.contracts.provenance import _num, measure, series, verify
 from questless.contracts.summary import summarise
+from questless.sim.entities import Site
 from questless.sim.ledger import Asset
 from questless.sim.world import build_world
 from tests.conftest import bandits, drought, mine_collapse, with_shocks
@@ -171,3 +173,37 @@ def test_m16_1_summary_only_repeats_numbers_from_the_chain(worlds, name):
             allowed |= {_num(v) for v in (e.value, e.baseline, e.threshold) if v is not None}
         assert set(re.findall(r"\d+(?:\.\d+)?", text)) <= allowed, (c.id, text)
         assert f"{c.reward} coin" in text, (c.id, text)
+
+
+def _shock_roots(contracts):
+    """(contract, cited shock evidence) for every contract, in chain order."""
+    return [(c, [e for e in c.provenance.chain if e.kind == "shock"]) for c in contracts]
+
+
+@pytest.mark.parametrize(
+    "earlier",
+    [
+        ShockConfig("Rich seam", ShockEffect.SITE_OUTPUT, 10, 10, 3.0, Site.MINE),
+        mine_collapse(start=5, duration=8),
+    ],
+    ids=["boom", "expired_collapse"],
+)
+def test_only_shocks_that_cut_output_and_overlap_are_cited(earlier):
+    """#47: a boom, or a collapse that ended weeks before, is never blamed for later bandits."""
+    from questless.config import load_scenario
+    from tests.conftest import SCENARIOS as DIR
+
+    world = build_world(
+        with_shocks(load_scenario(DIR / "baseline.toml"), earlier, bandits(start=50))
+    )
+    world.step(85)
+    later = [c for c in world.contracts.contracts.values() if c.created_tick >= 50]
+    assert later
+    for c, shocks in _shock_roots(later):
+        assert all(e.value < 1 for e in shocks), (c.id, shocks)
+        assert all(e.tick != earlier.start for e in shocks), (c.id, shocks)
+        if c.kind is ContractKind.TRANSPORT:
+            assert shocks and shocks[0].tick == 50, c.id
+        assert verify(world, c) == [], c.id
+    summaries = [summarise(world, c) for c in later if c.kind is ContractKind.TRANSPORT]
+    assert summaries and not any(earlier.name in s for s in summaries)

@@ -49,6 +49,9 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Causal chains cite only shocks that cut output and overlap the shortage (allowing 7 days for
+  stocks to run down), most recent first. A ×3 boom or a collapse that ended weeks earlier is no
+  longer blamed for a later shortage, and quest summaries name the right event (M13.9, #47).
 - Scenario files that set a number to `nan`, `inf` or `-inf` now fail to load with a clear
   "must be a finite number" error, instead of crashing partway through a run (#10, thanks
   @ElectLive).

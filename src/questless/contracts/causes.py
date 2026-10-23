@@ -38,12 +38,14 @@ DROP = 0.85  # production below this share of normal counts as a drop
 SHARE_RISE = 0.15  # rise in a profession's idle/hungry/broken share that counts
 PRICE_SPIKE = 1.25
 MAX_DEPTH = 3
+SHOCK_MARGIN = 7  # days a shock's effect can outlast it (stocks run down after it ends)
 
 
 @dataclass
 class _Walk:
     world: World
     base_tick: int  # end of the "normal" window
+    since: int  # first day of the shortage being explained
     chain: list[Evidence] = field(default_factory=list)
     visited: set[Asset] = field(default_factory=set)
     parent: str | None = None
@@ -61,7 +63,7 @@ def build_chain(
     """Root causes first, then the contract-level facts in ``extra`` (whose ``caused_by`` indexes
     are relative to ``extra`` and get shifted). Returns (chain, parent contract id)."""
     since = min(s.since for s in cand.needs)
-    walk = _Walk(world, base_tick=_base_tick(world, since), exclude_parent=cand.key)
+    walk = _Walk(world, _base_tick(world, since), since, exclude_parent=cand.key)
     top: list[int] = []
     if cand.kind is ContractKind.TRANSPORT:
         top += _transport_shocks(walk)
@@ -166,35 +168,41 @@ def _share_rise(
     )
 
 
+def _cited_shocks(walk: _Walk, effect: ShockEffect, site: Site | None = None) -> list:
+    """Shocks that can explain the shortage: they cut output (factor < 1), started in the lookback
+    window and overlap the shortage, allowing ``SHOCK_MARGIN`` days for their effect to wear off.
+    Most recent first, so the chain's first shock (the summary's root) is the latest cause."""
+    tick = walk.world.tick
+    found = [
+        s
+        for s in walk.world.modifiers.shocks
+        if s.effect is effect
+        and (site is None or s.site is site)
+        and s.factor < 1
+        and tick - LOOKBACK <= s.start <= tick
+        and s.end + SHOCK_MARGIN > walk.since
+    ]
+    return sorted(found, key=lambda s: s.start, reverse=True)
+
+
 def _site_shocks(walk: _Walk, prof: Profession) -> list[int]:
     site = walk.world.config.professions[prof].site
     out = []
-    for shock in walk.world.modifiers.shocks:
-        if (
-            shock.effect is ShockEffect.SITE_OUTPUT
-            and shock.site is site
-            and walk.world.tick - LOOKBACK <= shock.start <= walk.world.tick
-        ):
-            if shock not in walk.shocks_seen:
-                walk.shocks_seen[shock] = walk.add(
-                    _shock_evidence(walk, shock, ("site_factor", str(site)))
-                )
-            out.append(walk.shocks_seen[shock])
+    for shock in _cited_shocks(walk, ShockEffect.SITE_OUTPUT, site):
+        if shock not in walk.shocks_seen:
+            walk.shocks_seen[shock] = walk.add(
+                _shock_evidence(walk, shock, ("site_factor", str(site)))
+            )
+        out.append(walk.shocks_seen[shock])
     return out
 
 
 def _transport_shocks(walk: _Walk) -> list[int]:
     out = []
-    for shock in walk.world.modifiers.shocks:
-        if (
-            shock.effect is ShockEffect.TRANSPORT_CAPACITY
-            and walk.world.tick - LOOKBACK <= shock.start <= walk.world.tick
-        ):
-            if shock not in walk.shocks_seen:  # one evidence item per shock, however reached
-                walk.shocks_seen[shock] = walk.add(
-                    _shock_evidence(walk, shock, ("transport_factor",))
-                )
-            out.append(walk.shocks_seen[shock])
+    for shock in _cited_shocks(walk, ShockEffect.TRANSPORT_CAPACITY):
+        if shock not in walk.shocks_seen:  # one evidence item per shock, however reached
+            walk.shocks_seen[shock] = walk.add(_shock_evidence(walk, shock, ("transport_factor",)))
+        out.append(walk.shocks_seen[shock])
     return out
 
 
