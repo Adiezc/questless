@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Policy stress tests (M52.1, M52.3): a policy is a TOML file that `extends` a scenario and may
+  change only its rules (town, contracts, legitimacy, transport fee, import markup, guild dues and
+  policy); `policy.diff` lists what changed. `experiments/stress/hunt.py --policy <file>` plays
+  every attacker and honest player before and after the policy on the same seeds and flags any
+  attacker that wins on most seeds only after it. Example: a progressive levy on Iron Shortage
+  opens no new exploit.
 - Exploit hunters (M52.0): `experiments/stress/hunt.py` runs three scripted attackers (claim and
   wait, buy before a scheduled shock, accept and abandon) against two honest players on the four
   shock scenarios, 10 seeds each, and reports gain per day and the hunger each one adds. No
