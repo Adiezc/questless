@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "experiments" / "stress"))
 
 import policy  # noqa: E402
-from attackers import Flipper, Hoarder, Squatter  # noqa: E402
+from attackers import Flipper, Hoarder, Prober, Squatter  # noqa: E402
 from shock_vs_baseline import ScriptedPlayer  # noqa: E402
 
 from questless.api import Simulation  # noqa: E402
@@ -47,7 +47,7 @@ RESULTS = ROOT / "experiments" / "results"
 DAYS = 120
 SCENARIOS = ("iron_shortage", "mine_disaster", "drought", "bandits")
 HONEST = ("honest local", "honest importer")
-PLAYERS = (*HONEST, "squatter", "hoarder", "flipper")
+PLAYERS = (*HONEST, "squatter", "hoarder", "flipper", "prober")
 EXPLOIT_MARGIN = 1.25  # an attacker earning 25% more than honest on most seeds is an exploit
 
 
@@ -64,6 +64,8 @@ FINDINGS = """
   when the need goes away, but waiting for cheap prices doesn't pay enough to matter today.
 - **Accept and abandon** (flipper) earns nothing: each abandon costs reputation (median -300) and
   a guild pays a distrusted player less.
+- **Deliver before sourcing** (prober) earns nothing except honest transport fees in Bandits: no
+  rule pays for goods that weren't delivered. The planted-hole test (M52.5) checks it would.
 """
 
 
@@ -74,6 +76,7 @@ def make(name: str, sim: Simulation):
         "squatter": lambda: Squatter(sim),
         "hoarder": lambda: Hoarder(sim, ScriptedPlayer),
         "flipper": lambda: Flipper(sim),
+        "prober": lambda: Prober(sim),
     }[name]()
 
 
@@ -94,9 +97,9 @@ def play(source: str, player: str, seed: int, days: int = DAYS) -> Simulation:
     return sim
 
 
-def run(job: tuple[str, str, int]) -> dict:
-    scenario, player, seed = job
-    sim = play(scenario, player, seed)
+def run(job: tuple[str, str, int, int]) -> dict:
+    scenario, player, seed, days = job
+    sim = play(scenario, player, seed, days)
     cfg = sim.config
     me = sim.player()
     prices = sim.prices()
@@ -106,7 +109,7 @@ def run(job: tuple[str, str, int]) -> dict:
         "scenario": scenario,
         "player": player,
         "seed": seed,
-        "gain_per_day": round((worth - cfg.player_wallet) / DAYS, 2),
+        "gain_per_day": round((worth - cfg.player_wallet) / days, 2),
         "fulfilled": sum(c.status is Status.FULFILLED for c in mine),
         "lapsed": sum(c.status is Status.EXPIRED and c.accepted_by == "player" for c in mine),
         "actions": len(sim.world.actions),
@@ -200,9 +203,15 @@ def summarise_policy(rows: list[dict], path: str) -> str:
     return "\n".join([*lines, "", verdict]) + "\n"
 
 
-def hunt(sources: list[str], seeds: int) -> list[dict]:
-    jobs = [(src, p, s) for src in sources for p in PLAYERS for s in range(1, seeds + 1)]
-    with ProcessPoolExecutor() as pool:
+def hunt(
+    sources: list[str], seeds: int, days: int = DAYS, workers: int | None = None
+) -> list[dict]:
+    """Every player on every source and seed. ``workers=1`` runs in this process (tests use it to
+    plant a hole with monkeypatch); otherwise one process per CPU."""
+    jobs = [(src, p, s, days) for src in sources for p in PLAYERS for s in range(1, seeds + 1)]
+    if workers == 1:
+        return [run(job) for job in jobs]
+    with ProcessPoolExecutor(workers) as pool:
         return list(pool.map(run, jobs))
 
 

@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Planted-exploit test (M52.5) and a fourth attacker, the prober, which accepts every contract and
+  tries to deliver it before sourcing anything. With a #43-style hole planted (a procurement
+  contract that pays when nothing is delivered), the hunt flags the prober on every seed; on the
+  shipped scenarios it finds nothing.
 - Policy stress tests (M52.1, M52.3): a policy is a TOML file that `extends` a scenario and may
   change only its rules (town, contracts, legitimacy, transport fee, import markup, guild dues and
   policy); `policy.diff` lists what changed. `experiments/stress/hunt.py --policy <file>` plays
