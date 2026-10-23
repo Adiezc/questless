@@ -89,6 +89,7 @@ uv run questless run scenarios/drought.toml --json          # machine-readable
 uv run questless run scenarios/bandits.toml --save s.json   # save the run
 uv run questless replay s.json                              # rebuild it and verify the state hash
 uv run questless repro bug.json                              # replay a bug report and check what it saw
+uv run questless diff --base origin/main                     # economy impact of your changes
 uv run pytest                                               # 153 tests, ~14 s
 ```
 

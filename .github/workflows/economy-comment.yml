@@ -1,0 +1,54 @@
+name: Economy comment
+
+# Posts (or updates) the economy diff comment on the pull request. It runs from the default
+# branch with a write token and never checks out or runs pull request code: it only reads the
+# Markdown the "Economy" workflow uploaded.
+
+on:
+  workflow_run:
+    workflows: [Economy]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      github.event.workflow_run.conclusion != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: economy-diff
+          path: economy
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Post or update the comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr="$(cat economy/pr-number)"
+          if ! [[ "$pr" =~ ^[0-9]+$ ]]; then
+            echo "Invalid pull request number"; exit 1
+          fi
+          # Only comment on the pull request that produced this run.
+          if [ "$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)" != "$HEAD_SHA" ]; then
+            echo "Pull request $pr has moved on from $HEAD_SHA; skipping"; exit 0
+          fi
+          marker='<!-- questless-economy-diff -->'
+          if [ ! -f economy/economy-diff.md ]; then
+            printf '%s\n### Economy impact\n\nThe economy check could not run. See the Economy workflow logs.\n' "$marker" > economy/economy-diff.md
+          fi
+          id="$(gh api "repos/$REPO/issues/$pr/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | tail -1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@economy/economy-diff.md > /dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$pr/comments" -F body=@economy/economy-diff.md > /dev/null
+          fi

@@ -1,0 +1,9 @@
+# Limits for the economy check on pull requests (questless diff, M23.7).
+# A gate fails only on a *significant* change (beyond seed-to-seed noise and at least 3%) whose
+# head / base ratio falls outside its limits. Invariant failures always fail the check.
+# Metric names: hungry_npc_days, recovery_days, contracts_posted, contracts_delivered,
+# price_index.<good>, shortage_days.<good>, coin.town, coin.guilds, coin.npcs, coin.escrow.
+
+[gates]
+"hungry_npc_days" = { max_ratio = 1.2 }
+"price_index.*" = { max_ratio = 1.25 }

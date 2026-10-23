@@ -6,6 +6,7 @@ questless run scenarios/iron_shortage.toml            # contracts and why they e
 questless run scenarios/drought.toml --days 60 --json
 questless run scenarios/baseline.toml --save saves/base.json
 questless replay saves/base.json                      # rebuild and verify a save
+questless diff --base origin/main                     # economy impact of your changes
 questless demo                                        # open the interactive dashboard
 """
 
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import time
 from collections.abc import Sequence
@@ -41,6 +43,17 @@ def build_parser() -> argparse.ArgumentParser:
     rep = sub.add_parser("replay", help="replay a save file and verify it reproduces exactly")
     rep.add_argument("save")
 
+    dif = sub.add_parser(
+        "diff",
+        help="compare the economy against another commit (exit 1 on a failed check)",
+    )
+    dif.add_argument("--base", default="origin/main", help="git ref to compare against")
+    dif.add_argument("--seeds", type=int, default=10, help="seeds per scenario (default 10)")
+    dif.add_argument("--days", type=int, help="days per run (default: each scenario's own)")
+    dif.add_argument("--workers", type=int, default=0, help="processes (default: one per CPU)")
+    dif.add_argument("--out", default=".", help="where to write economy-diff.md and .json")
+    dif.add_argument("--gates", help="gates file (default: .questless/ci.toml if present)")
+
     rp = sub.add_parser(
         "repro",
         help="replay a bug report and check its observation "
@@ -62,10 +75,108 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _replay(args)
     if args.command == "repro":
         return _repro(args)
+    if args.command == "diff":
+        return _diff(args)
     if args.command == "demo":
         return _demo(args)
     parser.print_help()
     return 0
+
+
+def _diff(args: argparse.Namespace) -> int:
+    """Run the scenario × seed grid on ``--base`` (in a temporary git worktree, with that commit's
+    own engine) and on the working tree, then report what changed. Only scenarios present in both
+    are compared."""
+    import dataclasses
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+
+    from questless import diff
+
+    def git(*a: str) -> str:
+        return subprocess.run(
+            ["git", *a], cwd=root, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    root = Path(
+        subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], check=True, capture_output=True, text=True
+        ).stdout.strip()
+    )
+    base = git("merge-base", args.base, "HEAD")
+    changed = git("diff", "--name-only", base).splitlines()
+    seeds = list(range(1, args.seeds + 1))
+    workers = args.workers or None
+    head_dir = root / "scenarios"
+    with tempfile.TemporaryDirectory(prefix="questless-diff-") as tmp:
+        tree = Path(tmp) / "base"
+        git("worktree", "add", "--detach", str(tree), base)
+        try:
+            base_dir = tree / "scenarios"
+            stems = sorted(
+                {p.stem for p in head_dir.glob("*.toml")}
+                & {p.stem for p in base_dir.glob("*.toml")}
+            )
+            # Run this version's grid code against the base commit's engine: copy it outside
+            # both trees, and put the base's src first on the path.
+            runner = Path(tmp) / "questless_grid.py"
+            shutil.copy(diff.__file__, runner)
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(runner),
+                    *[str(base_dir / f"{s}.toml") for s in stems],
+                    "--seeds",
+                    ",".join(map(str, seeds)),
+                    "--days",
+                    str(args.days) if args.days else "default",
+                    "--workers",
+                    str(args.workers),
+                ],
+                env={**os.environ, "PYTHONPATH": str(tree / "src")},
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode:
+                print(proc.stderr, file=sys.stderr)
+                print(f"could not run the grid on {args.base} ({base[:7]})", file=sys.stderr)
+                return 2
+            base_rows = json.loads(proc.stdout)
+        finally:
+            git("worktree", "remove", "--force", str(tree))
+    head_rows = diff.run_grid([head_dir / f"{s}.toml" for s in stems], seeds, args.days, workers)
+
+    changes = diff.compare(base_rows, head_rows)
+    gates = diff.load_gates(args.gates or root / ".questless" / "ci.toml")
+    problems = [
+        *diff.invariant_problems(head_rows),
+        *diff.check_gates(changes, gates),
+        *diff.determinism_problems(base_rows, head_rows, changed, head_dir, root),
+    ]
+    report = diff.render_markdown(
+        changes, base_ref=args.base, seeds=len(seeds), scenarios=len(stems), problems=problems
+    )
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "economy-diff.md").write_text(report)
+    finite = [
+        {**dataclasses.asdict(c), "relative": c.relative if math.isfinite(c.relative) else None}
+        for c in changes
+    ]
+    payload = {
+        "base": args.base,
+        "base_commit": base,
+        "changed_paths": changed,
+        "problems": problems,
+        "changes": finite,
+        "base_rows": base_rows,
+        "head_rows": head_rows,
+    }
+    (out / "economy-diff.json").write_text(json.dumps(payload, indent=1) + "\n")
+    print(report)
+    return 1 if problems else 0
 
 
 def _repro(args: argparse.Namespace) -> int:

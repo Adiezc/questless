@@ -1,0 +1,45 @@
+name: Economy
+
+# Runs the economy diff (questless diff, M23) on pull requests that touch the engine or the
+# scenarios. It has a read-only token, so code from forks never sees a token that can write; the
+# "Economy comment" workflow posts the result.
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scenarios/**"
+      - ".questless/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - name: Economy diff against the base branch
+        run: uv run questless diff --base "origin/${BASE_REF}" --out economy
+        env:
+          BASE_REF: ${{ github.base_ref }}
+      - name: Record the pull request for the comment workflow
+        if: always()
+        run: |
+          mkdir -p economy
+          echo "${{ github.event.pull_request.number }}" > economy/pr-number
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: economy-diff
+          path: economy/
+          retention-days: 14
