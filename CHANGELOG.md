@@ -88,6 +88,12 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Pools no longer block members they give nothing to (M13.8, #46). A partly funded guild or town
+  pool listed every short member, even those it gave 0 units, and suppressed their own contracts
+  until it closed; so did members who ran short after the pool was posted. Pools now list only
+  members who get units, and only those members count as covered. Over a 120-day run, needs
+  suppressed as "covered by pool" fall from 1,204 to 208 in Mine Disaster and 315 to 109 in Iron
+  Shortage. A guild may now fund its pool and a left-out member's own contract at the same time.
 - The town no longer runs dry in long runs (M13.12, #72). Guard wages were 10-12 coin a day more
   than the levy and market tax brought in, so on seed 3 the treasury hit 0 by day 632 and guards
   went unpaid on 341 of 2,000 days. The baseline now has a reserve target: while the town holds

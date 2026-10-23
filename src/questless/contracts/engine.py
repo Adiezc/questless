@@ -216,7 +216,7 @@ class ContractBoard:
     def generate(self, world: World, report: ContractTickReport) -> None:
         cfg = world.config.contracts
         for cand in _candidates(world, self):
-            if cand.covered_by and self.live_for(cand.covered_by):
+            if cand.covered_by and self._pool_gives_units(cand):
                 report.suppressed["covered_by_pool"] += 1
                 continue
             if self.live_for(cand.key):
@@ -234,6 +234,12 @@ class ContractBoard:
             contract = self._try_post(world, cand, report)
             if contract:
                 report.created.append(contract.id)
+
+    def _pool_gives_units(self, cand: Candidate) -> bool:
+        """A member's own need is covered only by a live pool that gives them units (#46): a
+        partly funded pool, or one posted before they ran short, leaves them free to post."""
+        pool = self.live_for(cand.covered_by) if cand.covered_by else None
+        return pool is not None and pool.beneficiaries.get(cand.requester, 0) > 0
 
     def _try_post(
         self, world: World, cand: Candidate, report: ContractTickReport
@@ -265,7 +271,9 @@ class ContractBoard:
         if reward < cfg.min_reward:
             report.suppressed["too_small"] += 1
             return None
-        beneficiaries = allocate(qty, sorted(cand.beneficiaries.items()))
+        # Members a partly funded pool can't serve aren't beneficiaries at all (#46).
+        shares = allocate(qty, sorted(cand.beneficiaries.items()))
+        beneficiaries = {npc: n for npc, n in shares.items() if n > 0}
         world.ledger.transfer(
             funder, ESCROW, Asset.COIN, reward, tick=world.tick, reason="contract escrow"
         )
