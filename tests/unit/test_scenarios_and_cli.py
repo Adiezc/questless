@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Adrian Diez Cuadrado
+import dataclasses
 import json
 
 import pytest
@@ -14,6 +15,17 @@ from tests.conftest import SCENARIOS
 )
 def test_shipped_scenarios_load_and_round_trip(name):
     cfg = load_scenario(SCENARIOS / f"{name}.toml")
+    assert parse_scenario(to_dict(cfg)) == cfg
+
+
+def test_guilds_without_max_treasury_round_trip():
+    """A guild with no treasury ceiling saves and loads again (#48 made the key optional)."""
+    cfg = load_scenario(SCENARIOS / "baseline.toml")
+    guilds = {
+        gid: dataclasses.replace(g, policy=dataclasses.replace(g.policy, max_treasury=None))
+        for gid, g in cfg.guilds.items()
+    }
+    cfg = dataclasses.replace(cfg, guilds=guilds)
     assert parse_scenario(to_dict(cfg)) == cfg
 
 
