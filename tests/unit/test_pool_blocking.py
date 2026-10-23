@@ -40,10 +40,7 @@ def test_member_omitted_from_pool_can_post_individual_contract(baseline):
         for pool in pools:
             for ind in inds:
                 guild_name = pool.funder.removeprefix("guild:")
-                if (
-                    pool.good == ind.good
-                    and ind.requester in world.guilds[guild_name].members
-                ):
+                if pool.good == ind.good and ind.requester in world.guilds[guild_name].members:
                     assert pool.beneficiaries.get(ind.requester, 0) == 0
                     assert ind.requester in ind.beneficiaries
                     assert ind.beneficiaries[ind.requester] > 0
@@ -54,6 +51,6 @@ def test_member_omitted_from_pool_can_post_individual_contract(baseline):
         if coexisting:
             break
 
-    assert (
-        coexisting
-    ), "Expected an omitted member to post an individual contract alongside a live pool"
+    assert coexisting, (
+        "Expected an omitted member to post an individual contract alongside a live pool"
+    )
