@@ -105,6 +105,7 @@ class GuildPolicy:
     relief_days: int  # food a broke member is topped up to, in days (0 disables relief)
     max_daily_relief_share: float  # cap on total relief per day, as a share of treasury
     reserve: int  # coin relief may never touch; kept for emergencies and contracts
+    max_treasury: int | None = None  # coin above this pays the town upkeep levy (None: exempt)
 
 
 @dataclass(slots=True)

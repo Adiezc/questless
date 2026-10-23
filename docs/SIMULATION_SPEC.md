@@ -53,7 +53,8 @@ the original design; the differences are listed at the end.
 
 ## Money loop
 
-- **Town:** levies 3% a day on NPC coin above 60, and pays guard wages.
+- **Town:** levies 3% a day on NPC coin above 60 and on guild treasuries above their
+  `max_treasury` (3,000 in the baseline), and pays guard wages.
 - **Haulage:** 20% of shipped goods' value, pooled and split by merchant capacity.
 - **Guild dues:** 5% of a member's net daily gain, with fractional carry.
 - **Guild relief:** a broke member is topped up to *working capital*: 2 days of food, a

@@ -399,6 +399,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
                 "max_daily_relief_share",
                 "reserve",
             },
+            optional={"max_treasury"},
         )
         guilds[gid] = GuildConfig(
             name=str(g["name"]),
@@ -414,6 +415,11 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
                     pol["max_daily_relief_share"], f"{where}.policy.max_daily_relief_share"
                 ),
                 reserve=_nonneg_int(pol["reserve"], f"{where}.policy.reserve"),
+                max_treasury=(
+                    _nonneg_int(pol["max_treasury"], f"{where}.policy.max_treasury")
+                    if "max_treasury" in pol
+                    else None
+                ),
             ),
         )
 

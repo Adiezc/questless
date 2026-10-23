@@ -49,6 +49,11 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Guild treasuries no longer hoard the town's coin in long runs. A guild's coin above its new
+  `policy.max_treasury` (3,000 in the baseline) pays the daily upkeep levy to the town, reported
+  as `GuildReport.upkeep`. Over 2,000 days on seeds 42 and 7, unpaid guard days fall from 899 and
+  1,211 to 0, and no guild holds more than 19% of all coin. Runs of 365 days are unchanged
+  (M13.10, #48).
 - Causal chains cite only shocks that cut output and overlap the shortage (allowing 7 days for
   stocks to run down), most recent first. A ×3 boom or a collapse that ended weeks earlier is no
   longer blamed for a later shortage, and quest summaries name the right event (M13.9, #47).

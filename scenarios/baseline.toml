@@ -142,6 +142,8 @@ patience = [2, 5]        # days a need stays unmet before it is escalated
 #   relief_days             food money a broke member is topped up to, in days (0 = no relief)
 #   max_daily_relief_share  most of the treasury spent on relief per day
 #   reserve                 coin relief never touches; kept for emergencies and contracts
+#   max_treasury            coin above this pays the town's upkeep_rate each day (optional;
+#                           leave it out to exempt the guild)
 [guilds.miners]
 name = "Miners Guild"
 professions = ["miner"]
@@ -155,6 +157,7 @@ reward_premium = 1.3
 relief_days = 2
 max_daily_relief_share = 0.05
 reserve = 500
+max_treasury = 3000
 
 [guilds.merchants]
 name = "Merchants Guild"
@@ -169,6 +172,7 @@ reward_premium = 1.3
 relief_days = 2
 max_daily_relief_share = 0.05
 reserve = 500
+max_treasury = 3000
 
 [guilds.blacksmiths]
 name = "Blacksmiths Guild"
@@ -183,6 +187,7 @@ reward_premium = 1.3
 relief_days = 2
 max_daily_relief_share = 0.05
 reserve = 500
+max_treasury = 3000
 
 [town]
 treasury = 5000
