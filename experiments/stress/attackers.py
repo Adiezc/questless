@@ -14,6 +14,10 @@ Every move goes through the player actions, so each run is a replayable save.
 - ``Flipper`` (accept and abandon): accepts every open contract it can afford, keeps the ones it
   can source at or below base price that day and abandons the rest, so it never holds a losing
   contract for long.
+- ``Prober`` (deliver before sourcing): accepts every open contract and tries to deliver it at
+  once, holding nothing, then abandons what the rules refuse. Honest play never tries this, so it
+  is what finds a rule that pays for nothing (like #43, where a transport contract paid in full
+  for hauling nothing).
 """
 
 from __future__ import annotations
@@ -117,3 +121,18 @@ class Flipper:
             if missing > 0 and not (_cheap(sim, good) and _try(sim.buy, good, missing)):
                 _try(sim.abandon, c.id)
         _deliver_ready(sim)
+
+
+class Prober:
+    """Accept everything and try to deliver it before sourcing anything; abandon the refusals."""
+
+    def __init__(self, sim) -> None:
+        self.sim = sim
+
+    def act(self) -> None:
+        sim = self.sim
+        for c in sorted(sim.contracts("open"), key=lambda c: -c.reward):
+            _try(sim.accept, c.id)
+        for c in sim.contracts("accepted"):
+            if not _try(sim.deliver, c.id):
+                _try(sim.abandon, c.id)
