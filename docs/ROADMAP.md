@@ -253,10 +253,11 @@ v0.2 makes the economy richer. v0.3 makes it useful to three audiences beyond th
 - **Players and teachers:** a world that documents itself (M25) and teaches real economics and
   politics from what actually happened in it (M26).
 
-Three milestones added from the
+Five milestones added from the
 [#53 idea bank](https://github.com/Adiezc/questless/issues/53) (2026-10-23) give M32's politics
 real feedback and let studios attack a policy before it ships: legitimacy (M48), beliefs and
-rumours (M49) and policy stress tests (M52).
+rumours (M49), policy stress tests (M52), unpaid guards turning bandit (M56) and amnesty and debt
+jubilee (M57).
 
 The v0.1 and v0.2 guarantees still apply. New dependencies stay optional extras; the engine stays
 standard-library only.
@@ -277,15 +278,17 @@ standard-library only.
 | M48 | **Legitimacy and levy evasion** | M13 (better after M19) | 6 h |
 | M49 | **Beliefs and rumours** | M13 | 7 h |
 | M52 | **Policy stress tests** with attacker bots | M23, M31.2 | 6 h |
+| M56 | **Unpaid guards turn bandit** | M48 | 5 h |
+| M57 | **Amnesty and debt jubilee** | M17, M48; M56 and M19 for amnesty | 4 h |
 | M27 | Docs, examples and v0.3.0 tag | all | 1.5 h |
 
-- **Total:** about 77.5 h, roughly 10 working days; plan for **12.5 days** with the usual overrun.
+- **Total:** about 86.5 h, roughly 11 working days; plan for **14 days** with the usual overrun.
 - **How to build each one:** [BUILD_GUIDE.md](BUILD_GUIDE.md) breaks every milestone into
   issue-sized tasks with files, tests and pitfalls.
 - **Fastest win:** M23 needs nothing from v0.2 beyond the bug fixes, so it can be built first if
   the repo goes public before v0.2 is done.
 - **Can start any time:** M48 and M49 need only v0.1's levy, guard wages and prices, so they can
-  run in parallel with v0.2.
+  run in parallel with v0.2. M56 follows straight on from M48.
 - **Cut order if behind:** the wiki's graph view (keep the pages), the agent leaderboard (keep the
   environment and baselines), lesson count (ship 4 lessons, not 8), M52's grid search (keep the
   attacker bots and their report).
@@ -596,6 +599,46 @@ profit from it, and the result goes into M23's pull-request comment: "bot `wait-
 
 **Accept when:** the attacker suite finds a deliberately planted exploit on most seeds and nothing
 on the baseline, and the M23 comment links a replay for each finding.
+
+## M56: unpaid guards turn bandit (5 h)
+
+**Goal:** bandits start inside the world. Today the bandit shock comes only from a scenario file.
+With M56, a guard left unpaid for too many days in a row deserts and turns bandit. Bandits cut
+transport capacity and steal part of what is hauled, so merchants earn less, the levy shrinks, and
+more guards go unpaid. The chain behind a transport contract no longer stops at "bandits on the
+road": it continues to the deserters, their unpaid wages and the town's budget.
+- **Theft is a transfer:** stolen goods move from the hauler to the bandit's account with reason
+  `theft`, so conservation holds and every stolen unit is traceable.
+- **Shocks from the world:** the bandit shock is an ordinary shock whose source is `world`, with a
+  factor set by the number of active bandits. It replays like any other shock.
+- **The way back:** bandits return to the guard roll after N paid days or through an amnesty
+  (M57).
+- **Off by default:** scenario bandits work exactly as today.
+
+**Accept when:** in the legitimacy spiral scenario (M48), desertions appear on most seeds; a
+transport contract's chain walks from the bandit shock to the deserters' unpaid wages and the town
+treasury, and every step re-verifies; conservation holds with theft on.
+
+## M57: amnesty and debt jubilee (4 h)
+
+**Goal:** a ruler can cancel debts to buy back legitimacy, and everyone can see who paid for it.
+Historical rulers did this, from Babylonian debt-cancellation edicts to Solon's reforms in Athens. A
+jubilee writes off obligations in the M17 registry that match a rule (all debts, debts of NPCs in
+poverty, or debts older than N days). An amnesty pardons bandits (M56) and smugglers (M19), who
+return to their old work.
+- **Who loses:** cancelling a debt moves no coin; the creditor's claim is written off. The chain
+  lists each creditor's loss, measured from the registry, so the cost of the policy is never
+  hidden.
+- **What it buys:** legitimacy rises by a config amount scaled by the share of debtors relieved.
+- **What it costs later:** lenders can price in the risk of future jubilees (M17 credit and loan
+  rates), which an experiment measures.
+- **Who decides:** a town policy rule in config first; the mayor (M32) can trigger it as a
+  decision once elections exist. Both are recorded with evidence.
+- **A lesson for M26:** debt relief versus moral hazard, measured rather than argued.
+
+**Accept when:** conservation and the registry stay consistent through a jubilee; the creditors'
+losses in the chain equal the written-off amounts; an experiment over paired seeds reports the
+effect on legitimacy, hunger and later loan rates, with and without a jubilee.
 
 ## M27: docs, examples and v0.3.0 (1.5 h)
 

@@ -31,7 +31,8 @@ guarantees, propose it in the issue before building it.
     [M31](#m31-one-person-one-character-safeguards) ·
     [M32](#m32-elections-and-a-campaign-finance-register) ·
     [M48](#m48-legitimacy-and-levy-evasion) · [M49](#m49-beliefs-and-rumours) ·
-    [M52](#m52-policy-stress-tests)
+    [M52](#m52-policy-stress-tests) · [M56](#m56-unpaid-guards-turn-bandit) ·
+    [M57](#m57-amnesty-and-debt-jubilee)
   - v0.4: [M33](#m33-theme-packs-and-world-topology) · [M34](#m34-regions-and-simulation-level-of-detail) ·
     [M35](#m35-a-map-shaped-by-the-economy) · [M36](#m36-ecology-and-the-commons) ·
     [M37](#m37-legal-automation-standing-orders) · [M38](#m38-players-post-quests) ·
@@ -689,6 +690,64 @@ against an honest reference player. A gain above a configured margin on most see
 **Pitfalls:** attackers must see only what a player sees, never world internals, or they will find
 exploits no player could use. Keep each attacker small and explainable; a finding nobody can
 explain can't be fixed.
+
+### M56: unpaid guards turn bandit
+
+**Where:** `sim/world.py` (`_pay_wages`, NPC state), `sim/shocks.py` (a `world` shock source),
+`sim/transport.py` (theft), new `src/questless/sim/bandits.py`, `config.py` (`[bandits]`),
+`contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** each guard counts consecutive unpaid days. Past `desert_after` days
+(rolled from a `desertion` RNG stream, in sorted guard order) the guard deserts: they stop drawing
+wages and become a bandit. Every day the number of active bandits sets one `transport_capacity`
+shock with `source = "world"` and a factor from config, and bandits take a share of the units
+shipped through ordinary `theft` transfers. A bandit rejoins the guard roll when the town has paid
+full wages for `return_after` days, or at once under an M57 amnesty.
+
+| Task | Size | How |
+|---|---|---|
+| M56.1 Unpaid-day counter **(good first issue after M48.1)** | S | Count consecutive unpaid days per guard in `_pay_wages`; reset on a paid day. Store it on the NPC and in `state_dict()`. |
+| M56.2 Desertion | M | Past `desert_after`, mark the guard as a bandit. Bandits draw no wages and are skipped by the guard-supply logic. Record `TickStats.deserted` and `TickStats.bandits`. |
+| M56.3 World-sourced shock | M | Add `"world"` to `Shock.source`. Each day, replace the single bandit shock with one whose factor is `max(floor, 1 - per_bandit * bandits)`. Ending it is just a factor of 1. |
+| M56.4 Theft | M | In `transport.ship`, after shipping, move `theft_share` of shipped units (by sorted owner, `alloc.split` for fair rounding) to bandit accounts with reason `theft`. Bandits eat and sell what they steal like any NPC. |
+| M56.5 Evidence and walk | M | Evidence kinds `desertion` and `theft` (R3). In `causes.py`, when `_transport_shocks` finds a `world` shock, keep walking: shock ← desertions ← unpaid wages ← town treasury (M48's chain). |
+| M56.6 Return | S | Bandits rejoin after `return_after` fully paid days or an amnesty (M57), with a `returned` evidence record. |
+
+**Tests:** with `[bandits]` off, the bandits scenario and the baseline hash are unchanged; theft
+keeps conservation; a guard unpaid for `desert_after` days deserts and returns after
+`return_after` paid days; the transport chain reaches the treasury and re-verifies.
+
+**Pitfalls:** this adds a second loop on top of M48's (bandits cut trade, trade funds the levy).
+Check that a town with normal funding recovers after a one-week shock. Keep a floor on the
+transport factor so a few bandits can't stop all trade.
+
+### M57: amnesty and debt jubilee
+
+**Where:** `finance/obligations.py` (M17), new `src/questless/politics/jubilee.py`, `config.py`
+(`[jubilee]`), `sim/legitimacy.py` (M48), `sim/bandits.py` (M56), `contracts/provenance.py`,
+`experiments/jubilee.py`.
+
+**Design in one paragraph:** a jubilee is one recorded decision. It selects obligations from the
+M17 registry by a rule from config, marks them `forgiven` and releases any collateral held in
+escrow back to the debtor. No other coin moves: the creditor's claim is written off. Legitimacy
+then rises by `boost × share of debtors relieved`. An amnesty is the same decision for people:
+bandits (M56) and smugglers (M19) return to their old professions. The trigger is a town policy
+rule (legitimacy below a threshold, with a cooldown) or, once M32 exists, a mayor's decision.
+
+| Task | Size | How |
+|---|---|---|
+| M57.1 Forgiveness in the registry | S | `Obligation.forgive(tick, decision_id)`: status `forgiven`, collateral back to the debtor through the ledger, remaining principal and interest recorded as the creditor's write-off. |
+| M57.2 Jubilee decision | M | `jubilee.declare(world, rule)` picks obligations by rule (`all`, `poverty`, `older_than`), forgives them in id order and records one decision with evidence listing each creditor's loss. |
+| M57.3 Amnesty | S | `amnesty.declare(world)` returns bandits and smugglers to their professions, with `returned` evidence. |
+| M57.4 Legitimacy and credit | S | Apply the legitimacy boost (M48). A config flag sets whether forgiven debts count as defaults in `credit.score` (M17.5). |
+| M57.5 Trigger | S | A town policy rule from `[jubilee]`; later an M32 mayor decision through `player.apply_action`. |
+| M57.6 Experiment | M | Paired seeds, with and without a jubilee: legitimacy, hunger and the loan rates offered afterwards. Report honestly, including when it backfires. |
+
+**Tests:** the escrow invariant holds through a jubilee; the write-offs in the evidence equal the
+registry's forgiven amounts; a jubilee replays exactly; an amnesty returns every bandit.
+
+**Pitfalls:** a jubilee that fires every time legitimacy dips teaches lenders never to lend. Keep a
+long cooldown and let the experiment show the trade-off rather than tuning it away.
 
 ### M33: theme packs and world topology
 

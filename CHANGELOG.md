@@ -25,10 +25,11 @@ All notable changes to this project are documented here. The format follows
   sparklines (#29, thanks @RajGahoi).
 - Dashboard: a grey warm-up band covers days 0-9, and shocks are drawn as neutral hatched bands
   labelled above the plot (M14.3, #26, thanks @RajGahoi).
-- Roadmap and build guide: eight milestones from the #53 idea bank, with tasks, tests and
-  pitfalls. v0.3 gains legitimacy and levy evasion (M48), beliefs and rumours (M49) and policy
-  stress tests (M52); v0.4 the invisible border (M53), civilization DNA (M54) and infrastructure
-  dependency maps (M55); v0.5 told history versus the log (M50) and records that decay (M51).
+- Roadmap and build guide: ten milestones from the #53 idea bank, with tasks, tests and
+  pitfalls. v0.3 gains legitimacy and levy evasion (M48), beliefs and rumours (M49), policy stress
+  tests (M52), unpaid guards turning bandit (M56) and amnesty and debt jubilee (M57); v0.4 the
+  invisible border (M53), civilization DNA (M54) and infrastructure dependency maps (M55); v0.5
+  told history versus the log (M50) and records that decay (M51).
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
