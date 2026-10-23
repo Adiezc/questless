@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Economy checks on every pull request (M23): `questless diff --base <ref>` runs every scenario
+  on 10 seeds on the base commit (in a temporary git worktree, with its own engine) and on your
+  working tree, then writes `economy-diff.md` and `.json`. Significant changes are listed in plain
+  words; the check fails on broken invariants, on state-hash changes nothing explains, or on
+  limits in `.questless/ci.toml`. The Economy workflows post the result as one comment per pull
+  request, using the two-workflow pattern so fork code never gets a write token.
 - Bug reports that replay themselves (M28.1, M28.2): `Simulation.bug_report(note, observation)`
   bundles the save with a checkable observation (metric, day, operator, value), and
   `questless repro bug.json` replays it and says **reproduced**, **not reproduced** or **replay

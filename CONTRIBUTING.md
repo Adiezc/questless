@@ -110,6 +110,16 @@ uvx pip-audit -r /tmp/req.txt      # known vulnerabilities in dependencies
 
 CI also runs **gitleaks** to make sure no secrets (tokens, keys, passwords) are committed.
 
+**Economy check.** Pull requests that touch `src/`, `scenarios/` or `.questless/` get an automatic
+"Economy impact" comment: every scenario runs on 10 seeds against the base branch, and changes
+beyond seed-to-seed noise are listed in plain words. The check fails on a broken invariant, on
+non-determinism, or when a change breaks a limit in [`.questless/ci.toml`](.questless/ci.toml).
+Run it yourself before pushing:
+
+```bash
+uv run questless diff --base origin/main
+```
+
 **What the guarantee tests check**, and why they matter:
 
 | Test file | Guarantee |

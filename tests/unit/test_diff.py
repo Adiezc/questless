@@ -64,3 +64,108 @@ def test_halving_farm_output_is_flagged_on_hunger(tmp_path):
     changed = run_grid([head], [1, 2, 3, 4], days=60)
     hunger = next(c for c in compare(base, changed) if c.metric == "hungry_npc_days")
     assert hunger.significant and hunger.mean_diff > 0, hunger
+
+
+# --- M23.5 comment, M23.7 gates, M23.8 determinism, M23.3 command ------------------------------
+
+
+def _change(metric="hungry_npc_days", base=100.0, head=150.0, significant=True, scenario="drought"):
+    from questless.diff import Change
+
+    diff = head - base
+    return Change(scenario, metric, base, head, diff, 1.0, diff / base, significant)
+
+
+def test_comment_says_no_change_when_nothing_moved():
+    from questless.diff import MARKER, render_markdown
+
+    text = render_markdown(
+        [_change(head=100.0, significant=False)], base_ref="main", seeds=10, scenarios=5
+    )
+    assert text.startswith(MARKER)
+    assert "10 seeds × 5 scenarios, against `main`" in text
+    assert "No significant change" in text and "Nothing moved" in text
+
+
+def test_comment_lists_significant_changes_in_plain_words_biggest_first():
+    from questless.diff import render_markdown
+
+    changes = [
+        _change("price_index.tools", 1.0, 1.1),
+        _change("hungry_npc_days", 100.0, 250.0),
+        _change("contracts_posted", 10.0, 10.2, significant=False),
+    ]
+    text = render_markdown(
+        changes, base_ref="main", seeds=3, scenarios=1, problems=["Invariant broken"]
+    )
+    bullets = [line for line in text.splitlines() if line.startswith("- ")]
+    assert bullets[0] == "- Invariant broken"
+    assert bullets[1] == "- Hungry NPC-days in Drought: 100 → 250 (**2.5×**)"
+    assert bullets[2] == "- Tools price in Drought: 1 → 1.1 (**+10%**)"
+    assert "| Drought | Contracts posted | 10 | 10.2 | +2.0% | no |" in text
+
+
+def test_gates_fail_only_significant_changes_outside_their_limits(tmp_path):
+    from questless.diff import check_gates, load_gates
+
+    path = tmp_path / "ci.toml"
+    path.write_text(
+        '[gates]\n"hungry_npc_days" = { max_ratio = 1.2 }\n'
+        '"price_index.*" = { min_ratio = 0.9, max_ratio = 1.2 }\n'
+    )
+    gates = load_gates(path)
+    assert check_gates([_change("hungry_npc_days", 100, 110)], gates) == []
+    assert len(check_gates([_change("hungry_npc_days", 100, 130)], gates)) == 1
+    assert check_gates([_change("hungry_npc_days", 100, 130, significant=False)], gates) == []
+    assert len(check_gates([_change("price_index.food", 1.0, 0.8)], gates)) == 1
+    assert load_gates(tmp_path / "missing.toml") == {}
+    path.write_text('[gates]\n"x" = { most = 2 }\n')
+    with pytest.raises(ValueError, match="max_ratio"):
+        load_gates(path)
+
+
+def _rows(hashes):
+    return [
+        {"scenario": sc, "seed": 1, "state_hash": h, "failure": None, "metrics": {}}
+        for sc, h in hashes.items()
+    ]
+
+
+def test_determinism_flags_hash_changes_only_when_nothing_explains_them():
+    from questless.diff import determinism_problems
+
+    root = SCENARIOS.parent
+    base = _rows({"drought": "a", "bandits": "b"})
+    head = _rows({"drought": "a", "bandits": "CHANGED"})
+    assert determinism_problems(base, base, [], SCENARIOS, root) == []
+    assert len(determinism_problems(base, head, ["README.md"], SCENARIOS, root)) == 1
+    assert determinism_problems(base, head, ["src/questless/sim/world.py"], SCENARIOS, root) == []
+    assert determinism_problems(base, head, ["scenarios/bandits.toml"], SCENARIOS, root) == []
+    # bandits.toml extends baseline.toml, so changing the parent explains it too
+    assert determinism_problems(base, head, ["scenarios/baseline.toml"], SCENARIOS, root) == []
+
+
+def test_diff_command_against_head_reports_no_change(tmp_path):
+    from questless.cli import main
+
+    code = main(
+        [
+            "diff",
+            "--base",
+            "HEAD",
+            "--seeds",
+            "2",
+            "--days",
+            "20",
+            "--workers",
+            "1",
+            "--out",
+            str(tmp_path),
+        ]
+    )
+    assert code == 0
+    assert "No significant change" in (tmp_path / "economy-diff.md").read_text()
+    import json
+
+    data = json.loads((tmp_path / "economy-diff.json").read_text())
+    assert data["problems"] == [] and len(data["head_rows"]) == len(data["base_rows"])

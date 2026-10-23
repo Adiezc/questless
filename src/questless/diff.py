@@ -9,15 +9,23 @@ Three building blocks, all standard library:
 - ``compare(base, head)``: runs paired by (scenario, seed), with a paired difference per metric
   that is flagged only when it beats the seed-to-seed noise (``significance``).
 
-The ``questless diff --base <ref>`` command and the pull-request comment build on these (M23.3,
-M23.5, M23.6).
+On top of them: ``render_markdown`` (the pull-request comment, M23.5), ``check_gates`` (limits from
+``.questless/ci.toml``, M23.7) and ``determinism_problems`` (M23.8). ``questless diff`` in
+``cli.py`` runs the whole check against another commit (M23.3).
+
+This module only imports engine parts that every version since v0.1 has, so ``cli.py`` can run it
+as a script against an older checkout's code to build the base grid.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import fnmatch
+import json
 import math
 import statistics as st
+import sys
+import tomllib
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -73,14 +81,15 @@ def _recovery_days(world: World) -> float:
     return max(len(total) - end, 0)
 
 
-def run_one(scenario: str, seed: int, days: int) -> dict[str, Any]:
-    """One grid cell. A broken invariant ends the run and is reported, not raised."""
+def run_one(scenario: str, seed: int, days: int | None) -> dict[str, Any]:
+    """One grid cell (``days=None``: the scenario's own length). A broken invariant ends the run
+    and is reported, not raised."""
     cfg = dataclasses.replace(load_scenario(scenario), seed=seed)
     world = build_world(cfg)
     world.check_every_tick = True
     failure = None
     try:
-        world.step(days)
+        world.step(cfg.days if days is None else days)
     except AssertionError as exc:  # invariants raise AssertionError with the evidence
         failure = str(exc)
     metrics = suite_metrics(world)
@@ -95,7 +104,7 @@ def run_one(scenario: str, seed: int, days: int) -> dict[str, Any]:
 
 
 def run_grid(
-    scenarios: list[str | Path], seeds: list[int], days: int, workers: int | None = 1
+    scenarios: list[str | Path], seeds: list[int], days: int | None, workers: int | None = 1
 ) -> list[dict[str, Any]]:
     """Every scenario × seed, sorted by (scenario, seed). ``workers`` > 1 (or ``None`` for one per
     CPU) runs them in separate processes; results are identical either way."""
@@ -156,3 +165,208 @@ def compare(base: list[dict[str, Any]], head: list[dict[str, Any]]) -> list[Chan
                 Change(scenario, metric, base_mean, st.mean(h), mean, se, relative, significant)
             )
     return changes
+
+
+# --- the pull-request comment (M23.5) ------------------------------------------------------------
+
+MARKER = "<!-- questless-economy-diff -->"  # lets the workflow find and update its own comment
+LABELS = {
+    "hungry_npc_days": "Hungry NPC-days",
+    "recovery_days": "Days to recover after the shock",
+    "contracts_posted": "Contracts posted",
+    "contracts_delivered": "Contracts delivered",
+    "invariant_failures": "Invariant failures",
+    "coin.town": "Town treasury",
+    "coin.guilds": "Coin in guild treasuries",
+    "coin.npcs": "Coin held by NPCs",
+    "coin.escrow": "Coin in escrow",
+}
+MAX_BULLETS = 12
+
+
+def label(metric: str) -> str:
+    """The metric in plain words: "hungry_npc_days" -> "Hungry NPC-days"."""
+    if metric in LABELS:
+        return LABELS[metric]
+    kind, _, good = metric.partition(".")
+    good = good.replace("_", " ")
+    return {
+        "price_index": f"{good.capitalize()} price",
+        "shortage_days": f"{good.capitalize()} shortage days",
+    }.get(kind, metric)
+
+
+def _scenario_title(stem: str) -> str:
+    return stem.replace("_", " ").title()
+
+
+def _effect(c: Change) -> str:
+    if c.base_mean and c.head_mean / c.base_mean >= 2:
+        return f"**{c.head_mean / c.base_mean:.1f}×**"
+    if math.isinf(c.relative):
+        return "**new**"
+    return f"**{c.relative:+.0%}**"
+
+
+def render_markdown(
+    changes: list[Change],
+    *,
+    base_ref: str,
+    seeds: int,
+    scenarios: int,
+    problems: tuple[str, ...] | list[str] = (),
+) -> str:
+    """The comment: problems first, then significant changes in plain words, then a full table."""
+    lines = [
+        MARKER,
+        f"### Economy impact ({seeds} seeds × {scenarios} scenarios, against `{base_ref}`)",
+        "",
+    ]
+    if problems:
+        lines += ["**Failed checks:**", *[f"- {p}" for p in problems], ""]
+    significant = sorted(
+        (c for c in changes if c.significant),
+        key=lambda c: -abs(c.relative) if not math.isinf(c.relative) else -math.inf,
+    )
+    if significant:
+        for c in significant[:MAX_BULLETS]:
+            lines.append(
+                f"- {label(c.metric)} in {_scenario_title(c.scenario)}: "
+                f"{_num(c.base_mean)} → {_num(c.head_mean)} ({_effect(c)})"
+            )
+        if len(significant) > MAX_BULLETS:
+            lines.append(f"- …and {len(significant) - MAX_BULLETS} more in the table below")
+    else:
+        lines.append("No significant change in any metric.")
+    moved = [c for c in changes if c.mean_diff]
+    lines += ["", "<details><summary>Every metric that moved</summary>", ""]
+    if moved:
+        lines += [
+            "| Scenario | Metric | Base | Head | Change | Significant |",
+            "|---|---|---|---|---|---|",
+            *[
+                f"| {_scenario_title(c.scenario)} | {label(c.metric)} | {_num(c.base_mean)} | "
+                f"{_num(c.head_mean)} | {c.relative:+.1%} | {'yes' if c.significant else 'no'} |"
+                for c in moved
+            ],
+        ]
+    else:
+        lines.append("Nothing moved: every metric is identical on every seed.")
+    lines += [
+        "",
+        "</details>",
+        "",
+        "<sub>Runs are paired by seed. A change is significant when it is more than 2 standard "
+        "errors from zero and at least 3% of the base. Generated by `questless diff`.</sub>",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _num(x: float) -> str:
+    return f"{x:,.0f}" if abs(x) >= 100 else f"{x:,.2f}".rstrip("0").rstrip(".")
+
+
+# --- gates (M23.7) -------------------------------------------------------------------------------
+
+
+def load_gates(path: str | Path) -> dict[str, dict[str, float]]:
+    """``[gates]`` from ``.questless/ci.toml``: ``"metric glob" = { max_ratio = 1.2 }`` and/or
+    ``min_ratio``. A missing file means no gates."""
+    path = Path(path)
+    if not path.exists():
+        return {}
+    with path.open("rb") as fh:
+        data = tomllib.load(fh)
+    gates = data.get("gates", {})
+    for pattern, limits in gates.items():
+        if not isinstance(limits, dict) or not limits.keys() <= {"max_ratio", "min_ratio"}:
+            raise ValueError(f"{path}: gate {pattern!r} takes max_ratio and/or min_ratio")
+    return gates
+
+
+def check_gates(changes: list[Change], gates: dict[str, dict[str, float]]) -> list[str]:
+    """One message per significant change that breaks a gate (head ÷ base outside its limits)."""
+    out = []
+    for c in changes:
+        if not c.significant or not c.base_mean:
+            continue
+        ratio = c.head_mean / c.base_mean
+        for pattern, limits in sorted(gates.items()):
+            if not fnmatch.fnmatchcase(c.metric, pattern):
+                continue
+            if ratio > limits.get("max_ratio", math.inf) or ratio < limits.get("min_ratio", 0):
+                out.append(
+                    f"{label(c.metric)} in {_scenario_title(c.scenario)} is {ratio:.2f}× the base "
+                    f"({_num(c.base_mean)} → {_num(c.head_mean)}); gate `{pattern}` allows "
+                    f"{limits.get('min_ratio', 0)}-{limits.get('max_ratio', 'any')}×"
+                )
+    return out
+
+
+def invariant_problems(rows: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"Invariant broken in {_scenario_title(r['scenario'])}, seed {r['seed']}: {r['failure']}"
+        for r in rows
+        if r["failure"]
+    ]
+
+
+# --- determinism (M23.8) -------------------------------------------------------------------------
+
+
+def scenario_files(path: str | Path) -> list[Path]:
+    """A scenario file and every file it ``extends``, nearest first."""
+    out: list[Path] = []
+    path = Path(path).resolve()
+    while path not in out:
+        out.append(path)
+        with path.open("rb") as fh:
+            parent = tomllib.load(fh).get("scenario", {}).get("extends")
+        if parent is None:
+            break
+        path = (path.parent / parent).resolve()
+    return out
+
+
+def determinism_problems(
+    base: list[dict[str, Any]],
+    head: list[dict[str, Any]],
+    changed_paths: list[str],
+    scenario_dir: str | Path,
+    repo_root: str | Path,
+) -> list[str]:
+    """With the engine unchanged, a scenario whose files didn't change must replay to the same
+    state hash on every seed; anything else is accidental non-determinism."""
+    if any(p.startswith("src/questless/") for p in changed_paths):
+        return []
+    root = Path(repo_root).resolve()
+    changed = {(root / p).resolve() for p in changed_paths}
+    head_by = {(r["scenario"], r["seed"]): r for r in head}
+    out = []
+    for r in base:
+        other = head_by.get((r["scenario"], r["seed"]))
+        if other is None or other["state_hash"] == r["state_hash"]:
+            continue
+        files = scenario_files(Path(scenario_dir) / f"{r['scenario']}.toml")
+        if not changed & set(files):
+            out.append(
+                f"{_scenario_title(r['scenario'])}, seed {r['seed']}: the state hash changed "
+                "although neither the engine nor the scenario did (non-determinism?)"
+            )
+    return out
+
+
+# --- worker mode: ``python diff.py SCENARIO... --seeds 1,2 --days N`` prints the grid as JSON ----
+
+
+def _main(argv: list[str]) -> None:
+    seeds = [int(s) for s in argv[argv.index("--seeds") + 1].split(",")]
+    days_arg = argv[argv.index("--days") + 1]
+    workers = int(argv[argv.index("--workers") + 1]) or None  # 0: one per CPU
+    scenarios = argv[: argv.index("--seeds")]
+    days = None if days_arg == "default" else int(days_arg)
+    json.dump(run_grid(scenarios, seeds, days, workers), sys.stdout)
+
+
+if __name__ == "__main__":
+    _main(sys.argv[1:])
