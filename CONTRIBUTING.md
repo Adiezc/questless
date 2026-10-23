@@ -46,7 +46,8 @@ guarantees below.
 **Won't be merged:**
 - Changes that break a core guarantee (conservation, escrow, provenance, determinism, replay).
 - Cosmetic churn: mass reformatting, renaming, or rewording without a reason.
-- Code without tests, or tests that don't test the change.
+- Code without tests, or tests that don't test the change (for a bug fix, a test that also
+  passes without the fix).
 - Tradable tokens, NFTs or real-money features (see [BLOCKCHAIN.md](docs/BLOCKCHAIN.md)).
 - LLMs making decisions inside the simulation. They may write flavour text from verified
   evidence, never decide outcomes.
@@ -54,12 +55,29 @@ guarantees below.
   understanding, testing and defending every line, and please say in the pull request which tools
   you used.
 
+## Giving everyone a turn
+
+Questless has one maintainer, so review time is the scarce resource. These limits apply to
+everyone and keep the queue short enough for every pull request to get a proper review.
+
+- **One claimed issue and one open pull request per person at a time.** Finish or release your
+  current claim (say so in the issue) before claiming another. Pull requests over the limit may
+  be closed, and you're welcome to reopen them once your earlier one is merged or closed.
+- **`good first issue` tasks are for first-time contributors.** Once you've had a pull request
+  merged, please leave them for newcomers and pick a `help wanted` issue or a larger build-guide
+  task instead.
+- **Every bug fix needs a test that fails without the fix.** Before opening the pull request, run
+  your new test against `main` (for example `git stash` your source changes, or check out `main`'s
+  `src/`) and confirm it fails, then confirm it passes on your branch. Say in the pull request that
+  you did this. A test that passes either way doesn't prove the fix.
+
 ## How to contribute, step by step
 
 1. **Pick a task.** Browse issues labelled `good first issue` or `help wanted`, or choose a task
    from the [build guide](docs/BUILD_GUIDE.md).
 2. **Claim it.** Comment on the issue (or open one titled with the task id, such as
-   "M13.1 Reject NaN and infinity in config") so two people don't build the same thing. For M or L
+   "M13.1 Reject NaN and infinity in config") so two people don't build the same thing. You can
+   hold one claim at a time (see [Giving everyone a turn](#giving-everyone-a-turn)). For M or L
    tasks, add a short design: what you'll change and how you'll test it.
 3. **Fork and branch.** Fork the repository and create a branch named after the task, such as
    `m13-1-reject-nan`.

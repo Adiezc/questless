@@ -9,7 +9,8 @@
 ## Checklist
 
 - [ ] Linked to an issue or a build-guide task
-- [ ] Tests added or updated, and they fail without the change
+- [ ] Tests added or updated, and they fail without the change (I ran them against `main` and saw them fail)
+- [ ] This is my only open pull request, and the issue is my only claim
 - [ ] `uv run ruff check .` and `uv run ruff format --check .` pass
 - [ ] `uv run pytest` passes (including the guarantee tests)
 - [ ] `uvx bandit -r src app experiments -ll` reports no medium or high findings

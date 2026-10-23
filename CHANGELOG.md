@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- CONTRIBUTING: "Giving everyone a turn". One claimed issue and one open pull request per
+  person at a time, `good first issue` tasks kept for first-time contributors, and every bug fix
+  needs a test shown to fail without the fix. The pull request template asks for both.
 - Dashboard: a "Show as % of normal" toggle on the Economy tab plots prices and production
   relative to each good's average over days 10-14, with a dotted 100% line (M14.1, #15).
 - Metrics: `price_index`, `produced_index`, `unfilled_pct` and per-guild `escrowed` series.
