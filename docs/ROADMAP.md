@@ -257,7 +257,8 @@ Five milestones added from the
 [#53 idea bank](https://github.com/Adiezc/questless/issues/53) (2026-10-23) give M32's politics
 real feedback and let studios attack a policy before it ships: legitimacy (M48), beliefs and
 rumours (M49), policy stress tests (M52), unpaid guards turning bandit (M56) and amnesty and debt
-jubilee (M57).
+jubilee (M57). A sixth, respectful play (M59), adds a check that no change makes the game
+punish players for having a life.
 
 The v0.1 and v0.2 guarantees still apply. New dependencies stay optional extras; the engine stays
 standard-library only.
@@ -280,9 +281,10 @@ standard-library only.
 | M52 | **Policy stress tests** with attacker bots | M23, M31.2 | 6 h |
 | M56 | **Unpaid guards turn bandit** | M48 | 5 h |
 | M57 | **Amnesty and debt jubilee** | M17, M48; M56 and M19 for amnesty | 4 h |
+| M59 | **Respectful play** (evidence in [RESEARCH.md](RESEARCH.md#m59-respectful-play)) | M23, M31 (bot league); M52 for the attacker report | 6 h |
 | M27 | Docs, examples and v0.3.0 tag | all | 1.5 h |
 
-- **Total:** about 86.5 h, roughly 11 working days; plan for **14 days** with the usual overrun.
+- **Total:** about 92.5 h, roughly 12 working days; plan for **15 days** with the usual overrun.
 - **How to build each one:** [BUILD_GUIDE.md](BUILD_GUIDE.md) breaks every milestone into
   issue-sized tasks with files, tests and pitfalls.
 - **Fastest win:** M23 needs nothing from v0.2 beyond the bug fixes, so it can be built first if
@@ -639,6 +641,57 @@ return to their old work.
 **Accept when:** conservation and the registry stay consistent through a jubilee; the creditors'
 losses in the chain equal the written-off amounts; an experiment over paired seeds reports the
 effect on legitimacy, hunger and later loan rates, with and without a jubilee.
+
+## M59: respectful play (6 h)
+
+**Goal:** players feel rewarded, but never feel they must give up work, family or friends to keep
+up. M59 turns that into a check. It runs M31's bot league with players on different schedules and
+fails the economy check (M23) when a change makes being away costlier, or rewards streaks, fixed
+appointments or short windows. The design rests on peer-reviewed evidence collected in
+[RESEARCH.md](RESEARCH.md#m59-respectful-play).
+
+**Measure the pressure to play, not the hours.** Studies that link play logs to well-being find
+little or no effect of time played, and hard time caps have a weak record. The harm comes from
+play that feels compulsory. So M59 never caps or penalises hours. It measures what creates
+obligation.
+
+**Schedule bots**, each with the same strategy and a different life:
+- the **daily grinder**, who plays every day;
+- the **parent**, 30 minutes a day;
+- the **shift worker**, four days on and three days off, at changing times;
+- the **weekend player**, two long sessions a week;
+- the **returner**, who plays daily, leaves for three weeks, then comes back.
+
+**What the check measures**, per schedule bot, at equal hours played:
+1. **Reward per hour played**, and its spread across schedules (**schedule fairness**). The
+   weekend player's reward per hour must stay within a bound of the grinder's.
+2. **Cost of absence:** what the returner lost while away, beyond the play it missed (reputation
+   lost to contracts that lapsed, prices and offers that ran out, places on the board taken).
+   Today a lapsed contract costs its full reputation reward, the same as abandoning it.
+3. **Streak dependence:** the share of rewards that depend on playing on consecutive days.
+4. **Short windows:** the share of contracts and offers that close in less than a week or have no
+   catch-up path. Today every contract has a 10-day deadline (`contracts.deadline_days`).
+5. **Appointments:** rewards available only at a fixed time, and group contracts that fail or pay
+   less when one member is away.
+6. **Paid randomness:** any random reward schedule tied to play time or spending. Contract rewards
+   are escrowed, fixed and visible before a contract exists; the check keeps it that way.
+
+**Levers**, each a config knob, so studios can see what fixes a failing check:
+1. **Hand back without blame:** giving an accepted contract back before half its time has passed
+   costs no reputation, and a contract that lapses costs less than one abandoned late.
+2. **Catch-up paths:** fixed-time events leave a later way to earn the same reward.
+3. **Asynchronous group contracts:** each member's share can be delivered on any day in the
+   window, and no group is penalised for one member's absence.
+4. **Diminishing returns on grinding:** repeated identical jobs pay less within a day (shared
+   with M31's anti-bot levers).
+5. **Natural stopping points:** sessions sized to an evening, and an optional, judgement-free play
+   summary with player-set goals.
+
+**Accept when:** on the baseline, every schedule bot's reward per hour stays within a configured
+bound of the grinder's, and the returner's cost of absence stays below a second bound; a pull
+request that adds a planted daily streak bonus fails the M23 check with the evidence; a planted
+paid random reward fails it outright; and each measure's report cites the research finding it is
+based on.
 
 ## M27: docs, examples and v0.3.0 (1.5 h)
 

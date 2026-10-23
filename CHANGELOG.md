@@ -34,6 +34,9 @@ All notable changes to this project are documented here. The format follows
   late joiners: findings by lever from 34 peer-reviewed papers, with APA references and DOIs.
 - Research evidence for the proposed respectful-play milestone: what harms players (pressure to
   play, not hours played) and which levers help, from 27 peer-reviewed papers.
+- Roadmap and build guide: M59, respectful play, in v0.3. Schedule bots (a grinder, a parent, a
+  shift worker, a weekend player and a returner) and an economy check that fails when a change
+  makes being away costlier or rewards streaks, appointments or short windows.
 
 ### Changed
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
