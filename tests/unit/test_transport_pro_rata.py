@@ -1,7 +1,5 @@
 """Tests for M13.5: Pay transport contracts only for the units actually hauled (Fixes #43)."""
 
-from pathlib import Path
-
 import pytest
 
 from questless.api import Simulation
@@ -9,12 +7,7 @@ from questless.contracts.model import ContractKind
 from questless.contracts.validation import check_board
 from questless.player import ActionError
 from questless.sim.entities import ESCROW, PLAYER, Asset
-
-SCENARIOS = (
-    Path(__file__).resolve().parent.parent / "scenarios"
-    if (Path(__file__).resolve().parent.parent / "scenarios").exists()
-    else Path("scenarios")
-)
+from tests.conftest import SCENARIOS
 
 
 def test_transport_contract_pro_rata_payment_and_zero_haul_error():
