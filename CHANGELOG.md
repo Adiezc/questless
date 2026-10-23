@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Exploit evidence (M52.4): for every exploit the hunt flags, `hunt.py` saves a replay to
+  `experiments/results/exploits/` and lists the coin flows behind the gain, by who paid and who
+  was paid. The hoarder on Iron Shortage (seed 9) took 1,261 coin from the blacksmiths' guild and
+  individual smiths and spent 590 on miners and caravans.
 - Planted-exploit test (M52.5) and a fourth attacker, the prober, which accepts every contract and
   tries to deliver it before sourcing anything. With a #43-style hole planted (a procurement
   contract that pays when nothing is delivered), the hunt flags the prober on every seed; on the
