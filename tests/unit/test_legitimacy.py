@@ -31,7 +31,8 @@ def test_off_by_default_and_hash_free(baseline):
 
 
 def test_unpaid_wages_lower_legitimacy_and_pay_restores_it(baseline):
-    world = build_world(_on(baseline))
+    no_reserve = dataclasses.replace(baseline.town, reserve_days=0)  # #72 would refill it daily
+    world = build_world(_on(dataclasses.replace(baseline, town=no_reserve)))
     world.step(10)
     assert world.legitimacy > 0.9
     for _ in range(7):  # a week with no money for guards
