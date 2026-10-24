@@ -176,8 +176,10 @@ uv run python experiments/analyse_export.py data/   # a worked example, standard
 | `npc_days.csv` | arm × seed × day × NPC | who gets rich and why, wealth mobility, output per worker |
 | `events.csv` | shock or changed rule | studies around a shock: what moved, and when |
 | `runs.csv` | arm × seed | a policy's effect, paired by seed so the starting world is identical |
+| `player_days.csv` | arm × seed × day, with `--player` | what a player earns, and how a player changes the town |
+| `transactions.csv` | ledger entry, with `--transactions` | who paid whom, and why: flows of funds |
 
-Arms share seeds, so every comparison is a controlled experiment: the same world with one rule
+Without `--player` nobody can deliver a quest, so every quest expires. Arms share seeds, so every comparison is a controlled experiment: the same world with one rule
 changed. Every run's state hash is in `runs.csv`, so anyone can rerun it and check every row.
 
 ## Use it from Python
