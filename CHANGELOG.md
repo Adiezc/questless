@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Percentile levy brackets: a `[[town.levy_brackets]]` entry can give `percentile = 0.9` instead
+  of a fixed `threshold`, and each day's threshold becomes the NPC wallet at that rank. The fixed
+  brackets in `progressive_levy.toml` (500 and 2,000 coin) only touched 0.8% of NPC-days on Iron
+  Shortage; the new `levy_top_decile.toml` (6% above the 90th percentile, 10% above the 99th)
+  lowers the final coin Gini by 0.029 ± 0.012 over 20 seeds, against 0.005 ± 0.002. Each day's
+  resolved thresholds are in `TickStats.levy_thresholds` and the export's `daily.csv`.
 - Research export: `questless export <scenario> [--policy <toml>]... --seeds 20 --out data/` runs
   the scenario and each policy arm on the same seeds and writes `daily.csv`, `npc_days.csv` (one
   row per NPC per day), `events.csv` (shocks and changed rules), `runs.csv` (with state hashes to

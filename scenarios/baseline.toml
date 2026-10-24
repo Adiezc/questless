@@ -200,6 +200,8 @@ upkeep_exempt = 60
 # [[town.levy_brackets]]
 # threshold = 500
 # rate = 0.05
+# Or follow the wealth distribution: `percentile = 0.9` instead of `threshold` sets each day's
+# threshold to the NPC wallet at that percentile (one kind per scenario, not both).
 # Reserve target (#72): while the town holds less than reserve_days of guard wages (10 × 28 × 7 =
 # 1,960 coin), every levy rate rises by reserve_rate until it recovers. reserve_days = 0 turns it off.
 reserve_days = 10
