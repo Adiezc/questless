@@ -145,15 +145,40 @@ class TownConfig:
     # Higher brackets as (threshold, rate), ascending: coin above each threshold pays that rate
     # instead of the one below it. Empty means one flat rate above upkeep_exempt (M58.3).
     levy_brackets: tuple[tuple[int, float], ...] = ()
+    # Or brackets that follow the wealth distribution, as (percentile, rate): each day the
+    # threshold is the NPC wallet at that percentile, so a bracket keeps taxing the same share of
+    # NPCs however rich the town gets. A scenario uses one kind or the other, never both.
+    levy_percentiles: tuple[tuple[float, float], ...] = ()
     # Reserve target (#72): while the town holds less than ``reserve_days`` of guard wages, every
     # levy rate rises by ``reserve_rate``. 0 days turns it off.
     reserve_days: int = 0
     reserve_rate: float = 0.0
 
-    def levy(self, coin: int, surcharge: float = 0.0) -> int:
+    def brackets_for(self, wallets: list[int]) -> tuple[tuple[int, float], ...]:
+        """Today's brackets as (threshold, rate). Percentile brackets resolve to the wallet at that
+        rank (nearest rank, after sorting), each kept above the one before it."""
+        if not self.levy_percentiles:
+            return self.levy_brackets
+        ordered = sorted(wallets)
+        out: list[tuple[int, float]] = []
+        below = self.upkeep_exempt
+        for pct, rate in self.levy_percentiles:
+            at = ordered[max(math.ceil(pct * len(ordered)) - 1, 0)] if ordered else 0
+            below = max(at, below + 1)
+            out.append((below, rate))
+        return tuple(out)
+
+    def levy(
+        self,
+        coin: int,
+        surcharge: float = 0.0,
+        brackets: tuple[tuple[int, float], ...] | None = None,
+    ) -> int:
         """The day's upkeep on ``coin``, each bracket taxing only the coin that falls in it.
-        ``surcharge`` is added to every bracket's rate (the reserve top-up)."""
-        bands = [(self.upkeep_exempt, self.upkeep_rate), *self.levy_brackets]
+        ``surcharge`` is added to every bracket's rate (the reserve top-up); ``brackets`` are
+        today's from ``brackets_for`` (default: the fixed ones)."""
+        fixed = self.levy_brackets if brackets is None else brackets
+        bands = [(self.upkeep_exempt, self.upkeep_rate), *fixed]
         owed = 0.0
         for i, (threshold, rate) in enumerate(bands):
             top = bands[i + 1][0] if i + 1 < len(bands) else coin
@@ -488,6 +513,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             upkeep_rate=_fraction(town["upkeep_rate"], "town.upkeep_rate"),
             upkeep_exempt=_nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt"),
             levy_brackets=_levy_brackets(town),
+            levy_percentiles=_levy_percentiles(town),
             reserve_days=_nonneg_int(town.get("reserve_days", 0), "town.reserve_days"),
             reserve_rate=_reserve_rate(town),
         ),
@@ -607,10 +633,37 @@ def _legitimacy(table: Any) -> LegitimacyConfig:
     )
 
 
-def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
+def _bracket_kind(town: Mapping[str, Any]) -> str | None:
+    """``"threshold"`` or ``"percentile"``: which kind of brackets the town uses, if any."""
     raw = town.get("levy_brackets", [])
     if not isinstance(raw, list):
         raise ConfigError("town.levy_brackets: expected an array of tables")
+    kinds = {k for b in raw if isinstance(b, dict) for k in ("threshold", "percentile") if k in b}
+    if len(kinds) > 1:
+        raise ConfigError("town.levy_brackets: use thresholds or percentiles, not both")
+    return kinds.pop() if kinds else None
+
+
+def _levy_percentiles(town: Mapping[str, Any]) -> tuple[tuple[float, float], ...]:
+    if _bracket_kind(town) != "percentile":
+        return ()
+    out: list[tuple[float, float]] = []
+    below = 0.0
+    for i, b in enumerate(town["levy_brackets"]):
+        where = f"town.levy_brackets[{i}]"
+        _keys(b, where, required={"percentile", "rate"})
+        pct = _fraction(b["percentile"], f"{where}.percentile")
+        if not below < pct < 1:
+            raise ConfigError(f"{where}.percentile: must be between {below} and 1, exclusive")
+        out.append((pct, _fraction(b["rate"], f"{where}.rate")))
+        below = pct
+    return tuple(out)
+
+
+def _levy_brackets(town: Mapping[str, Any]) -> tuple[tuple[int, float], ...]:
+    if _bracket_kind(town) == "percentile":
+        return ()
+    raw = town.get("levy_brackets", [])
     out: list[tuple[int, float]] = []
     below = _nonneg_int(town["upkeep_exempt"], "town.upkeep_exempt")
     for i, b in enumerate(raw):
@@ -803,7 +856,9 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
 
 def _town_dict(town: TownConfig) -> dict[str, Any]:
     d = asdict(town)
-    brackets = d.pop("levy_brackets")
+    brackets, percentiles = d.pop("levy_brackets"), d.pop("levy_percentiles")
     if brackets:
         d["levy_brackets"] = [{"threshold": t, "rate": r} for t, r in brackets]
+    if percentiles:
+        d["levy_brackets"] = [{"percentile": p, "rate": r} for p, r in percentiles]
     return d

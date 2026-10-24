@@ -12,12 +12,25 @@ All notable changes to this project are documented here. The format follows
   divergences are tracked as strict `xfail`s or bounds: iron ore prices don't recover after the
   mine disaster (D1), and baseline coin reaches real-world concentration over a year without
   any capital to earn on (D2): right level, wrong cause.
+- Research export, part 2: `--player local|importer` puts a scripted player in every run, so
+  quests get delivered, and adds `player_days.csv` plus `player` and `player_profit` in
+  `runs.csv`. `--transactions` writes every ledger entry to `transactions.csv` (about 600 rows a
+  day). `ScriptedPlayer` moved from `experiments/shock_vs_baseline.py` to `questless.bots`. With a
+  local player in every run of Iron Shortage (20 seeds), the top-decile levy no longer lowers the
+  final Gini (−0.005 ± 0.019) and hunger rises by 11.7 ± 5.1 NPC-days, so a policy's effect
+  depends on whether players are there.
+- Percentile levy brackets: a `[[town.levy_brackets]]` entry can give `percentile = 0.9` instead
+  of a fixed `threshold`, and each day's threshold becomes the NPC wallet at that rank. The fixed
+  brackets in `progressive_levy.toml` (500 and 2,000 coin) only touched 0.8% of NPC-days on Iron
+  Shortage; the new `levy_top_decile.toml` (6% above the 90th percentile, 10% above the 99th)
+  lowers the final coin Gini by 0.029 ± 0.012 over 20 seeds, against 0.005 ± 0.002. Each day's
+  resolved thresholds are in `TickStats.levy_thresholds` and the export's `daily.csv`.
 - Research export: `questless export <scenario> [--policy <toml>]... --seeds 20 --out data/` runs
   the scenario and each policy arm on the same seeds and writes `daily.csv`, `npc_days.csv` (one
   row per NPC per day), `events.csv` (shocks and changed rules), `runs.csv` (with state hashes to
   rerun against) and a generated `codebook.md`. `experiments/analyse_export.py` is a worked
   example: on Iron Shortage over 20 seeds, the progressive levy lowers the final coin Gini by
-  0.005 ± 0.002, and wealth ranks on day 30 and day 119 correlate at 0.63. The policy-overlay
+  0.005 ± 0.002, and wealth ranks on day 30 and day 119 correlate at 0.36. The policy-overlay
   loader moved from `experiments/stress/policy.py` to `questless.policy` so the CLI can use it.
 - Coin concentration (M58.1): each day records the Gini of NPC coin and the share held by the
   richest 10%, as `coin_gini` and `coin_top10_share` in `timeseries()`. On the baseline the Gini
@@ -123,6 +136,9 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Research export: `npc_days.csv` counted the coin and goods of NPCs who work at the market
+  (smiths) twice, because their work site is their own account. Wealth mobility on Iron Shortage
+  is 0.36, not the 0.63 first reported.
 - A player can no longer corner a good ahead of a shock (#93). The exploit hunt found that buying
   iron ore before the scheduled Iron Shortage out-earned honest play on most seeds and left smiths
   hungry. `Simulation.config` no longer shows the shock schedule; `Simulation.shocks()` lists

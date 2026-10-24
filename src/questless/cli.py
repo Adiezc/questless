@@ -77,6 +77,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--seeds", default="10", help="'20' for seeds 1-20, or '5-9', or '3,7,11' (default 10)"
     )
     exp.add_argument("--days", type=int, help="days per run (default: the scenario's)")
+    exp.add_argument(
+        "--player",
+        choices=("local", "importer"),
+        help="put a scripted player in every run, so quests get delivered (adds player_days.csv)",
+    )
+    exp.add_argument(
+        "--transactions",
+        action="store_true",
+        help="also write every ledger entry to transactions.csv (several hundred rows a day)",
+    )
     exp.add_argument("--out", default="export", help="directory for the tables (default export/)")
 
     demo = sub.add_parser("demo", help="open the interactive dashboard (needs the demo extra)")
@@ -216,6 +226,8 @@ def _export(args: argparse.Namespace) -> int:
             seeds=seeds,
             policies=args.policy,
             days=args.days,
+            player=args.player,
+            transactions=args.transactions,
             command=" ".join(["questless", *sys.argv[1:]]),
         )
     except ConfigError as exc:
@@ -223,8 +235,8 @@ def _export(args: argparse.Namespace) -> int:
         return 2
     elapsed = time.perf_counter() - started
     print(f"{counts['runs']} runs in {elapsed:.1f}s -> {args.out}/")
-    for table in ("daily", "npc_days", "events", "runs"):
-        print(f"  {table}.csv  {counts[table]:>9,} rows")
+    for table, rows in counts.items():
+        print(f"  {table + '.csv':<18}{rows:>10,} rows")
     print("  codebook.md")
     return 0
 
