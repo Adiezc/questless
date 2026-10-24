@@ -8,6 +8,7 @@ knowing the engine's internals.
 
 from __future__ import annotations
 
+from math import ceil
 from statistics import fmean
 from typing import TYPE_CHECKING, Any
 
@@ -48,7 +49,31 @@ def timeseries(world: World) -> dict[str, Any]:
             "capacity": [s.transport.capacity if s.transport else 0 for s in stats],
             "backlog": [s.transport.backlog if s.transport else 0 for s in stats],
         },
+        "coin_gini": [round(s.coin_gini, 4) for s in stats],
+        "coin_top10_share": [round(s.coin_top10_share, 4) for s in stats],
     }
+
+
+def gini(values: list[int]) -> float:
+    """Gini coefficient of ``values``: 0 when all are equal, (n - 1) / n when one holds everything.
+
+    0 for an empty or all-zero list. Sorted first, so the result doesn't depend on input order.
+    """
+    ordered = sorted(values)
+    n, total = len(ordered), sum(ordered)
+    if not total:
+        return 0.0
+    weighted = sum(rank * v for rank, v in enumerate(ordered, start=1))
+    return 2 * weighted / (n * total) - (n + 1) / n
+
+
+def top_share(values: list[int], fraction: float = 0.1) -> float:
+    """Share of the total held by the richest ``fraction`` of holders (at least one); 0 if none."""
+    ordered = sorted(values, reverse=True)
+    total = sum(ordered)
+    if not total:
+        return 0.0
+    return sum(ordered[: max(1, ceil(len(ordered) * fraction))]) / total
 
 
 def _unfilled_pct(report: MarketReport) -> float:

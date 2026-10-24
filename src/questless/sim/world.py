@@ -13,6 +13,7 @@ from questless.config import ScenarioConfig
 from questless.contracts.engine import ContractBoard, ContractTickReport
 from questless.contracts.needs import NeedTracker
 from questless.contracts.validation import check_board
+from questless.metrics import gini, top_share
 from questless.sim import legitimacy
 from questless.sim.entities import (
     ESCROW,
@@ -62,6 +63,8 @@ class TickStats:
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
     guilds: dict[str, GuildReport] = field(default_factory=dict)
     contracts: ContractTickReport | None = None
+    coin_gini: float = 0.0  # over NPC wallets after the market clears (M58)
+    coin_top10_share: float = 0.0  # share of NPC coin held by the richest 10%
 
 
 @dataclass
@@ -117,6 +120,9 @@ class World:
         relief = provide_relief(self)  # before the market, so relief buys food today
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
+        wallets = [self.ledger.balance(n.account, Asset.COIN) for n in self.npcs_in_order()]
+        stats.coin_gini = gini(wallets)
+        stats.coin_top10_share = top_share(wallets)
         dues = collect_dues(self, start_coin, relief)
         stats.guilds = guild_reports(self, dues, relief, guild_upkeep)
         self.stats.append(stats)
