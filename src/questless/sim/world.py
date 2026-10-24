@@ -14,7 +14,7 @@ from questless.contracts.engine import ContractBoard, ContractTickReport
 from questless.contracts.needs import NeedTracker
 from questless.contracts.validation import check_board
 from questless.metrics import gini, top_share
-from questless.sim import legitimacy
+from questless.sim import claims, legitimacy
 from questless.sim.entities import (
     ESCROW,
     IN_TRANSIT,
@@ -64,8 +64,10 @@ class TickStats:
     prices: dict[Asset, float] = field(default_factory=dict)  # after today's adjustment
     guilds: dict[str, GuildReport] = field(default_factory=dict)
     contracts: ContractTickReport | None = None
+    claims: claims.ClaimsReport | None = None  # M60; None while the feature is off
     coin_gini: float = 0.0  # over NPC wallets after the market clears (M58)
     coin_top10_share: float = 0.0  # share of NPC coin held by the richest 10%
+    wealth_gini: float | None = None  # NPC coin plus claims at their price (M60); None while off
 
 
 @dataclass
@@ -84,6 +86,7 @@ class World:
     pending_caravans: list[tuple[int, str, int]] = field(default_factory=list)
     tick: int = 0
     legitimacy: float = 1.0  # the town's authority, 0-1; only moves when enabled (M48)
+    claims: dict[str, claims.Claim] = field(default_factory=dict)  # M60; empty while off
     check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
 
     def step(self, days: int = 1) -> None:
@@ -98,8 +101,10 @@ class World:
         start_coin = {
             n.id: self.ledger.balance(n.account, Asset.COIN) for n in self.npcs_in_order()
         }
+        records = {}
         for npc in self.npcs_in_order():
             rec = run_npc_day(self, npc)
+            records[npc.id] = rec
             stats.produced.update(rec.produced)
             stats.consumed.update(rec.consumed)
             stats.unmet.update(rec.unmet)
@@ -121,9 +126,13 @@ class World:
         relief = provide_relief(self)  # before the market, so relief buys food today
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
+        if self.config.claims.enabled:
+            stats.claims = claims.step(self, records)
         wallets = [self.ledger.balance(n.account, Asset.COIN) for n in self.npcs_in_order()]
         stats.coin_gini = gini(wallets)
         stats.coin_top10_share = top_share(wallets)
+        if self.config.claims.enabled:
+            stats.wealth_gini = gini(claims.wealth(self))
         dues = collect_dues(self, start_coin, relief)
         stats.guilds = guild_reports(self, dues, relief, guild_upkeep)
         self.stats.append(stats)
@@ -205,6 +214,7 @@ class World:
     def check_invariants(self) -> None:
         self.ledger.check_conservation()
         check_board(self, self.contracts)
+        claims.check(self)
         if self.ledger.holdings(MARKET):
             raise AssertionError(
                 f"market clearing account not empty: {self.ledger.holdings(MARKET)}"
@@ -242,6 +252,7 @@ class World:
             "rng": repr(self.rng.getstate()),
             # Only when on, so worlds without the feature keep their hashes.
             **({"legitimacy": round(self.legitimacy, 9)} if self.config.legitimacy.enabled else {}),
+            **({"claims": claims.state(self)} if self.config.claims.enabled else {}),
         }
 
     def state_hash(self) -> str:
@@ -315,5 +326,7 @@ def build_world(config: ScenarioConfig) -> World:
         modifiers=Modifiers([Shock.from_config(s) for s in config.shocks]),
         legitimacy=config.legitimacy.start,
     )
+    if config.claims.enabled:
+        world.claims = claims.genesis(world)
     world.check_invariants()
     return world

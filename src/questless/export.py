@@ -33,6 +33,7 @@ from questless.api import Simulation
 from questless.bots import STRATEGIES, ScriptedPlayer
 from questless.config import ConfigError, ScenarioConfig, load_scenario
 from questless.contracts.model import Status
+from questless.sim import claims
 from questless.sim.entities import PLAYER
 from questless.sim.ledger import GOODS, Asset, Entry
 from questless.sim.world import World
@@ -43,6 +44,7 @@ DAILY = [
     "day",
     "coin_gini",
     "coin_top10_share",
+    "wealth_gini",
     "npc_coin",
     "npc_wealth",
     "hungry_npcs",
@@ -54,6 +56,10 @@ DAILY = [
     "wages_paid",
     "wages_unpaid",
     "legitimacy",
+    "rent_paid",
+    "rent_unpaid",
+    "claims_sold",
+    "claims_top10_share",
     *(f"{col}_{g}" for g in map(str, GOODS) for col in ("price", "produced", "traded", "unfilled")),
 ]
 NPC_DAYS = [
@@ -72,6 +78,10 @@ NPC_DAYS = [
     "coin",
     "coin_change",
     "goods_value",
+    "claims_owned",
+    "claim_value",
+    "rent_paid",
+    "rent_received",
     "wealth",
     "produced_units",
     "produced_value",
@@ -230,7 +240,10 @@ def _npc_rows(world: World, coin: dict[str, int]) -> Iterator[list[Any]]:
     """End-of-day rows for every NPC; updates ``coin`` to today's balances."""
     stats = world.stats[-1]
     prices = stats.prices
+    owned = claims.holdings(world) if world.claims else {}
+    rent = stats.claims
     for npc in world.npcs_in_order():
+        n_claims, claim_value = owned.get(npc.id, (0, 0))
         rec = npc.history[-1] if npc.history and npc.history[-1].tick == stats.tick else None
         held: dict[Asset, int] = {}
         # Market workers' site is their own account: count it once (as ``eat`` does).
@@ -254,7 +267,11 @@ def _npc_rows(world: World, coin: dict[str, int]) -> Iterator[list[Any]]:
             wallet,
             wallet - coin[npc.id],
             round(goods_value, 2),
-            round(wallet + goods_value, 2),
+            n_claims,
+            claim_value,
+            rent.paid_by[npc.id] if rent else 0,
+            rent.received_by[npc.id] if rent else 0,
+            round(wallet + goods_value + claim_value, 2),
             sum(produced.values()),
             round(sum(q * prices.get(a, 0.0) for a, q in produced.items()), 2),
             sum(rec.consumed.values()) if rec else 0,
@@ -282,6 +299,7 @@ def _daily_row(world: World, npc_rows: list[list[Any]]) -> list[Any]:
         s.tick,
         round(s.coin_gini, 4),
         round(s.coin_top10_share, 4),
+        "" if s.wealth_gini is None else round(s.wealth_gini, 4),
         sum(r[coin_col] for r in npc_rows),
         round(sum(r[wealth_col] for r in npc_rows), 2),
         s.hungry_npcs,
@@ -293,6 +311,16 @@ def _daily_row(world: World, npc_rows: list[list[Any]]) -> list[Any]:
         s.wages_paid,
         s.wages_unpaid,
         "" if s.legitimacy is None else round(s.legitimacy, 4),
+        *(
+            [
+                s.claims.rent_paid,
+                s.claims.rent_unpaid,
+                s.claims.sold,
+                round(s.claims.top10_share, 4),
+            ]
+            if s.claims
+            else ["", "", "", ""]
+        ),
         *per_good,
     ]
 
@@ -400,8 +428,9 @@ COLUMNS: dict[str, dict[str, str]] = {
         "day": "Day number, from 0. Values are at the end of the day.",
         "coin_gini": "Gini of NPC coin after the market clears: 0 equal, (n-1)/n one holds all.",
         "coin_top10_share": "Share of NPC coin held by the richest 10% of NPCs (at least one).",
+        "wealth_gini": "Gini of NPC coin plus claims at their price (M60); blank with claims off.",
         "npc_coin": "Coin held by all NPCs at the end of the day.",
-        "npc_wealth": "NPC coin plus goods held, valued at the day's prices.",
+        "npc_wealth": "NPC coin, goods and claims, valued at the day's prices.",
         "hungry_npcs": "NPCs whose hunger passed the scenario's `hungry_after` today.",
         "idle_npcs": "NPCs who could not work today for lack of inputs.",
         "live_contracts": "Contracts open on the quest board at the end of the day.",
@@ -411,6 +440,10 @@ COLUMNS: dict[str, dict[str, str]] = {
         "wages_paid": "Guard wages the town paid today, in coin.",
         "wages_unpaid": "Guard wages owed but not paid today, in coin.",
         "legitimacy": "The town's authority, 0-1; blank when the feature is off.",
+        "rent_paid / rent_unpaid": "Claim rent tenants paid today, and rent forgiven because it "
+        "would have taken a tenant below `rent_floor`; blank with claims off.",
+        "claims_sold": "Claims that changed owner today; blank with claims off.",
+        "claims_top10_share": "Share of claims owned by the richest 10% of NPCs by coin.",
         "price_<good>": "Market price after today's adjustment, in coin per unit.",
         "produced_<good>": "Units produced today, town-wide.",
         "traded_<good>": "Units that changed hands at market today.",
@@ -430,7 +463,11 @@ COLUMNS: dict[str, dict[str, str]] = {
         "coin": "Coin at the end of the day.",
         "coin_change": "Coin today minus coin yesterday (or at genesis on day 0): net income.",
         "goods_value": "Goods held at market and at the work site, at the day's prices.",
-        "wealth": "coin + goods_value.",
+        "claims_owned / claim_value": "Claims the NPC owns (M60), and their value: 0 with claims "
+        "off. A claim's value is `price_days` days of its rent at its recent output.",
+        "rent_paid / rent_received": "Rent the NPC paid as a tenant, and received as an owner, "
+        "today. rent_received is capital income; sales and wages are labour income.",
+        "wealth": "coin + goods_value + claim_value.",
         "produced_units / produced_value": "Output today, in units and at the day's prices.",
         "consumed_units": "Units eaten or used up as inputs today.",
         "bought_units / sold_units": "Units bought and sold at market today.",
