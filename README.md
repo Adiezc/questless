@@ -179,6 +179,8 @@ uv run python experiments/analyse_export.py data/   # a worked example, standard
 
 Arms share seeds, so every comparison is a controlled experiment: the same world with one rule
 changed. Every run's state hash is in `runs.csv`, so anyone can rerun it and check every row.
+[docs/VALIDATION.md](docs/VALIDATION.md) lists which real-world patterns the model reproduces,
+and where it doesn't.
 
 ## Use it from Python
 
