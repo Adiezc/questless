@@ -31,6 +31,7 @@ RULES = (
     "town.",
     "contracts.",
     "legitimacy.",
+    "claims.",
     "transport.fee_rate",
     "player.caravan_markup",  # an import tariff
     "player.max_buy_share",

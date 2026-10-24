@@ -728,6 +728,7 @@ and long supply chains emerge from the same ledger.
 | M54 | **Civilization DNA** | M34 (the mutation can be built earlier) | 6 h |
 | M55 | **Infrastructure dependency maps** | M34 | 8 h |
 | M58 | **Fairness for late joiners** (evidence in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners)) | M17, M31; M34 for migration between regions | 8 h |
+| M60 | **Land and mine claims** (returns on capital; see [VALIDATION.md](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)) | none; M58 builds on it | 7 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
 - **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
@@ -970,6 +971,49 @@ better information (M49).
 veterans' reward per hour stays above a second bound; M52's attacker bots find no way to farm the
 newcomer levers with alts; and each lever's report states the research finding it is modelled on
 and what the model leaves out.
+
+## M60: land and mine claims (7 h)
+
+**Goal:** wealth can earn more wealth. Today NPCs can only earn by working, so coin stays far more
+equal than real wealth ([VALIDATION.md, D2](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)),
+and r − g, the main long-run driver of wealth concentration in the research
+([RESEARCH.md, M58](RESEARCH.md#m58-fairness-for-late-joiners)), can't be measured. M60 adds the
+asset the evidence points to: land and mining rights.
+
+**Design** (decided 2026-10-24):
+- **Claims are work rights.** Every gatherer (miner, farmer) works one claim at their site. A
+  claim has an owner and a worker; at genesis each worker owns the claim they work, so day 0 is
+  as equal as it is today, and any concentration comes from trade.
+- **Rent is a share of output.** A worker who doesn't own their claim pays the owner
+  `rent_share` of the day's output, valued at the day's prices, in coin, after the market clears.
+  A tenant never pays below `rent_floor` coin (subsistence), and the shortfall is forgiven and
+  counted as `rent_unpaid`. Tenants are never evicted in this version.
+- **Claims trade.** An owner whose coin falls below `sell_below` sells one claim and keeps working
+  it as a tenant (a sale-leaseback). The buyer is the richest NPC who would still hold
+  `buy_reserve` coin after paying. The price is `price_days` days of the claim's recent rent
+  (rent share × its mean daily output value over the last 7 days). Coin moves on the ledger
+  (reasons `rent` and `claim sale`), so conservation holds.
+- **Off by default** (`[claims] enabled = false`). With it off, nothing changes and every state
+  hash stays the same. Policy overlays may switch it on, so it can be an export arm.
+
+**Measured:**
+- `TickStats`: rent paid and unpaid, claims sold and their mean price, and the share of claims
+  held by the richest 10% of NPCs.
+- The export adds `claims_owned`, `rent_paid` and `rent_received` per NPC per day, and rent and
+  claim sales per day, so a researcher can split income into capital (rent) and labour (sales and
+  wages), which is r against g.
+
+**Simpler than reality, on purpose:** claims are all equally productive (no Ricardian rent), no
+eviction, no mortgages, and the population is fixed, so site capacity never binds. Each is a
+config-free follow-up once the basic loop is measured.
+
+**Accept when:**
+- coin is conserved, and every claim always has exactly one owner and one worker;
+- with claims trading, the baseline's wealth Gini (coin plus claims at their price) ends above a
+  world whose claims never trade, across seeds. Coin alone isn't the measure: buyers turn coin
+  into claims;
+- with claims off, every scenario's state hash is unchanged;
+- the export's per-NPC rent columns add up to the day's totals.
 
 ## M41: docs, both skins and v0.4.0 (3 h)
 

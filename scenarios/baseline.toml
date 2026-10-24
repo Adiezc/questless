@@ -244,3 +244,14 @@ weapons = 1000
 # [founding.bounds]
 # "town.upkeep_rate" = [0.02, 0.05]
 # "guilds.*.dues_rate" = [0.03, 0.08]
+
+# Land and mine claims (M60), off here: every gatherer owns the claim they work; tenants pay the
+# owner rent_share of their output; owners below sell_below coin sell to the richest NPC who keeps
+# buy_reserve, at price_days of rent, and rent the claim back.
+# [claims]
+# enabled = true
+# rent_share = 0.2
+# rent_floor = 10
+# sell_below = 15
+# buy_reserve = 200
+# price_days = 30

@@ -119,6 +119,22 @@ class LegitimacyConfig:
 
 
 @dataclass(frozen=True)
+class ClaimsConfig:
+    """M60: land and mine claims, so wealth can earn rent. Off unless ``enabled``. Every gatherer
+    works one claim; at genesis they own it. A worker who doesn't own their claim pays the owner
+    ``rent_share`` of the day's output value, never going below ``rent_floor`` coin. An owner whose
+    coin falls below ``sell_below`` sells a claim (and rents it back) to the richest NPC who would
+    keep ``buy_reserve`` coin, at ``price_days`` days of its recent rent."""
+
+    enabled: bool = False
+    rent_share: float = 0.2
+    rent_floor: int = 10
+    sell_below: int = 15
+    buy_reserve: int = 200
+    price_days: int = 30
+
+
+@dataclass(frozen=True)
 class ContractsConfig:
     max_open: int  # global cap on OPEN + ACCEPTED contracts
     max_new_per_tick: int
@@ -207,6 +223,7 @@ class ScenarioConfig:
     outside: Mapping[Asset, int]
     shocks: tuple[ShockConfig, ...] = ()
     legitimacy: LegitimacyConfig = LegitimacyConfig()
+    claims: ClaimsConfig = ClaimsConfig()
     # [founding.bounds]: knobs a colony may change from its parent, as (knob, low, high) (M54)
     founding_bounds: tuple[tuple[str, float, float], ...] = ()
     # Most of a good's sellable stock the player may buy in one day (#93). 1 means no cap.
@@ -277,7 +294,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "town",
             "player",
         },
-        optional={"outside", "shocks", "founding", "legitimacy"},
+        optional={"outside", "shocks", "founding", "legitimacy", "claims"},
     )
 
     sc = data["scenario"]
@@ -524,6 +541,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         shocks=tuple(shocks),
         founding_bounds=_founding_bounds(data.get("founding", {}), set(guilds)),
         legitimacy=_legitimacy(data.get("legitimacy", {})),
+        claims=_claims(data.get("claims", {})),
     )
     if cfg.population <= 0:
         raise ConfigError("population is zero")
@@ -608,6 +626,27 @@ def _founding_bounds(founding: Any, guild_ids: set[str]) -> tuple[tuple[str, flo
             raise ConfigError(f"{where}: low must not exceed high")
         out.append((knob, low, high))
     return tuple(out)
+
+
+def _claims(table: Any) -> ClaimsConfig:
+    fields = {"enabled", "rent_share", "rent_floor", "sell_below", "buy_reserve", "price_days"}
+    _keys(table, "claims", required=set(), optional=fields)
+    default = ClaimsConfig()
+    enabled = table.get("enabled", default.enabled)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"claims.enabled: expected true or false, got {enabled!r}")
+
+    def count(key: str) -> int:
+        return _nonneg_int(table.get(key, getattr(default, key)), f"claims.{key}")
+
+    return ClaimsConfig(
+        enabled=enabled,
+        rent_share=_fraction(table.get("rent_share", default.rent_share), "claims.rent_share"),
+        rent_floor=count("rent_floor"),
+        sell_below=count("sell_below"),
+        buy_reserve=count("buy_reserve"),
+        price_days=_pos_int(table.get("price_days", default.price_days), "claims.price_days"),
+    )
 
 
 def _legitimacy(table: Any) -> LegitimacyConfig:
@@ -827,6 +866,7 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
         "transport": asdict(cfg.transport),
         "contracts": asdict(cfg.contracts),
         "legitimacy": asdict(cfg.legitimacy),
+        "claims": asdict(cfg.claims),
         "guilds": {
             gid: {
                 "name": gc.name,

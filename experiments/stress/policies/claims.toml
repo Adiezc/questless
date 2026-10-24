@@ -1,0 +1,10 @@
+# Policy: land and mine claims (M60). Every gatherer starts owning the claim they work; owners
+# short of coin sell to the richest NPCs and rent the claim back, so wealth can earn rent.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "../../../scenarios/baseline.toml"
+name = "Baseline, land and mine claims"
+
+[claims]
+enabled = true
