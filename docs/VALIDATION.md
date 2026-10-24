@@ -8,7 +8,7 @@ stale.
 
 **How to read it:** a fact that holds is a test that passes. A known divergence is a test marked
 `xfail(strict=True)`: if someone fixes the model, the test fails until this page is updated. Every
-number below comes from those tests' scenarios (120 days, seeds 1-5) and was regenerated on
+number below comes from those tests' scenarios (120 days, seeds 1-5, except D2: 365 days, seeds 1-20) and was regenerated on
 2026-10-24; scenario changes can move them.
 
 **What a fact does and doesn't mean:** matching a pattern shows the model isn't wrong in that
@@ -24,7 +24,7 @@ can only reproduce patterns that don't depend on what it leaves out (see
 | 2 | Prices return towards normal once supply recovers | Food yes, iron ore **no** (D1) | Food ends 6% to 32% above normal; iron ore ends at 25% to 37% of normal on 4 seeds and near the price ceiling on 1 |
 | 3 | A food shortage leaves people hungry | Yes | 0 hungry NPCs before the drought, 11 to 13 on average during it |
 | 4 | Wealth ranks persist but are not fixed | Yes | Rank correlation of NPC coin between day 30 and day 120: 0.19 to 0.72 (mean 0.36 baseline, 0.51 Iron Shortage) |
-| D2 | Wealth concentration reaches real-world levels | **No, in normal times** | Baseline coin Gini peaks at 0.25 to 0.31; the global household wealth Gini was 0.92 in 2014 |
+| D2 | Wealth concentrates through returns on capital | **Right level, wrong cause** | Baseline coin Gini rises from 0.27 (day 120) to 0.49 (day 365, 20 seeds), with no capital to earn on |
 
 ## Facts
 
@@ -84,15 +84,22 @@ doesn't come back once supply does. This is
 also when coin concentrates most: the mine disaster's coin Gini peaks near 0.67 on 3 seeds. **To
 fix before** using mine-disaster exports for post-shock analysis.
 
-### D2. In normal times, coin is far more equal than real wealth
+### D2. Coin concentrates to real-world levels, but not through capital
 
 Real wealth is highly concentrated: the global household wealth Gini was 0.92 in 2014, with the
-top 10% holding 88% (Davies et al., 2017). Wealth is also far more unequal than income within
-countries, though we have not yet sourced per-country figures for this page. The baseline's coin Gini peaks at 0.25 to 0.31. The main reason: NPCs can't own capital
-(land, mines, loans), and the returns on capital drive much of real wealth concentration (see
-[RESEARCH.md, M58](RESEARCH.md#m58-fairness-for-late-joiners)). Land and mine claims are planned
-to close this gap. **Test:** `test_divergence_d2_in_normal_times_coin_is_far_more_equal_than_real_wealth`
-fails if the baseline ever passes 0.4, so this section gets revisited.
+top 10% holding 88% (Davies et al., 2017), and returns on capital, land and housing above all,
+drive much of it (see [RESEARCH.md, M58](RESEARCH.md#m58-fairness-for-late-joiners)).
+
+The baseline gets there slowly. Over 20 seeds its coin Gini is 0.27 ± 0.01 on day 120 and
+0.49 ± 0.04 on day 365, above 0.5 on 14 seeds, with peaks from 0.26 to 0.70. But NPCs own no
+capital: they can't buy land, lend or invest. So the concentration comes from somewhere else,
+most likely differences in skill, thrift and profession compounding over time, and not yet
+diagnosed. A researcher can use the *level* of inequality but should not read its *cause* as the
+real-world one. Land and mine claims (M60) add a capital channel to measure against it.
+
+**Tests:** `test_divergence_d2_early_on_coin_is_far_more_equal_than_real_wealth` checks the
+first 120 days stay below 0.4, and `test_divergence_d2_over_a_year_coin_concentrates` checks
+the Gini climbs over the year, so either change shows up here.
 
 ## References
 

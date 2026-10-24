@@ -10,7 +10,8 @@ All notable changes to this project are documented here. The format follows
   `tests/test_stylized_facts.py`. Supply shocks raise prices, food prices recover after a
   drought, shortages cause hunger, and wealth ranks persist without being fixed. Two known
   divergences are tracked as strict `xfail`s or bounds: iron ore prices don't recover after the
-  mine disaster (D1), and baseline coin is far more equal than real wealth (D2).
+  mine disaster (D1), and baseline coin reaches real-world concentration over a year without
+  any capital to earn on (D2): right level, wrong cause.
 - Research export: `questless export <scenario> [--policy <toml>]... --seeds 20 --out data/` runs
   the scenario and each policy arm on the same seeds and writes `daily.csv`, `npc_days.csv` (one
   row per NPC per day), `events.csv` (shocks and changed rules), `runs.csv` (with state hashes to

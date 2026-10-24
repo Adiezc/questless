@@ -96,10 +96,19 @@ def test_fact_4_wealth_ranks_persist_but_are_not_fixed(scenario):
     assert 0.1 < st.fmean(rhos) < 0.8, rhos
 
 
-def test_divergence_d2_in_normal_times_coin_is_far_more_equal_than_real_wealth():
-    """Real wealth is far more concentrated (global wealth Gini 0.92 in 2014). The baseline stays
-    below 0.4; if it ever passes that, docs/VALIDATION.md's divergence D2 is out of date. (A
-    severe shock goes higher: the mine disaster peaks near 0.67.)"""
+def test_divergence_d2_early_on_coin_is_far_more_equal_than_real_wealth():
+    """Real wealth is far more concentrated (global wealth Gini 0.92 in 2014). The baseline's
+    first 120 days stay below 0.4; if that changes, docs/VALIDATION.md's D2 is out of date."""
     for seed in SEEDS:
         w = _world("baseline", seed)
         assert max(s.coin_gini for s in w.stats) < 0.4, seed
+
+
+def test_divergence_d2_over_a_year_coin_concentrates():
+    """...but over a full year the baseline's coin Gini climbs well above its day-120 level."""
+    early, late = [], []
+    for seed in SEEDS:
+        w = _world("baseline", seed, days=365)
+        early.append(w.stats[119].coin_gini)
+        late.append(w.stats[-1].coin_gini)
+    assert st.fmean(late) > st.fmean(early) + 0.1, (early, late)
