@@ -90,6 +90,7 @@ uv run questless run scenarios/bandits.toml --save s.json   # save the run
 uv run questless replay s.json                              # rebuild it and verify the state hash
 uv run questless repro bug.json                              # replay a bug report and check what it saw
 uv run questless diff --base origin/main                     # economy impact of your changes
+uv run questless export scenarios/iron_shortage.toml --seeds 20 --out data/  # CSV for research
 uv run pytest                                               # 153 tests, ~14 s
 ```
 
@@ -157,6 +158,27 @@ the no-shock run on the same seed. Full write-up: [docs/RESULTS.md](docs/RESULTS
 
 Quests also have side effects, which the engine makes visible. Player profit leaves circulation,
 and importing finished goods takes sales from local producers.
+
+## Use it for research
+
+`questless export` runs a scenario and any number of policy arms over many seeds and writes plain
+CSV tables, with a generated `codebook.md` that defines every column:
+
+```bash
+uv run questless export scenarios/iron_shortage.toml \
+    --policy experiments/stress/policies/progressive_levy.toml --seeds 20 --out data/
+uv run python experiments/analyse_export.py data/   # a worked example, standard library only
+```
+
+| Table | One row per | For questions like |
+|---|---|---|
+| `daily.csv` | arm × seed × day | how fast coin concentrates (Gini, top 10% share), shortages, prices |
+| `npc_days.csv` | arm × seed × day × NPC | who gets rich and why, wealth mobility, output per worker |
+| `events.csv` | shock or changed rule | studies around a shock: what moved, and when |
+| `runs.csv` | arm × seed | a policy's effect, paired by seed so the starting world is identical |
+
+Arms share seeds, so every comparison is a controlled experiment: the same world with one rule
+changed. Every run's state hash is in `runs.csv`, so anyone can rerun it and check every row.
 
 ## Use it from Python
 

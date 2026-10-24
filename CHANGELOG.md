@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Research export: `questless export <scenario> [--policy <toml>]... --seeds 20 --out data/` runs
+  the scenario and each policy arm on the same seeds and writes `daily.csv`, `npc_days.csv` (one
+  row per NPC per day), `events.csv` (shocks and changed rules), `runs.csv` (with state hashes to
+  rerun against) and a generated `codebook.md`. `experiments/analyse_export.py` is a worked
+  example: on Iron Shortage over 20 seeds, the progressive levy lowers the final coin Gini by
+  0.005 ± 0.002, and wealth ranks on day 30 and day 119 correlate at 0.63. The policy-overlay
+  loader moved from `experiments/stress/policy.py` to `questless.policy` so the CLI can use it.
 - Coin concentration (M58.1): each day records the Gini of NPC coin and the share held by the
   richest 10%, as `coin_gini` and `coin_top10_share` in `timeseries()`. On the baseline the Gini
   drifts from 0.23 to 0.18 over the first month. Guild, town and player accounts are left out.
