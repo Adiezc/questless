@@ -100,11 +100,18 @@ Seed 5 avoided the trap: by day 120 miners have re-tooled and mine 16 ore a day,
 is high because smiths are rebuilding the tool stock; it is falling again by day 145.
 
 The scenario intends a slump the town can't leave alone ("player action matters", see
-`scenarios/mine_disaster.toml` and REVIEW B3); the planned answer is relief and loan quests (F2,
-M17). Whether the NPC economy itself should recover is a design decision, tracked in the pull
-request that added this diagnosis. **Until then,** don't use mine-disaster exports without a
-player for post-shock price analysis: after day 55, the iron ore price on most seeds reflects a
-frozen market.
+`scenarios/mine_disaster.toml` and REVIEW B3), so the trap stays: it is the designed behaviour, not
+a bug to fix in the NPC economy. **But a player can't get the town out of it yet either.** With
+the scripted player from `questless.bots` in the run, iron ore ends at 0.38 to 1.02 times its
+pre-shock price with the `local` strategy (recovered on 1 of 5 seeds) and 0.33 to 0.52 with
+`importer` (none): today's quests pay for delivering goods, and none of them puts working capital
+in the hands of broke miners and smiths. The planned answer is relief and loan quests (F2, M17),
+the mechanism real economies use to escape a liquidity trap.
+`test_fact_2_ore_prices_come_back_with_a_player` is a strict `xfail` that starts passing when one
+works.
+
+**For researchers:** don't use mine-disaster exports for post-shock price analysis, with or
+without `--player`: after day 55, the iron ore price on most seeds reflects a frozen market.
 
 ### D2. Coin concentrates to real-world levels, but not through capital
 
