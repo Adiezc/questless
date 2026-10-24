@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Land and mine claims (M60), off by default: `[claims] enabled = true` gives every gatherer the
+  claim they work. A tenant pays the owner `rent_share` of the day's output value. An owner short
+  of coin sells a claim to the richest NPC and rents it back. `TickStats` gains `claims` (rent,
+  sales, the top decile's share of claims) and `wealth_gini` (coin plus claims at their price),
+  and the export adds per-NPC `claims_owned`, `claim_value`, `rent_paid` and `rent_received`.
+  Over a year on the baseline (20 seeds), trading claims raises the wealth Gini by
+  0.063 ± 0.016 against claims that never trade, and makes wealth ranks stickier (day 30 against
+  day 364: 0.56 against 0.46). Policy overlays may switch claims on
+  (`experiments/stress/policies/claims.toml`).
 - Research export, part 2: `--player local|importer` puts a scripted player in every run, so
   quests get delivered, and adds `player_days.csv` plus `player` and `player_profit` in
   `runs.csv`. `--transactions` writes every ledger entry to `transactions.csv` (about 600 rows a

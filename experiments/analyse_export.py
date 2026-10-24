@@ -14,6 +14,8 @@ Answers four questions a researcher would ask first, and prints them as Markdown
    concentrated days of each run, against the week after the least concentrated.
 4. **Does wealth stay put?** Rank correlation of NPC wealth on day 30 and on the last day; 1 means
    nobody changed places, the axis of the "Great Gatsby curve" (see docs/RESEARCH.md, M58).
+5. **Capital against labour** (only with claims on): how much income is rent, and who owns the
+   claims.
 
 The same analyses take a few lines each in pandas, R or Stata; the CSVs load as they are.
 """
@@ -91,6 +93,23 @@ def main(folder: Path) -> None:
                     _spearman([early[k] for k in sorted(early)], [late[k] for k in sorted(early)])
                 )
         print(f"| {arm} | {_mean_se(rhos, 3) if rhos else 'runs too short'} |")
+
+    if not any(r["claim_value"] for r in npc_days):
+        return
+    print("\n## 5. Capital against labour (land and mine claims, M60)\n")
+    print("| Arm | Wealth Gini, last day | Rent share of NPC income | Claims held by top 10% |")
+    print("|---|---|---|---|")
+    for arm in arms:
+        rows = [r for r in npc_days if r["arm"] == arm]
+        rent = sum(r["rent_received"] for r in rows)
+        labour = sum(r["produced_value"] for r in rows)
+        last = [rs[-1] for (a, _), rs in by_run.items() if a == arm]
+        if last[0]["wealth_gini"] == "":
+            print(f"| {arm} | claims off | - | - |")
+            continue
+        wealth_gini = _mean_se([r["wealth_gini"] for r in last])
+        top = _mean_se([r["claims_top10_share"] for r in last], 2)
+        print(f"| {arm} | {wealth_gini} | {rent / (rent + labour):.1%} | {top} |")
 
 
 def _read(path: Path) -> list[dict]:
