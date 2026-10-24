@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Coin concentration (M58.1): each day records the Gini of NPC coin and the share held by the
+  richest 10%, as `coin_gini` and `coin_top10_share` in `timeseries()`. On the baseline the Gini
+  drifts from 0.23 to 0.18 over the first month. Guild, town and player accounts are left out.
 - Exploit evidence (M52.4): for every exploit the hunt flags, `hunt.py` saves a replay to
   `experiments/results/exploits/` and lists the coin flows behind the gain, by who paid and who
   was paid. The hoarder on Iron Shortage (seed 9) took 1,261 coin from the blacksmiths' guild and
