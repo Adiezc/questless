@@ -728,7 +728,7 @@ and long supply chains emerge from the same ledger.
 | M54 | **Civilization DNA** | M34 (the mutation can be built earlier) | 6 h |
 | M55 | **Infrastructure dependency maps** | M34 | 8 h |
 | M58 | **Fairness for late joiners** (evidence in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners)) | M17, M31; M34 for migration between regions | 8 h |
-| M60 | **Land and mine claims** (returns on capital; see [VALIDATION.md](VALIDATION.md#d2-in-normal-times-coin-is-far-more-equal-than-real-wealth)) | none; M58 builds on it | 7 h |
+| M60 | **Land and mine claims** (returns on capital; see [VALIDATION.md](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)) | none; M58 builds on it | 7 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
 - **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
@@ -975,7 +975,7 @@ and what the model leaves out.
 ## M60: land and mine claims (7 h)
 
 **Goal:** wealth can earn more wealth. Today NPCs can only earn by working, so coin stays far more
-equal than real wealth ([VALIDATION.md, D2](VALIDATION.md#d2-in-normal-times-coin-is-far-more-equal-than-real-wealth)),
+equal than real wealth ([VALIDATION.md, D2](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)),
 and r − g, the main long-run driver of wealth concentration in the research
 ([RESEARCH.md, M58](RESEARCH.md#m58-fairness-for-late-joiners)), can't be measured. M60 adds the
 asset the evidence points to: land and mining rights.
