@@ -7,6 +7,7 @@ questless run scenarios/drought.toml --days 60 --json
 questless run scenarios/baseline.toml --save saves/base.json
 questless replay saves/base.json                      # rebuild and verify a save
 questless diff --base origin/main                     # economy impact of your changes
+questless export scenarios/iron_shortage.toml --seeds 20 --out data/   # CSV tables for research
 questless demo                                        # open the interactive dashboard
 """
 
@@ -61,6 +62,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rp.add_argument("report")
 
+    exp = sub.add_parser(
+        "export", help="run a scenario and its policy arms over many seeds, as CSV for research"
+    )
+    exp.add_argument("scenario", help="path to a scenario .toml (the `base` arm)")
+    exp.add_argument(
+        "--policy",
+        action="append",
+        default=[],
+        metavar="TOML",
+        help="a policy that extends the scenario; one more arm each (repeatable)",
+    )
+    exp.add_argument(
+        "--seeds", default="10", help="'20' for seeds 1-20, or '5-9', or '3,7,11' (default 10)"
+    )
+    exp.add_argument("--days", type=int, help="days per run (default: the scenario's)")
+    exp.add_argument("--out", default="export", help="directory for the tables (default export/)")
+
     demo = sub.add_parser("demo", help="open the interactive dashboard (needs the demo extra)")
     demo.add_argument("--port", type=int, default=8501)
     return parser
@@ -77,6 +95,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _repro(args)
     if args.command == "diff":
         return _diff(args)
+    if args.command == "export":
+        return _export(args)
     if args.command == "demo":
         return _demo(args)
     parser.print_help()
@@ -177,6 +197,36 @@ def _diff(args: argparse.Namespace) -> int:
     (out / "economy-diff.json").write_text(json.dumps(payload, indent=1) + "\n")
     print(report)
     return 1 if problems else 0
+
+
+def _export(args: argparse.Namespace) -> int:
+    from questless import export
+    from questless.config import ConfigError
+
+    try:
+        seeds = export.parse_seeds(args.seeds)
+    except ValueError:
+        print(f"--seeds: expected '20', '5-9' or '3,7,11', got {args.seeds!r}", file=sys.stderr)
+        return 2
+    started = time.perf_counter()
+    try:
+        counts = export.export(
+            args.scenario,
+            args.out,
+            seeds=seeds,
+            policies=args.policy,
+            days=args.days,
+            command=" ".join(["questless", *sys.argv[1:]]),
+        )
+    except ConfigError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    elapsed = time.perf_counter() - started
+    print(f"{counts['runs']} runs in {elapsed:.1f}s -> {args.out}/")
+    for table in ("daily", "npc_days", "events", "runs"):
+        print(f"  {table}.csv  {counts[table]:>9,} rows")
+    print("  codebook.md")
+    return 0
 
 
 def _repro(args: argparse.Namespace) -> int:

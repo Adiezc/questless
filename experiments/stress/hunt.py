@@ -39,10 +39,10 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "experiments" / "stress"))
 
-import policy  # noqa: E402
 from attackers import Flipper, Hoarder, Prober, Squatter  # noqa: E402
 from shock_vs_baseline import ScriptedPlayer  # noqa: E402
 
+from questless import policy  # noqa: E402
 from questless.api import Simulation  # noqa: E402
 from questless.config import load_scenario  # noqa: E402
 from questless.contracts.model import Status  # noqa: E402

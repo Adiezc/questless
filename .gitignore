@@ -8,6 +8,7 @@ build/
 *.egg-info/
 .DS_Store
 saves/
+export/
 experiments/results/*.tmp
 
 # Local tool settings (machine-specific)

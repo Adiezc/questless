@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "experiments" / "stress"))
 
-import policy  # noqa: E402
 from hunt import HONEST, PLAYERS, summarise_policy  # noqa: E402
+
+from questless import policy  # noqa: E402
 
 LEVY = ROOT / "experiments" / "stress" / "policies" / "progressive_levy.toml"
 
