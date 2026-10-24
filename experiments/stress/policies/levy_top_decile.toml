@@ -1,0 +1,16 @@
+# Policy: a progressive levy that follows the wealth distribution. Each day 6% on coin above the
+# richest 10%'s level and 10% above the richest 1%'s, so it taxes the top whatever coin they hold.
+# Compare progressive_levy.toml, whose fixed thresholds (500, 2,000) few NPCs ever reach.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "../../../scenarios/iron_shortage.toml"
+name = "Iron Shortage, top-decile levy"
+
+[[town.levy_brackets]]
+percentile = 0.9
+rate = 0.06
+
+[[town.levy_brackets]]
+percentile = 0.99
+rate = 0.10

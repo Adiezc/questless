@@ -55,6 +55,7 @@ class TickStats:
     by_profession: dict[Profession, Counter[str]] = field(default_factory=dict)
     upkeep: int = 0
     levy_evaded: int = 0  # upkeep NPCs didn't pay because legitimacy was low (M48)
+    levy_thresholds: tuple[int, ...] = ()  # today's bracket thresholds, after percentiles resolve
     legitimacy: float | None = None  # end of day; None while the feature is off
     wages_paid: int = 0
     wages_unpaid: int = 0
@@ -146,8 +147,12 @@ class World:
         rate = town.upkeep_rate + surcharge
         evading = self.config.legitimacy.enabled
         pays = legitimacy.compliance(self) if evading else 1.0
-        for npc in self.npcs_in_order():
-            levy = town.levy(self.ledger.balance(npc.account, Asset.COIN), surcharge)
+        npcs = self.npcs_in_order()
+        wallets = [self.ledger.balance(n.account, Asset.COIN) for n in npcs]
+        brackets = town.brackets_for(wallets)
+        stats.levy_thresholds = tuple(t for t, _ in brackets)
+        for npc, wallet in zip(npcs, wallets, strict=True):
+            levy = town.levy(wallet, surcharge, brackets)
             if evading and levy and self.rng.stream("levy").random() >= pays:
                 stats.levy_evaded += levy  # the coin stays in the NPC's wallet
                 continue
