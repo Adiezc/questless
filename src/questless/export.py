@@ -24,13 +24,17 @@ import csv
 import dataclasses
 import sys
 from collections.abc import Iterator, Sequence
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
 from questless import __version__, policy
 from questless.api import Simulation
+from questless.bots import STRATEGIES, ScriptedPlayer
 from questless.config import ConfigError, ScenarioConfig, load_scenario
-from questless.sim.ledger import GOODS, Asset
+from questless.contracts.model import Status
+from questless.sim.entities import PLAYER
+from questless.sim.ledger import GOODS, Asset, Entry
 from questless.sim.world import World
 
 DAILY = [
@@ -78,6 +82,19 @@ NPC_DAYS = [
     "idle",
 ]
 EVENTS = ["arm", "seed", "kind", "name", "start_day", "end_day", "detail"]
+PLAYER_DAYS = [
+    "arm",
+    "seed",
+    "day",
+    "strategy",
+    "coin",
+    "goods_value",
+    "wealth",
+    "accepted",
+    "delivered_total",
+    "caravans_pending",
+]
+TRANSACTIONS = ["arm", "seed", "day", "kind", "asset", "qty", "src", "dst", "reason"]
 RUNS = [
     "arm",
     "seed",
@@ -93,6 +110,8 @@ RUNS = [
     "output_value",
     "contracts_posted",
     "contracts_fulfilled",
+    "player",
+    "player_profit",
     "state_hash",
 ]
 
@@ -131,40 +150,64 @@ def export(
     seeds: list[int],
     policies: Sequence[str | Path] = (),
     days: int | None = None,
+    player: str | None = None,
+    transactions: bool = False,
     command: str | None = None,
 ) -> dict[str, int]:
-    """Run every arm on every seed and write the tables to ``out``. Returns rows per table."""
+    """Run every arm on every seed and write the tables to ``out``. Returns rows per table.
+
+    ``player`` puts a scripted player (``bots.STRATEGIES``) in every run, acting before each day
+    as a human would, and adds ``player_days.csv``. ``transactions`` adds ``transactions.csv``,
+    every ledger entry of the run (large: several hundred rows per day).
+    """
+    if player is not None and player not in STRATEGIES:
+        raise ConfigError(f"player: expected one of {', '.join(STRATEGIES)}, got {player!r}")
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    counts = dict.fromkeys(("daily", "npc_days", "events", "runs"), 0)
+    tables = {"daily": DAILY, "npc_days": NPC_DAYS, "events": EVENTS, "runs": RUNS}
+    if player:
+        tables["player_days"] = PLAYER_DAYS
+    if transactions:
+        tables["transactions"] = TRANSACTIONS
+    counts = dict.fromkeys(tables, 0)
     all_arms = arms(scenario, policies)
-    with (
-        _table(out / "daily.csv", DAILY) as daily,
-        _table(out / "npc_days.csv", NPC_DAYS) as npc_days,
-        _table(out / "events.csv", EVENTS) as events,
-        _table(out / "runs.csv", RUNS) as runs,
-    ):
+    with ExitStack() as stack:
+        w = {
+            name: stack.enter_context(_table(out / f"{name}.csv", h)) for name, h in tables.items()
+        }
         for arm in all_arms:
             for seed in seeds:
                 sim = Simulation.from_scenario(dataclasses.replace(arm.config, seed=seed))
                 world = sim.world
+                bot = ScriptedPlayer(sim, player) if player else None
                 coin = {
                     n.id: world.ledger.balance(n.account, Asset.COIN) for n in world.npcs.values()
                 }
+                key = [arm.name, seed]
                 for _ in range(days if days is not None else world.config.days):
+                    mark = world.ledger.journal[-1] if world.ledger.journal else None
+                    if bot:
+                        bot.act()
                     sim.step()
                     rows = list(_npc_rows(world, coin))
-                    npc_days.writerows([arm.name, seed, *r] for r in rows)
-                    daily.writerow([arm.name, seed, *_daily_row(world, rows)])
+                    w["npc_days"].writerows([*key, *r] for r in rows)
+                    w["daily"].writerow([*key, *_daily_row(world, rows)])
                     counts["npc_days"] += len(rows)
                     counts["daily"] += 1
+                    if bot:
+                        w["player_days"].writerow([*key, *_player_row(sim, player)])
+                        counts["player_days"] += 1
+                    if transactions:
+                        entries = _entries_since(world, mark)
+                        w["transactions"].writerows([*key, *e] for e in entries)
+                        counts["transactions"] += len(entries)
                 event_rows = _event_rows(world, arm)
-                events.writerows([arm.name, seed, *r] for r in event_rows)
-                runs.writerow([arm.name, seed, *_run_row(sim)])
+                w["events"].writerows([*key, *r] for r in event_rows)
+                w["runs"].writerow([*key, *_run_row(sim, player)])
                 counts["events"] += len(event_rows)
                 counts["runs"] += 1
     (out / "codebook.md").write_text(
-        _codebook(scenario, all_arms, seeds, command), encoding="utf-8"
+        _codebook(scenario, all_arms, seeds, command, tables), encoding="utf-8"
     )
     return counts
 
@@ -189,9 +232,11 @@ def _npc_rows(world: World, coin: dict[str, int]) -> Iterator[list[Any]]:
     prices = stats.prices
     for npc in world.npcs_in_order():
         rec = npc.history[-1] if npc.history and npc.history[-1].tick == stats.tick else None
-        held = dict(world.ledger.holdings(npc.account))
-        for asset, qty in world.ledger.holdings(npc.site_account).items():
-            held[asset] = held.get(asset, 0) + qty
+        held: dict[Asset, int] = {}
+        # Market workers' site is their own account: count it once (as ``eat`` does).
+        for account in dict.fromkeys((npc.account, npc.site_account)):
+            for asset, qty in world.ledger.holdings(account).items():
+                held[asset] = held.get(asset, 0) + qty
         wallet = held.pop(Asset.COIN, 0)
         goods_value = sum(qty * prices.get(asset, 0.0) for asset, qty in held.items())
         produced = rec.produced if rec else {}
@@ -264,7 +309,7 @@ def _event_rows(world: World, arm: Arm) -> list[list[Any]]:
     return rows
 
 
-def _run_row(sim: Simulation) -> list[Any]:
+def _run_row(sim: Simulation, player: str | None) -> list[Any]:
     world, stats = sim.world, sim.world.stats
     gini = [s.coin_gini for s in stats] or [0.0]
     statuses = [str(c.status) for c in sim.contracts()]
@@ -282,7 +327,51 @@ def _run_row(sim: Simulation) -> list[Any]:
         round(output, 2),
         len(statuses),
         statuses.count("fulfilled"),
+        player or "",
+        _player_coin(world) - world.config.player_wallet if player else "",
         world.state_hash(),
+    ]
+
+
+def _player_coin(world: World) -> int:
+    return world.ledger.balance(PLAYER, Asset.COIN)
+
+
+def _player_row(sim: Simulation, strategy: str | None) -> list[Any]:
+    world, prices = sim.world, sim.world.stats[-1].prices
+    held = world.ledger.holdings(PLAYER)
+    wallet = held.get(Asset.COIN, 0)
+    goods = sum(q * prices.get(a, 0.0) for a, q in held.items() if a is not Asset.COIN)
+    delivered = sum(c.accepted_by == PLAYER for c in sim.contracts(str(Status.FULFILLED)))
+    return [
+        world.stats[-1].tick,
+        strategy,
+        wallet,
+        round(goods, 2),
+        round(wallet + goods, 2),
+        len(sim.contracts("accepted")),
+        delivered,
+        len(world.pending_caravans),
+    ]
+
+
+def _entries_since(world: World, mark: Entry | None) -> list[list[Any]]:
+    """Ledger entries appended after ``mark``, oldest first. Fails rather than drop any: if the
+    journal rolled past ``mark`` in a single day, the day had more entries than it keeps."""
+    journal = world.ledger.journal
+    fresh: list[Entry] = []
+    for entry in reversed(journal):
+        if entry is mark:
+            break
+        fresh.append(entry)
+    else:
+        if mark is not None:
+            raise RuntimeError(
+                f"day {world.stats[-1].tick}: more ledger entries than the journal keeps"
+            )
+    return [
+        [e.tick, str(e.kind), str(e.asset), e.qty, e.src or "", e.dst or "", e.reason]
+        for e in reversed(fresh)
     ]
 
 
@@ -356,6 +445,29 @@ COLUMNS: dict[str, dict[str, str]] = {
         "end_day": "First day the shock no longer applies (exclusive); blank for policies.",
         "detail": "Shock effect, factor and site, or the knob's `base -> arm` values.",
     },
+    "player_days.csv": {
+        "arm, seed, day": "As in daily.csv.",
+        "strategy": "`local` (buys at market, imports only food and ore) or `importer` (caravans "
+        "first). Both are greedy and honest, and use only the public API.",
+        "coin": "The player's coin at the end of the day.",
+        "goods_value": "Goods the player holds, at the day's prices.",
+        "wealth": "coin + goods_value.",
+        "accepted": "Quests the player has accepted and not yet delivered.",
+        "delivered_total": "Quests the player has delivered so far.",
+        "caravans_pending": "Caravans the player ordered that have not arrived yet.",
+    },
+    "transactions.csv": {
+        "arm, seed": "As in daily.csv.",
+        "day": "Day of the entry, from day 0; starting balances are not entries. Caravans unload "
+        "at the start of the next day, so a few entries carry the next day's number.",
+        "kind": "transfer, produce or consume.",
+        "asset": "coin or a good.",
+        "qty": "Units moved, made or used up.",
+        "src / dst": "Accounts: an NPC id, `npc_042@mine` (output waiting at a site), `town`, "
+        "`market`, `escrow`, `guild:<id>`, `player`, `outside` or `in_transit`; blank for produce "
+        "(no source) and consume (no destination).",
+        "reason": "Why, e.g. `upkeep`, `guard wage`, `sale to player`, `caravan`.",
+    },
     "runs.csv": {
         "arm, seed": "As in daily.csv.",
         "scenario": "The scenario's name as written in its file.",
@@ -366,13 +478,20 @@ COLUMNS: dict[str, dict[str, str]] = {
         "hungry_npc_days / idle_npc_days": "Sum over days of hungry_npcs and idle_npcs.",
         "output_value": "Everything produced over the run, valued at each day's prices.",
         "contracts_posted / contracts_fulfilled": "Quests that appeared, and those delivered.",
+        "player": "The scripted player's strategy (`--player`), or blank: then nobody can "
+        "deliver a quest, so every one expires.",
+        "player_profit": "The player's final coin minus their starting wallet; blank without one.",
         "state_hash": "SHA-256 of the final world; rerunning arm + seed must reproduce it.",
     },
 }
 
 
 def _codebook(
-    scenario: str | Path, all_arms: list[Arm], seeds: list[int], command: str | None
+    scenario: str | Path,
+    all_arms: list[Arm],
+    seeds: list[int],
+    command: str | None,
+    tables: dict[str, list[str]],
 ) -> str:
     lines = [
         "# Questless research export",
@@ -402,6 +521,8 @@ def _codebook(
         for knob, (before, after) in arm.changes.items():
             lines.append(f"- `{arm.name}`: `{knob}` {before!r} → {after!r}")
     for table, columns in COLUMNS.items():
+        if table.removesuffix(".csv") not in tables:
+            continue
         lines += ["", f"## {table}", "", "| Column | Meaning |", "|---|---|"]
         lines += [f"| `{col}` | {meaning} |" for col, meaning in columns.items()]
     goods = ", ".join(f"`{g}`" for g in map(str, GOODS))

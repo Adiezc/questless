@@ -11,6 +11,7 @@ import pytest
 
 from questless import export
 from questless.api import Simulation
+from questless.bots import ScriptedPlayer
 from questless.cli import main
 from questless.config import ConfigError
 from questless.sim.ledger import Asset
@@ -26,6 +27,13 @@ DAYS = 25
 def tables(tmp_path_factory) -> Path:
     out = tmp_path_factory.mktemp("export")
     export.export(IRON, out, seeds=[1, 2], policies=[LEVY], days=DAYS)
+    return out
+
+
+@pytest.fixture(scope="module")
+def played(tmp_path_factory) -> Path:
+    out = tmp_path_factory.mktemp("played")
+    export.export(IRON, out, seeds=[1], days=60, player="local", transactions=True)
     return out
 
 
@@ -92,15 +100,17 @@ def test_a_policy_for_another_scenario_is_rejected():
         export.arms(SCENARIOS / "baseline.toml", [LEVY])
 
 
-def test_codebook_documents_every_column(tables):
+@pytest.mark.parametrize("folder", ["tables", "played"])
+def test_codebook_documents_every_column(folder, request):
+    tables = request.getfixturevalue(folder)
     codebook = (tables / "codebook.md").read_text(encoding="utf-8")
     documented: dict[str, set[str]] = {}
     for table, columns in export.COLUMNS.items():
         names = {n.strip() for key in columns for n in key.replace(" / ", ", ").split(",")}
         documented[table] = names
-        assert f"## {table}" in codebook
+        assert (f"## {table}" in codebook) == (tables / table).exists(), table
     goods = [str(g) for g in export.GOODS]
-    for table in ("daily.csv", "npc_days.csv", "events.csv", "runs.csv"):
+    for table in sorted(p.name for p in tables.glob("*.csv")):
         with (tables / table).open(encoding="utf-8") as fh:
             header = next(csv.reader(fh))
         for col in header:
@@ -129,3 +139,44 @@ def test_worked_example_runs_on_an_export(tables):
         [sys.executable, str(script), str(tables)], capture_output=True, text=True, check=True
     )
     assert "progressive_levy minus base" in result.stdout
+
+
+def test_a_player_bot_delivers_quests_and_reproduces(played):
+    run = _rows(played, "runs.csv")[0]
+    assert run["player"] == "local"
+    assert int(run["contracts_fulfilled"]) > 0, "the bot delivered nothing, so this proves nothing"
+    days = _rows(played, "player_days.csv")
+    assert len(days) == 60
+    assert int(days[-1]["delivered_total"]) == int(run["contracts_fulfilled"])
+    assert (
+        int(days[-1]["coin"]) - int(run["player_profit"])
+        == Simulation.from_scenario(IRON).config.player_wallet
+    )
+    sim = Simulation.from_scenario(IRON, seed=1)
+    bot = ScriptedPlayer(sim, "local")
+    for _ in range(60):
+        bot.act()
+        sim.step()
+    assert run["state_hash"] == sim.world.state_hash()
+
+
+def test_transactions_account_for_every_coin(played):
+    """Coin each NPC received minus coin it paid, over the run, is its final wallet minus its
+    starting one: nothing moved off the books."""
+    net: dict[str, int] = {}
+    for t in _rows(played, "transactions.csv"):
+        if t["asset"] != "coin":
+            continue
+        qty = int(t["qty"])
+        net[t["dst"]] = net.get(t["dst"], 0) + qty
+        net[t["src"]] = net.get(t["src"], 0) - qty
+    start = Simulation.from_scenario(IRON, seed=1).world.ledger
+    last = [r for r in _rows(played, "npc_days.csv") if r["day"] == "59"]
+    assert len(last) == 100
+    for r in last:
+        assert int(r["coin"]) == start.balance(r["npc_id"], Asset.COIN) + net.get(r["npc_id"], 0)
+
+
+def test_an_unknown_player_strategy_is_rejected(tmp_path):
+    with pytest.raises(ConfigError, match="local, importer"):
+        export.export(IRON, tmp_path, seeds=[1], days=1, player="speedrunner")
