@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- `docs/VALIDATION.md`: stylized facts from the literature, each checked on 5 seeds by
+  `tests/test_stylized_facts.py`. Supply shocks raise prices, food prices recover after a
+  drought, shortages cause hunger, and wealth ranks persist without being fixed. Two known
+  divergences are tracked as strict `xfail`s or bounds: iron ore prices don't recover after the
+  mine disaster (D1), and baseline coin reaches real-world concentration over a year without
+  any capital to earn on (D2): right level, wrong cause.
 - Research export, part 2: `--player local|importer` puts a scripted player in every run, so
   quests get delivered, and adds `player_days.csv` plus `player` and `player_profit` in
   `runs.csv`. `--transactions` writes every ledger entry to `transactions.csv` (about 600 rows a
