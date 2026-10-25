@@ -135,6 +135,12 @@ All notable changes to this project are documented here. The format follows
   makes being away costlier or rewards streaks, appointments or short windows.
 
 ### Changed
+- `docs/VALIDATION.md` D1 diagnosed: iron ore doesn't recover after the mine disaster because
+  miners and smiths go broke during the shock, not because ore stays plentiful. On seeds 2-4 the
+  market freezes: miners hold 80 unsold ore, smiths with about 4 coin each can't buy the 2 ore a
+  96-coin tool needs, and the ore price slides to its floor. The trap is kept as designed; a
+  scripted player doesn't escape it either (1 of 5 seeds), which a new strict `xfail` records
+  until relief and loan quests (M17) land.
 - Dashboard: unmet demand is plotted as a share of demand from buyers who could pay (0-100%), so
   low-volume goods are as visible as food (M14.4, #14).
 - Dashboard: guilds have their own colour set, and the treasury chart starts at zero (M14.5,

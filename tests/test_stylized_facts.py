@@ -9,6 +9,7 @@ import statistics as st
 import pytest
 
 from questless.api import Simulation
+from questless.bots import ScriptedPlayer
 from questless.sim.ledger import Asset
 from tests.conftest import SCENARIOS
 
@@ -58,6 +59,23 @@ def test_fact_2_ore_prices_come_back_after_a_mine_disaster():
         w = _world("mine_disaster", seed)
         before = _price(w, Asset.IRON_ORE, BEFORE)
         late = _price(w, Asset.IRON_ORE, slice(-20, None))
+        assert 0.6 * before < late < 1.4 * before, (seed, before, late)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="divergence D1: today's quests don't give a player a way out of the poverty trap; "
+    "relief and loan quests (M17) are meant to",
+)
+def test_fact_2_ore_prices_come_back_with_a_player():
+    for seed in SEEDS:
+        sim = Simulation.from_scenario(SCENARIOS / "mine_disaster.toml", seed=seed)
+        bot = ScriptedPlayer(sim, "local")
+        for _ in range(120):
+            bot.act()
+            sim.step(1)
+        before = _price(sim.world, Asset.IRON_ORE, BEFORE)
+        late = _price(sim.world, Asset.IRON_ORE, slice(-20, None))
         assert 0.6 * before < late < 1.4 * before, (seed, before, late)
 
 

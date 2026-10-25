@@ -21,7 +21,7 @@ can only reproduce patterns that don't depend on what it leaves out (see
 | # | Fact | Holds? | Simulation, 5 seeds |
 |---|---|---|---|
 | 1 | A supply shock raises the price of the good | Yes | Iron ore +15% to +35% during the mine disaster; food +56% to +57% during the drought |
-| 2 | Prices return towards normal once supply recovers | Food yes, iron ore **no** (D1) | Food ends 6% to 32% above normal; iron ore ends at 25% to 37% of normal on 4 seeds and near the price ceiling on 1 |
+| 2 | Prices return towards normal once supply recovers | Food yes, iron ore **no** (D1, a poverty trap) | Food ends 6% to 32% above normal; iron ore ends at 25% to 37% of normal on 4 seeds and near the price ceiling on 1 |
 | 3 | A food shortage leaves people hungry | Yes | 0 hungry NPCs before the drought, 11 to 13 on average during it |
 | 4 | Wealth ranks persist but are not fixed | Yes | Rank correlation of NPC coin between day 30 and day 120: 0.19 to 0.72 (mean 0.36 baseline, 0.51 Iron Shortage) |
 | D2 | Wealth concentrates through returns on capital | **Right level, wrong cause** | Baseline coin Gini rises from 0.27 (day 120) to 0.49 (day 365, 20 seeds), with no capital to earn on |
@@ -78,11 +78,40 @@ caste system nor a lottery", not as "US-like mobility".
 
 After the mine reopens (day 55), the iron ore price settles at 2.3 to 3.5 coin on 4 of 5 seeds,
 about a third of its pre-shock 8.5 to 9.4. On seed 5 it sticks at 30.8, near the ceiling of 32.
-Real mineral prices return to trend after a supply shock (Stuermer, 2018). The cause isn't
-diagnosed yet; one hypothesis is that smiths lose income during the shortage, so demand for ore
-doesn't come back once supply does. This is
-also when coin concentrates most: the mine disaster's coin Gini peaks near 0.67 on 3 seeds. **To
-fix before** using mine-disaster exports for post-shock analysis.
+Real mineral prices return to trend after a supply shock (Stuermer, 2018).
+
+**Cause: a poverty trap, not a supply problem.** During the shock miners sell almost nothing, wear
+out their tools and run through their savings; smiths run out of ore and stop earning. By day 120
+on seeds 2-4, the 16 miners hold 6 to 39 coin between them (about 1,700 to 2,050 on day 14), all
+16 have no usable tool, and the 8 smiths hold 26 to 31. Coin has pooled with farmers, the only
+sellers left (3,600 to 3,850 on day 14, 9,600 to 9,900 on day 120): that is the coin Gini of
+0.66 to 0.67. From then on the market is frozen:
+
+- Miners have 80 ore waiting to sell but no buyer, so they stop mining (their unsold-stock cap).
+- Smiths would make a tool from 2 ore and sell it for 96, and buyers who can pay (all of them farmers)
+  want 32 to 33 tools a day. But a smith may only spend coin above a food reserve of 2 to 5 days of food
+  (`market.budget`), and with about 4 coin each and food near 15, that budget is 0.
+- Guild relief can't help: every guild treasury is at its untouchable reserve of 500.
+
+With ore on offer and no one able to bid, the price's stock term pushes it down 2.5% a day to the
+floor of 2. So the low price measures the buyers' poverty, not plentiful ore. Nothing changes it:
+on seed 3 the market is the same on day 300. Seed 1 is half-trapped (smiths recovered, miners didn't: 3 ore a day).
+Seed 5 avoided the trap: by day 120 miners have re-tooled and mine 16 ore a day, and the ore price
+is high because smiths are rebuilding the tool stock; it is falling again by day 145.
+
+The scenario intends a slump the town can't leave alone ("player action matters", see
+`scenarios/mine_disaster.toml` and REVIEW B3), so the trap stays: it is the designed behaviour, not
+a bug to fix in the NPC economy. **But a player can't get the town out of it yet either.** With
+the scripted player from `questless.bots` in the run, iron ore ends at 0.38 to 1.02 times its
+pre-shock price with the `local` strategy (recovered on 1 of 5 seeds) and 0.33 to 0.52 with
+`importer` (none): today's quests pay for delivering goods, and none of them puts working capital
+in the hands of broke miners and smiths. The planned answer is relief and loan quests (F2, M17),
+the mechanism real economies use to escape a liquidity trap.
+`test_fact_2_ore_prices_come_back_with_a_player` is a strict `xfail` that starts passing when one
+works.
+
+**For researchers:** don't use mine-disaster exports for post-shock price analysis, with or
+without `--player`: after day 55, the iron ore price on most seeds reflects a frozen market.
 
 ### D2. Coin concentrates to real-world levels, but not through capital
 
