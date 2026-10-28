@@ -37,7 +37,7 @@ jobs:
         run: |
           mkdir -p economy
           echo "${{ github.event.pull_request.number }}" > economy/pr-number
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: economy-diff
