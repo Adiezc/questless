@@ -39,10 +39,21 @@ guarantees, propose it in the issue before building it.
     [M39](#m39-treaties-sanctions-and-embargoes) · [M40](#m40-surrogate-fast-forward-experiment) ·
     [M41](#m41-docs-both-skins-and-v040) · [M53](#m53-the-invisible-border) ·
     [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps) ·
-    [M58](#m58-fairness-for-late-joiners)
+    [M58](#m58-fairness-for-late-joiners) · [M61](#m61-spoilage-and-storage) ·
+    [M62](#m62-know-how-that-rusts-and-is-taught) · [M63](#m63-players-hire-npcs) ·
+    [M64](#m64-tool-rental) · [M65](#m65-scrap-and-recycling) · [M66](#m66-market-fair-days) ·
+    [M82](#m82-co-operatives-against-companies)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
-    [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
+    [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
+    [M70](#m70-the-weekly-newspaper) ·
+    [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M75](#m75-offline-basics) ·
+    [M79](#m79-guilds-on-prescription) · [M81](#m81-career-tasters) · [M46](#m46-docs-and-v050)
+  - v0.6: [M67](#m67-real-weather-real-places) · [M68](#m68-clean-energy-simulation) ·
+    [M72](#m72-cross-game-federation) · [M73](#m73-science-from-play) ·
+    [M76](#m76-a-tabletop-ar-map) · [M77](#m77-worlds-never-die) ·
+    [M78](#m78-idle-devices-do-science-on-clean-power) ·
+    [M80](#m80-play-the-policy-before-it-becomes-law) · [M74](#m74-docs-and-v060)
 - [Part 5: backlog ideas, sketched](#part-5-backlog-ideas-sketched)
 
 ---
@@ -1023,6 +1034,206 @@ before M31's one-person-one-character safeguards. Don't tune the levers until ve
 collapse: the second acceptance bound exists to stop that. Keep each lever's effect separately
 measurable; turning on five at once makes the report unreadable.
 
+### M61: spoilage and storage
+
+**Where:** `config.py` (`spoil_rate` in `[goods.*]`, a `[storage]` section), new
+`src/questless/sim/spoilage.py`, `sim/world.py` (a tick slot and `TickStats.spoiled`),
+`sim/behaviour.py` (food stock targets), `contracts/engine.py` (the granary contract),
+`contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** once a day, after the market clears and before `TickStats` is
+appended, every account except escrow and in-transit accounts loses `spoil_rate` of each good it
+holds, minus the share a granary protects. Fractions carry per account and good, as production
+does, so integer stocks stay unbiased. Spoiled units leave through `ledger.consume(...,
+reason="spoiled")`. A granary is a site property with a capacity, built when a town-funded contract
+for tools is delivered.
+
+| Task | Size | How |
+|---|---|---|
+| M61.1 Config **(good first issue)** | S | `spoil_rate` per good (default 0) and `[storage]` (`granary_factor`, `granary_capacity`), following R1. |
+| M61.2 Daily spoilage | M | `spoilage.apply(world)` in sorted account order. Skip escrow and `IN_TRANSIT`. Keep carry in a dict on the world and in `state_dict()`. Record `TickStats.spoiled`. |
+| M61.3 Granaries | M | A `granaries: dict[Site, int]` on the world (capacity built). Protected units spoil at `rate × granary_factor`; the rest at `rate`. |
+| M61.4 Granary contract | M | A contract kind (R4) the town posts when food spoiled at a site over 14 days exceeds a threshold; fulfilment adds capacity. |
+| M61.5 NPC stock targets | S | Cap food `stock_days` at the half-life `ln 2 / spoil_rate` while spoilage is on. |
+| M61.6 Evidence and walk | M | Evidence kind `spoilage` with a measure key (R3). In `causes.py`, for a food need, add it only when the same-seed run without spoilage covers the need. |
+
+**Tests:** with every rate at 0 the baseline and every scenario hash are unchanged; conservation
+with spoilage on; escrowed goods never spoil; a granary lowers losses by the configured factor up to
+its capacity; the evidence re-verifies and a forged value is reported.
+
+**Pitfalls:** spoilage slots before the needs tracker, so a farmer who sold everything today can't
+be charged for spoilage they didn't hold. Keep `spoil_rate` small for food (about 1-2% a day) or
+the drought scenario turns into a famine and the results stop being comparable.
+
+### M62: know-how that rusts and is taught
+
+**Where:** `sim/entities.py` (`NPC.experience`), `sim/behaviour.py` (`productivity`,
+`_update_state`), `config.py` (`[knowhow]`), `contracts/engine.py` (the training contract),
+`metrics.py` (recovery time), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** `productivity()` multiplies by `floor + (1 − floor) × experience`.
+At the end of each NPC's day, a working NPC's experience moves `learn_rate` of the way to 1 and an
+idle one's moves `rust_rate` of the way to 0. Guilds watch their members' average and post a
+training contract when it falls below `teach_below`; delivering it raises the apprentice's
+experience and pays the master for the output they gave up.
+
+| Task | Size | How |
+|---|---|---|
+| M62.1 Experience value **(good first issue)** | S | Add `experience: float = 1.0` to `NPC` and `state_dict()`; `[knowhow]` config (R1). |
+| M62.2 Learn and rust | S | Update in `_update_state` from `rec.idle`; apply in `productivity()`. |
+| M62.3 Recovery metric | M | In `metrics.py`, days from a shock's end until the profession's output is back to 95% of the pre-shock baseline. Report it in the run report and the export. |
+| M62.4 Training contract | M | A contract kind (R4) funded by the guild; the master and apprentice are picked in sorted order; the master's output falls by `teach_cost` for `teach_days`; the player delivers practice inputs and food. |
+| M62.5 Evidence and walk | M | Evidence kind `experience` (R3). In `causes.py`, when output stays low after its shock ends, walk to the profession's experience and the idle days behind it. |
+
+**Tests:** with know-how off the hashes are unchanged; experience stays in [0, 1]; recovery is
+slower with know-how on across seeds; the training contract conserves coin and goods; the chain
+re-verifies.
+
+**Pitfalls:** rust must be slower than learning, or a single short shock leaves a permanent
+scar and every scenario drifts into a slump. Guards don't idle in the same way, so leave them out
+of the first version.
+
+### M63: players hire NPCs
+
+**Where:** `player.py` (`hire` and `dismiss` actions), new `src/questless/sim/hiring.py`,
+`sim/behaviour.py` (where output lands), `sim/guilds.py` (minimum wage, crisis cap),
+`config.py` (`[hiring]`), M17's obligation registry, `contracts/provenance.py`,
+`contracts/causes.py`.
+
+**Design in one paragraph:** a `hire` action escrows `wage × days` from the player into a job
+account and records an obligation. Each day, before the NPC's day runs, the job pays one day's wage
+(reason `wage`) and points the NPC's output at the player's account. The NPC accepts only if the
+wage beats their own 7-day earnings plus `switch_premium`, and their guild allows it. The job ends
+at term, when inputs run out for `quit_after` days, or on `dismiss`; leftover escrow returns to the
+player.
+
+| Task | Size | How |
+|---|---|---|
+| M63.1 Config and accounts **(good first issue after M17)** | S | `[hiring]` (R1) and a `job_account(job_id)` helper (R2) opened before the ledger is sealed. |
+| M63.2 Hire action | M | `player.hire(npc_id, wage, days)` (R5): check the NPC's earnings, the guild's `min_wage` and `max_hired_share`, then escrow. Add an invariant: job escrow equals unpaid wages. |
+| M63.3 Output to employer | M | In `produce`, when the NPC has a job, land output on the player's account; craft inputs come from the player's account. |
+| M63.4 Daily wage and ending | S | Pay from escrow each day; end at term or after `quit_after` days without inputs; refund the rest. |
+| M63.5 Evidence and walk | M | Evidence kind `hired` (R3). In `causes.py`, when a profession's output falls while its members are hired, name the employer and the wage. |
+| M63.6 Dashboard | S | A "Hire" panel listing idle NPCs, their expected earnings and the minimum wage that would win them. |
+
+**Tests:** with hiring off the hashes are unchanged; conservation and the escrow invariant hold
+under a chaos player that hires and dismisses at random; the crisis cap blocks a hire; a shortage
+caused by hiring names the employer and re-verifies.
+
+**Pitfalls:** a rich player can hire every smith and corner tools. The crisis cap is the first
+defence; M52's attacker bots should try it before the feature is switched on in any overlay.
+
+### M64: tool rental
+
+**Where:** `config.py` (`[rental]`), new `src/questless/sim/rental.py`, `sim/behaviour.py`
+(`maintain` uses a rented tool), `sim/entities.py` (`rental_account(id)`), `player.py`
+(`rent_out`), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** after the market clears, NPCs without usable tools who can't afford
+one but can pay the fee rent from the cheapest owner, in seeded order. The tool sits in a rental
+account tied to the renter; `maintain` treats it as the renter's. Each day the renter pays the fee
+or counts a missed day; past `default_after` the tool goes back. When it wears out, it is used up
+and the rental closes.
+
+| Task | Size | How |
+|---|---|---|
+| M64.1 Config and accounts **(good first issue)** | S | `[rental]` (R1); `rental_account` helper (R2); a `rentals` dict on the world in `state_dict()`. |
+| M64.2 Matching | M | Owners offer tools beyond their own next replacement at the cost-based fee; renters match by lowest fee, sorted ids for ties. |
+| M64.3 Daily fee and ending | S | Fee transfer (reason `tool rent`); missed-day counter; return or close. Invariant: each rented tool is in exactly one rental account. |
+| M64.4 Player owners | S | `rent_out(qty, fee)` action (R5). |
+| M64.5 Evidence and walk | M | Evidence kind `rental` (R3); in `causes.py`, split equipment shortages into unavailable and unaffordable. |
+
+**Tests:** hashes unchanged with rental off; conservation; default returns the tool; the owner keeps
+their own replacement; fewer tool-less days in the iron shortage scenario.
+
+**Pitfalls:** don't let a tool be both rented out and used for the owner's own replacement in the
+same tick: match after `maintain` has run for everyone.
+
+### M65: scrap and recycling
+
+**Where:** `sim/ledger.py` (a `scrap` asset), `config.py` (`[goods.scrap]`, `scrap_per_tool`, a
+smith recipe), `sim/behaviour.py` (`maintain` scraps instead of consuming), `contracts/engine.py`
+(the collector contract), `contracts/provenance.py`.
+
+**Design in one paragraph:** `maintain` moves the old tool out with `consume` and then `produce`s
+`scrap_per_tool` scrap, both journalled, so the ledger shows the transformation. Smiths get a
+recipe `iron_ore = { scrap = scrap_per_ore }` as a second way to get iron, chosen with the
+existing `_margin_per_input`.
+
+| Task | Size | How |
+|---|---|---|
+| M65.1 The scrap good | M | Add `SCRAP` to `Asset` and `[goods.scrap]` to the baseline. See the pitfall below. |
+| M65.2 Scrapping **(good first issue after M65.1)** | S | In `maintain`, produce scrap after consuming the old tool, reason `scrapped`. |
+| M65.3 Melting | M | A smith recipe from scrap to ore, chosen by margin; record the share of iron from scrap in `TickStats`. |
+| M65.4 Collector contract | M | A contract kind (R4) for hauling scrap to the market when smiths lack ore and scrap is unsold. |
+| M65.5 Evidence | S | Evidence kind `recycled` with a measure key (R3). |
+
+**Tests:** conservation; every scrap unit traces to a scrapped tool; smiths prefer ore when it's
+cheaper; tools output falls less in the mine disaster with recycling on.
+
+**Pitfalls:** adding a value to `Asset` changes every account's balance dict, and so every state
+hash, even with recycling off. Leave zero balances out of `state_dict()` for new goods (or for all
+goods, once), and record the one-time hash change in the changelog. This is also the first test of
+how hard it is to add a good, and a reason to make adding goods a config change in future.
+
+### M66: market fair days
+
+**Where:** `config.py` (`[fair]`), `sim/market.py` (outside asks and bids on fair days),
+`sim/behaviour.py` (holding output for the fair), `sim/world.py` (`TickStats.fair`),
+`app/` (the fair calendar), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** when `tick % every == offset`, the market adds the outside account's
+orders before clearing: asks and bids at `fair_price_factor` of reference prices, capped by
+`fair_volume` and by the outside account's balances. Stall fees move to the town. Gatherers keep up
+to `fair_hold_days` of output when the last fair paid better than the daily market.
+
+| Task | Size | How |
+|---|---|---|
+| M66.1 Config and calendar **(good first issue)** | S | `[fair]` (R1) and a fair-day helper; show upcoming fairs in the dashboard. |
+| M66.2 Outside orders | M | Extra asks and bids in `market.clear` on fair days, through the existing rationing. |
+| M66.3 Holding for the fair | S | Raise the unsold cap for gatherers before a fair when the last fair's price beat the daily one. |
+| M66.4 Fees and stats | S | Stall fees (reason `fair fee`); `TickStats.fair` with volume and prices. |
+| M66.5 Evidence | M | Evidence kind `fair` (R3); in `causes.py`, a food need after a fair export walks to it. |
+
+**Tests:** hashes unchanged with fairs off; conservation; the outside account only trades on fair
+days; a weekly price cycle appears with fairs on.
+
+**Pitfalls:** if outside prices are too generous, the fair empties the town of food every week. Keep
+`fair_volume` small against daily consumption, and check the drought scenario with fairs on.
+
+### M82: co-operatives against companies
+
+**Where:** new `src/questless/sim/firms.py` (firm accounts, membership, shares), new
+`src/questless/sim/votes.py` (member votes), `config.py` (`[firms]`), `sim/world.py` (a tick slot
+after the market clears), M60's claims and M63's hiring, `player.py` (`found_firm`, `join`, `vote`),
+`contracts/provenance.py`, `experiments/firms.py`. Evidence:
+[RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies).
+
+**Design in one paragraph:** a firm is an account that owns capital (claims, tools) and employs
+workers. After the market clears, it sells the day's output and computes the surplus. A company
+pays fixed wages and sends the rest to owners by shares; when its margin falls below
+`layoff_margin` for `layoff_days`, it lays off the most recent hires. A co-op moves
+`reserve_share` of the surplus into an indivisible reserve and pays members by its pay rule; when
+the margin falls, it holds a vote among pay cut, reserve draw and layoffs, and each NPC member
+votes for the option with the best expected income for them.
+
+| Task | Size | How |
+|---|---|---|
+| M82.1 Firm accounts **(good first issue after M60)** | S | `firm_account(id)` (R2), shares or membership records in `state_dict()`, `[firms]` config (R1). |
+| M82.2 Companies | M | Fixed wages via M63, owner payout by share, the layoff rule. |
+| M82.3 Co-ops and reserve | M | Surplus split, indivisible reserve (an invariant: never paid to members), pay rule. |
+| M82.4 Votes | M | Options with expected income per member; seeded tie-breaks; `firm_vote` evidence (R3). |
+| M82.5 Degeneration and group | M | Non-member hires and the daily member share; optional co-op group fund and member transfers. |
+| M82.6 Experiment | M | Paired seeds, firm types as arms, volatility and survival in the report. |
+
+**Tests:** conservation; the reserve invariant; hashes unchanged when off; votes replay
+identically; a planted rule that sets co-op employment directly fails the test that layoffs only
+come from votes.
+
+**Pitfalls:** it is tempting to tune the vote until co-ops "win". Don't: report what emerges,
+including when co-ops fail. And keep votes rare (only when the margin falls), or the game turns
+into meetings.
+
 ### M42: privacy as code
 
 **Where:** new `privacy/` folder (`data_inventory.toml`, `DPIA_TEMPLATE.md` in `docs/`),
@@ -1131,9 +1342,364 @@ M30 audit verifies the developer log across every loss.
 **Pitfalls:** in-world loss must never touch the engine's own journal or the evidence `verify()`
 reads. The archive is a separate, in-world copy.
 
+### M69: light check-ins by voice, and real breaks
+
+**Where:** new `src/questless/checkin/` (`actions.py`, `confirm.py`), `player.py` (an away-mode
+action), M37's standing orders (a safe profile), M59's harness (voice-only and away bots), the
+notification settings in the client.
+
+**Design in one paragraph:** the check-in layer is a thin, fixed menu over `player.ACTIONS`. A
+speech front end (on the device, outside this repo) produces a candidate action and parameters;
+`confirm.py` renders the read-back sentence from the same templates the dashboard uses and applies
+the action only after an explicit yes. Away mode is a dated record on the player that switches
+their standing orders to a safe profile and hands back lapsing contracts through M59's no-blame
+lever.
+
+| Task | Size | How |
+|---|---|---|
+| M69.1 Check-in menu **(good first issue after M37)** | S | A list of allowed actions with parameter schemas; anything else is refused. |
+| M69.2 Read-back and confirm | M | Render the sentence from templates; apply only on a confirmed token; log nothing about the audio. |
+| M69.3 Away mode | M | Dated away record, safe standing-order profile, no-blame hand-back, `away_weeks` cap per year. |
+| M69.4 Quiet hours and digest | S | Default quiet hours on new accounts; a weekly digest in place of per-event notifications. |
+| M69.5 Bots | M | Voice-only bot (only menu actions) and returner-on-away-mode in M59's harness. |
+
+**Tests:** an unconfirmed action changes nothing; every menu action replays identically; the away
+cap holds; M59 bounds hold for both new bots.
+
+**Pitfalls:** don't add "just one more" voice action that is faster than the full client: voice
+must never be the efficient way to play. And away mode must not freeze prices or markets, only the
+player's own obligations.
+
+### M70: the weekly newspaper
+
+**Where:** new `src/questless/press/` (`select.py`, `render.py`), M25's wiki renderer, M43's
+templates, `contracts/provenance.py` (measure keys), the client.
+
+**Design in one paragraph:** each week, `select.py` ranks the week's evidence by measured impact
+and picks stories per page; `render.py` fills page templates with the facts and their measure
+keys, and optional model-written prose is stored with the issue so the issue is fixed once
+printed. Rival papers (after M49) use the same facts with different selection weights and
+headline templates.
+
+| Task | Size | How |
+|---|---|---|
+| M70.1 Story selection **(good first issue after M25)** | M | Rank evidence by impact; a market page from `TickStats`. |
+| M70.2 Rendering and checks | M | HTML and PDF; every figure links to its measure key and shows `verify()`'s result. |
+| M70.3 Player articles | M | Submission format; numeric claims must carry a measure key; failures are marked. |
+| M70.4 Rival papers | S | Selection weights and headline templates per paper, after M49. |
+
+**Tests:** every figure re-verifies; a forged figure is reported; rendering twice gives identical
+output; rival papers share identical values.
+
+**Pitfalls:** stored prose must be regenerated only when the facts change, never silently. Don't
+rank stories by clicks: rank by measured impact, or the paper drifts towards drama.
+
+### M71: play for everyone, accessibility and one-switch play
+
+**Where:** `app/` (the dashboard), a new scanning interface, `player.py` (a deadline check), M59's
+harness (switch bot), CI (an accessibility checker), `docs/` (test write-ups).
+
+**Design in one paragraph:** a single ranked action list is the backbone: the dashboard, the
+scanning interface and voice (M69) all read it. Accessibility is checked in CI on every page, and
+the switch bot proves in numbers that one-switch players aren't worse off.
+
+| Task | Size | How |
+|---|---|---|
+| M71.1 Dashboard audit **(good first issue, can start now)** | S | Run an automated accessibility checker on every dashboard page; fix contrast, labels and keyboard order. |
+| M71.2 Chart alternatives **(can start now)** | S | Patterns and direct labels on every chart; a text summary under each. |
+| M71.3 Ranked action list | M | The three most useful actions now, then the rest, from the board and the player's state. |
+| M71.4 Scanning interface | M | Step through the list with one input; dwell or switch to select; configurable speed. |
+| M71.5 Deadline guarantee | S | A test that no action or offer needs a response faster than `min_response_seconds`. |
+| M71.6 Switch bot and paid testing | M | Bot in M59's harness; one paid round with disabled players, written up. |
+
+**Tests:** the accessibility checker in CI; the deadline test; the switch bot's parity bound.
+
+**Pitfalls:** automated checks find maybe a third of real problems. The paid testing round is not
+optional, and its findings go into the docs even when they're unflattering.
+
+### M75: offline basics
+
+**Where:** new `src/questless/offline/` (`snapshot.py`, `intents.py`, `practice.py`),
+`player.py` (applying intents on arrival), M37's standing orders, M59's harness, M52's attackers.
+
+**Design in one paragraph:** the server signs a snapshot of the player's public view. Offline, the
+client stores intents from a fixed list with a local sequence number. On reconnect, the server
+drops duplicates, applies intents in arrival order as ordinary actions against the current world,
+and returns applied or refused for each. Practice runs build a local world from the snapshot with
+seeded stand-ins for unknown shocks and never sync.
+
+| Task | Size | How |
+|---|---|---|
+| M75.1 Signed snapshot **(good first issue)** | S | Public view, tick and signature; the client shows its age. |
+| M75.2 Intent list and cap | S | Fixed list, parameter schemas, `offline_intents` a day; anything priced refused. |
+| M75.3 Apply on arrival | M | Deduplicate by device sequence, apply in arrival order, return reasons for refusals. |
+| M75.4 Practice runs | M | Local world from the snapshot; no shock schedule; never synced. |
+| M75.5 Bots and attackers | M | Traveller bot in M59's harness; clock, replay and multi-device attacks in M52. |
+
+**Tests:** refusals carry reasons; priced intents rejected; practice never touches the server
+state; attacker tests gain nothing.
+
+**Pitfalls:** the temptation is to let offline players "catch up" with a bonus. Don't: the
+standing orders already keep them working while they're away, and a bonus is what attackers farm.
+
+### M79: guilds on prescription
+
+**Where:** `src/questless/cohorts/` (`cohort.py`, `facilitator.py`), M44's steward tools for
+facilitators, M42's privacy rules, client defaults from M71, `docs/PRESCRIBED_GUILDS.md` (partner
+guide and evaluation template).
+
+**Design in one paragraph:** a cohort is a guild with a start and end date, invitation-only
+membership, cooperative contract kinds only, and accessibility defaults on. Partners create cohorts
+and issue invitations; the game stores the invitation, never a reason. Facilitators get session
+tools, a concern button that goes to the partner's safeguarding lead, and a signposting page.
+
+| Task | Size | How |
+|---|---|---|
+| M79.1 Cohort record **(good first issue after M44)** | S | Dates, invitation-only membership, partner id; no free-text reason field. |
+| M79.2 Cooperative contracts | M | Contract kinds that only pay the group; no deadlines under a week. |
+| M79.3 Facilitator tools | M | Session view, concern reporting to the partner, signposting page. |
+| M79.4 Ending well | S | End-of-cohort choice: join a guild together, keep meeting, or signposting. |
+| M79.5 Partner guide | M | Safeguarding requirements, student supervision, an evaluation protocol template. |
+
+**Tests:** invitation-only joining; no referral data in any record; cohorts close on their end
+date; accessibility defaults on.
+
+**Pitfalls:** this is the milestone where a mistake can hurt someone. Don't launch without a care
+partner's safeguarding lead reviewing the facilitator tools, and don't measure outcomes inside the
+game.
+
+### M81: career tasters
+
+**Where:** new `src/questless/careers/` (`tasters.py`, `cards.py`, `report.py`), `data/careers/`
+(one card file per role and country), M45's passport, M75's practice worlds, the client (cards and
+the taster report), `docs/CAREERS_EVALUATION.md` (the partner protocol). Evidence:
+[RESEARCH.md](RESEARCH.md#m81-career-tasters).
+
+**Design in one paragraph:** a taster is a session flag on the player plus a role. While it's set,
+the client may show one skill notice at the end of a world day, chosen from the actions the player
+actually took. When the session ends, the client offers the reflection questions and the card for
+that engine role and the player's country. `report.py` renders the one-page taster report from the
+session's actions and any saved answers.
+
+| Task | Size | How |
+|---|---|---|
+| M81.1 Card format **(good first issue, can start now)** | S | A small TOML or Markdown format: role, country, real jobs, same and different tasks, pay range with source and year, routes, links, and the justifying activities. Write the five v0.1 roles for one country. |
+| M81.2 Card checks **(good first issue)** | S | A test that every card has sources, years and justifying activities, and warns when data is over two years old. |
+| M81.3 Taster sessions | M | Session flag, role, start in the live world or a practice copy; end-of-day skill notice from the action log, capped at one. |
+| M81.4 Reflection and passport | S | Three skippable questions; nothing stored unless saved; optional passport entry. |
+| M81.5 Taster report | S | One-page PDF or HTML for advisers and parents. |
+| M81.6 Suggestions | S | Rotate through untried roles; the function takes only the player's taster history. |
+| M81.7 Evaluation protocol | S | Before, after and follow-up measures for partner schools. |
+
+**Tests:** notice caps; nothing stored on skip; card checks; no reward path from tasters; the
+suggestion function's signature; the same card in both skins.
+
+**Pitfalls:** the urge to add a quiz, a badge or a "your ideal career" result will come up. Each
+one makes it feel like homework or tells players who they are; keep them out.
+
 ### M46: docs and v0.5.0
 
 Update PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT with what was built; changelog; tag v0.5.0.
+
+### M67: real weather, real places
+
+**Where:** `config.py` (a `[weather]` section per region), new `src/questless/weather/`
+(`ingest.py`, `mapping.py`), M30's world log, `sim/shocks.py` (weather as a `world` shock
+source), `contracts/provenance.py`.
+
+**Design in one paragraph:** `ingest.py` runs outside the tick: it fetches the twin place's daily
+weather, normalises it against that place's historical normals, and appends a signed record to
+the world log. `mapping.py` turns each record into modifiers (farm output, transport, spoilage,
+food need) through config curves. The tick reads only log records, so it never touches the
+network.
+
+| Task | Size | How |
+|---|---|---|
+| M67.1 Log record format **(good first issue after M30)** | S | Fields: place, date, values, normals, source, licence, hash, `filled_in` flag. |
+| M67.2 Ingest and fallback | M | Fetch, normalise, append; seeded draw from normals when missing. |
+| M67.3 Mapping | M | Config curves from anomalies to modifiers; a severity cap; `exclude_events`. |
+| M67.4 Evidence | S | Evidence kind `weather` with source and licence (R3). |
+
+**Tests:** replay offline gives the same hash; fallback marks the day; the cap holds; hashes
+unchanged with the feature off.
+
+**Pitfalls:** never call the network from the tick, even for a cache miss. And check each source's
+licence before adding it.
+
+### M68: clean-energy simulation
+
+**Where:** new `src/questless/energy/` (`meter.py`, `grid.py`, `scheduler.py`), M23's CI jobs,
+M34's level of detail, M40's surrogate, the dashboard and M70's newspaper.
+
+**Design in one paragraph:** `meter.py` wraps each system's work and records CPU time (or
+hardware energy counters when available). `grid.py` reads carbon-intensity data and forecasts for
+the server's region. `scheduler.py` holds deferrable and optional jobs and starts each in the
+cleanest window before its deadline. Level-of-detail choices are written to the log so replays
+follow them.
+
+| Task | Size | How |
+|---|---|---|
+| M68.1 Energy meter **(good first issue, can start now)** | S | Time each tick phase; report kWh with a stated per-core estimate; add it to the run report. |
+| M68.2 Grid data | M | An adapter for a carbon-intensity feed with recorded test data for CI. |
+| M68.3 Scheduler | M | Deadlines, thresholds, cleanest-window choice; a replay of a recorded week. |
+| M68.4 Level of detail | M | Surrogate when dirty, full when clean; logged choice. |
+| M68.5 Green queue and display | M | Discounted, delayed heavy requests; energy per world day in the dashboard. |
+
+**Tests:** the same inputs give the same hash at any hour; the recorded-week replay meets
+`clean_shift_target`; M59's check passes with the green queue.
+
+**Pitfalls:** don't overstate precision: a per-core estimate can be off by half, so print the method
+and range beside every number. Never let the scheduler skip live work.
+
+### M72: cross-game federation
+
+**Where:** new `src/questless/federation/` (`protocol/` JSON schemas, `bridge.py`, `gateway.py`),
+M30's log, `contracts/engine.py` (contracts from partners), `contracts/provenance.py` (foreign
+evidence), M52's attackers, an `examples/convoy_skirmish/` reference game.
+
+**Design in one paragraph:** the gateway validates every incoming message against the schema and
+the partner's signature, writes it to the log, and only then lets the tick read it. Value crosses
+through a bridge account per partner with escrow and a daily cap. A partner's need becomes a
+funded contract whose evidence includes the partner's facts with their measure keys.
+
+| Task | Size | How |
+|---|---|---|
+| M72.1 Protocol schema **(good first issue)** | M | JSON schemas for contract, delivery, outcome and evidence; a validator and fixtures. |
+| M72.2 Bridge accounts | M | Escrow, daily caps, rates from trade; conservation across worlds. |
+| M72.3 Gateway and log | M | Signature checks, log writes, replay from log only. |
+| M72.4 Foreign evidence | M | Evidence that cites a partner's measure; verification against their published values. |
+| M72.5 Quarantine and attackers | M | Automatic bridge freeze on bad messages; M52 attacks. |
+| M72.6 Reference game | M | A tiny convoy game whose results set a route-security factor. |
+
+**Tests:** two-world conservation; each side replays alone; forged messages rejected; the cap holds
+under attack.
+
+**Pitfalls:** the hardest part is social, not technical: partners must want to keep the link alive.
+Start with a link that matters every day (supplies and routes), not with rare showcase battles.
+
+### M73: science from play
+
+**Where:** `export.py` (identifiers and citation files), new `src/questless/science/`
+(`register.py`, `notices.py`, `tasks.py`), M42's privacy rules, M45's passport, M25's wiki.
+
+**Design in one paragraph:** every public export gets an identifier and a citation file listing its
+region and days. The study register is a public list of registered studies. When a citation is
+recorded, `notices.py` finds opted-in players whose actions fall in the slice and notifies them.
+`tasks.py` fetches tasks from a partner platform, mixes in known-answer items, and scores players
+by those and by agreement.
+
+| Task | Size | How |
+|---|---|---|
+| M73.1 Citation file **(good first issue, can start now)** | S | A `CITATION.cff` and a stable identifier per export, listing the data slice. |
+| M73.2 Study register | M | Public register with question, slice and status; links from the wiki. |
+| M73.3 Notices and passport | M | Opt-in notices for players in a cited slice; a passport entry. |
+| M73.4 Task adapter | M | Fetch tasks from a partner platform; known-answer items; agreement scoring; no player identity sent. |
+| M73.5 Impact pages | S | Per project: community totals and the researchers' findings. |
+
+**Tests:** random answers score zero; no identity in adapter requests; notices only to opted-in
+players in the slice; M59's check passes.
+
+**Pitfalls:** never inflate the claim of impact. Show only what partners have confirmed, and let
+players see a task's purpose before they start it.
+
+### M76: a tabletop AR map
+
+**Where:** a public view endpoint in `api.py` (map scene), a reference client in
+`clients/tabletop/` (outside the engine package), M71's ranked action list, M35 and M55's map
+data.
+
+**Design in one paragraph:** the engine publishes a map scene per tick (sites, roads with volumes,
+shortages, dependencies) as plain data. The reference client turns it into a 3D scene anchored on
+a table and shares only the anchor between devices in the room. Actions go through the same API as
+every other client.
+
+| Task | Size | How |
+|---|---|---|
+| M76.1 Map scene data **(good first issue after M35)** | M | Sites, roads, flows and shortages per tick in a documented format. |
+| M76.2 Reference client | M | Anchored scene, shared anchor, touch to open a chain. |
+| M76.3 Accessibility and 2D | S | Patterns as well as colours; the same scene as a 2D map. |
+| M76.4 Session ends | S | A suggested session length and a natural end, from M59's stopping points. |
+
+**Tests:** scene data matches the tick's `TickStats`; the client sends only ordinary actions; no
+camera data in network traces.
+
+**Pitfalls:** keep game logic out of the AR client. Anything the table can do, the 2D client must
+be able to do too.
+
+### M77: worlds never die
+
+**Where:** new `src/questless/ark/` (`export.py`, `boot.py`, `keys.py`), M30's log, M42's
+scanner, `docs/SUNSET.md`, a weekly CI job.
+
+**Design in one paragraph:** `export.py` writes the log, snapshots, scenario, engine version and
+hash chain into one archive after M42's scanner passes. `boot.py` starts a world from an archive
+and replays it to the recorded hash. `keys.py` issues signed character keys and checks them on a
+restarted world.
+
+| Task | Size | How |
+|---|---|---|
+| M77.1 Ark format **(good first issue after M30)** | S | A manifest listing every file, its hash and the engine version. |
+| M77.2 Export with privacy scan | M | Bundle and refuse on personal data. |
+| M77.3 Boot and verify | M | Boot on a clean machine; replay to the final hash. |
+| M77.4 Character keys | M | Signed keys; claim on restart; unclaimed characters become NPCs. |
+| M77.5 Weekly drill and pledge | S | CI job; `SUNSET.md` template. |
+
+**Tests:** round trip export, boot and replay; planted personal data blocks the export; keys claim
+only their own characters.
+
+**Pitfalls:** the engine version matters: an ark must name the exact engine release it replays
+with, and old releases must stay installable.
+
+### M78: idle devices do science on clean power
+
+**Where:** client settings, an adapter to an established volunteer-computing client, M68's
+`grid.py`, M45's passport, M73's partner list.
+
+**Design in one paragraph:** the client checks four conditions (idle, plugged in, cool, grid below
+threshold) and only then lets the volunteer-computing client run, up to the player's daily cap. It
+reports work done and estimated energy to the player and, as a total only, to the project page.
+
+| Task | Size | How |
+|---|---|---|
+| M78.1 Conditions and cap **(good first issue after M68.2)** | S | The four checks and a daily cap, all logged locally. |
+| M78.2 Cost estimate | S | Energy and cost at the player's tariff, shown before opt-in and monthly. |
+| M78.3 Adapter | M | Start and stop an established volunteer-computing client in its sandbox. |
+| M78.4 Recognition | S | Contribution totals on the project page and in the passport; no in-game items. |
+
+**Tests:** recorded grid and device traces never run work outside the conditions; no reward path
+from contribution to coin or items.
+
+**Pitfalls:** never make it the default, and never hint that players who contribute will do better
+in the game.
+
+### M80: play the policy before it becomes law
+
+**Where:** a modern-town theme pack (M33), new `src/questless/policylab/` (`build.py`,
+`backtest.py`, `report.py`), M23's paired-run machinery, M40's surrogate for many seeds, the
+research export.
+
+**Design in one paragraph:** `build.py` reads a documented open-data file into a scenario.
+`backtest.py` runs a past policy and scores the estimate against the recorded real outcome.
+`report.py` runs paired seeds for the new policy and renders effects by group with uncertainty
+bands, the backtest score and the "left out" list; it refuses to render without a backtest.
+
+| Task | Size | How |
+|---|---|---|
+| M80.1 Open-data mapping **(good first issue)** | M | A documented file format from public statistics to scenario fields. |
+| M80.2 Modern-town pack | M | Households, jobs, bus routes and fares as a theme pack. |
+| M80.3 Backtest | M | A past policy, its real outcome and the error. |
+| M80.4 Group report | M | Effects by area, income and age with uncertainty; the "left out" list. |
+| M80.5 Optional play | M | Residents play the twin; reported separately. |
+
+**Tests:** the build reproduces from the file; the report refuses without a backtest; runs
+reproduce from the published files.
+
+**Pitfalls:** a toy town can look more certain than it is. Lead every report with the backtest
+error and the "left out" list, and resist requests to hide them.
+
+### M74: docs and v0.6.0
+
+Update BLUEPRINT, RESEARCH and PRIVACY_AND_IDENTITY with what was built; changelog; tag v0.6.0.
 
 ---
 

@@ -19,6 +19,8 @@ with DOI links. Link to it from the milestone in [ROADMAP.md](ROADMAP.md).
 
 - [M58: fairness for late joiners](#m58-fairness-for-late-joiners) (searched 2026-10-23)
 - [M59: respectful play](#m59-respectful-play) (searched 2026-10-23)
+- [M81: career tasters](#m81-career-tasters) (searched 2026-11-01)
+- [M82: co-operatives against companies](#m82-co-operatives-against-companies) (searched 2026-11-01)
 
 ## M58: fairness for late joiners
 
@@ -491,3 +493,260 @@ industry. *Nature Human Behaviour, 7*(10), 1753–1766. https://doi.org/10.1038/
 Zhou, X., Liao, M., Gorowska, M., Chen, X., & Li, Y. (2024). Compliance and alternative behaviors
 of heavy gamers in adolescents to Chinese online gaming restriction policy. *Journal of
 Behavioral Addictions, 13*(2), 687–692. https://doi.org/10.1556/2006.2024.00021
+
+## M81: career tasters
+
+Evidence for [M81](ROADMAP.md#m81-career-tasters-10-h). Its aim: a player tries a role in the game
+and comes away knowing what the real jobs behind it are like, without the game turning into a
+lesson.
+
+The question for the research: do games help people explore careers, what makes them work, and
+does teenage career exploration matter later in life?
+
+### What the evidence changes in the design
+
+1. **The game is the experience; the learning comes after it.** Serious games beat conventional
+   teaching by a small margin, and by more when they are combined with other teaching, played over
+   several sessions and played in groups (Wouters et al., 2013). Support inside the game adds to
+   learning, most for skills (Wouters & van Oostendorp, 2013). So M81 wraps play in reflection,
+   conversation and real encounters, and offers tasters as a series, not a one-off.
+2. **Thinking, not fun or rewards, drives learning.** In a study of 809 Swiss teenagers, how much
+   the game stimulated thinking predicted what they learned about jobs; enjoyment and flow did not
+   (Keller et al., 2022). So M81 adds a short reflection and a single skill notice, and gives no
+   points or badges for completing them.
+3. **Career games widen horizons and build confidence.** *like2be* broadened the jobs teenagers
+   considered, mainly when it was part of careers lessons (Keller et al., 2023). In a randomised
+   trial, *Youth@Work* players grew faster on concern, control and confidence than a paper-based
+   group (Hummel et al., 2018). A game about nursing raised teenagers' self-efficacy and their view
+   of its job prospects (Mitchell et al., 2024).
+4. **Stereotypes have to be designed against.** *like2be* did little for gendered attitudes to
+   jobs (Keller et al., 2023); younger teenagers' aspirations are more gendered than older ones'
+   (Hoff et al., 2022); and boys were more likely than girls to see gaming skills as career
+   resources (Hoffelner et al., 2025). So M81's suggestions never use gender or background, and
+   every player is offered every role.
+5. **Real information matters because aspirations and jobs don't match.** About half of 3,367 US
+   teenagers aspired to investigative or artistic careers, which make up about 8% of the US labour
+   market (Hoff et al., 2022). The "Then and now" card puts real pay and routes next to play.
+6. **Someone to talk to makes skills transfer.** Teenagers turned gaming skills into career
+   thinking mainly when they also sought social support (Hoffelner et al., 2025). Hence the taster
+   report for advisers and parents.
+7. **Exploring work as a teenager pays off.** Across longitudinal data from eight countries,
+   teenagers who explore, experience and think about work have lower unemployment, higher wages
+   and more job satisfaction as adults (OECD, 2021). Aspirations at 16 predict careers in the
+   mid-30s (Schoon & Polek, 2011), and moderate work experience at school helps young people
+   commit to a direction (Thouin et al., 2023).
+
+### Findings by lever
+
+| Finding | Design consequence |
+|---|---|
+| Serious games: d = 0.29 over conventional teaching; larger with other instruction, multiple sessions and group play (Wouters et al., 2013). | Tasters as a repeated series, with group and adviser debriefs. |
+| Instructional support in games: d = 0.34, largest for skills and for support that helps select relevant information; some publication bias (Wouters & van Oostendorp, 2013). | One skill notice that points at what mattered, at a natural pause. |
+| Cognitive stimulation predicted learning about occupations; enjoyment and flow did not (Keller et al., 2022). | Short reflection questions; no rewards for completing them. |
+| Gamification works best with game fiction and with competition combined with collaboration (Sailer & Homner, 2020). | Keep tasters inside the real game and its fiction, not a separate lesson mode. |
+| *like2be* broadened career horizons, mainly when built into careers lessons; limited effect on reflection about one's own aptitude and on gendered attitudes (Keller et al., 2023). | Partner with schools; design actively against stereotypes. |
+| *Youth@Work* RCT (n = 93): faster growth in career adaptability (concern, control, confidence) than the paper version; short-term effects only (Hummel et al., 2018). | Expect short-term gains; measure follow-up. |
+| A nursing game raised teenagers' self-efficacy and perceived job prospects (Mitchell et al., 2024). | Show realistic prospects on the card. |
+| Teenage aspirations cluster in fields with few jobs (Hoff et al., 2022). | Real pay, demand and routes on every card. |
+| Gaming skills transfer to career planning mainly with social support; boys more likely to recognise them (Hoffelner et al., 2025). | Taster report for adults; rotate roles for everyone. |
+| Teenage exploration and experience predict better adult employment outcomes across eight countries (OECD, 2021). | Link tasters to real encounters through schools. |
+| Aspirations at 16 predict attainment in the mid-30s, beyond background and ability (Schoon & Polek, 2011). | Teenage exploration is worth supporting. |
+| Moderate teenage work builds identity commitment, which predicts a career-related job (Thouin et al., 2023). | Tasters can support, not replace, real experience. |
+
+### What the evidence does not settle
+
+- Whether career games change real choices years later: the trials measure attitudes and
+  knowledge soon after play (Hummel et al., 2018; Mitchell et al., 2024).
+- Most studies are small, short and use self-reports; game-based learning studies show signs of
+  publication bias (Wouters & van Oostendorp, 2013).
+- The longitudinal studies are correlational: teenagers who explore may differ in ways the
+  controls miss (OECD, 2021).
+
+### Gaps not yet searched
+
+- The effect of telling students about real earnings on their education choices.
+- Employer encounters (careers talks, workplace visits) and later outcomes, in the UK in
+  particular.
+- Career games for adults changing career, not only teenagers.
+- How children's views of jobs form before the teenage years.
+
+### References
+
+Hoff, K., Van Egdom, D., Napolitano, C., Hanna, A., & Rounds, J. (2022). Dream jobs and employment
+realities: How adolescents' career aspirations compare to labor demands and automation risks.
+*Journal of Career Assessment, 30*(1), 134–156. https://doi.org/10.1177/10690727211026183
+
+Hoffelner, C., Düggeli, A., & Nägele, C. (2025). Unlocking hidden resources: The role of gaming
+skills in fostering career adaptability for resilience in the career planning of young people.
+*Nordic Journal of Vocational Education and Training, 15*(5), 101–139.
+https://doi.org/10.3384/njvet.2242-458x.25155101
+
+Hummel, H. G. K., Boyle, E. A., Einarsdóttir, S., Pétursdóttir, A., & Graur, A. (2018). Game-based
+career learning support for youth: Effects of playing the Youth@Work game on career adaptability.
+*Interactive Learning Environments, 26*(6), 745–759.
+https://doi.org/10.1080/10494820.2017.1402062
+
+Keller, C., Döring, A. K., & Makarova, E. (2022). Factors influencing the effectiveness of serious
+gaming in the field of vocational orientation. *Education Sciences, 13*(1), Article 16.
+https://doi.org/10.3390/educsci13010016
+
+Keller, C., Makarova, E., & Döring, A. K. (2023). Career choice with the serious game like2be.
+*International Journal of Game-Based Learning, 13*(1), 1–18. https://doi.org/10.4018/ijgbl.327788
+
+Mitchell, G., Rainey, D., Healy, M., Anderson, T., Stark, P., Kalu, F. A., Monaghan, C., & Linden,
+M. A. (2024). Employing a serious game intervention to promote adolescent school children's
+perceptions of nursing and midwifery professions. *BMC Nursing, 23*(1), Article 372.
+https://doi.org/10.1186/s12912-024-02045-1
+
+OECD. (2021). *Indicators of teenage career readiness: An analysis of longitudinal data from eight
+countries* (OECD Education Working Papers). OECD Publishing. https://doi.org/10.1787/cec854f8-en
+
+Sailer, M., & Homner, L. (2020). The gamification of learning: A meta-analysis. *Educational
+Psychology Review, 32*(1), 77–112. https://doi.org/10.1007/s10648-019-09498-w
+
+Schoon, I., & Polek, E. (2011). Teenage career aspirations and adult career attainment: The role of
+gender, social background and general cognitive ability. *International Journal of Behavioral
+Development, 35*(3), 210–217. https://doi.org/10.1177/0165025411398183
+
+Thouin, É., Dupéré, V., & Denault, A.-S. (2023). Paid employment in adolescence and rapid
+integration into a career-related job in early adulthood among vulnerable youth: The identity
+connection. *Journal of Vocational Behavior, 142*, Article 103864.
+https://doi.org/10.1016/j.jvb.2023.103864
+
+Wouters, P., van Nimwegen, C., van Oostendorp, H., & van der Spek, E. D. (2013). A meta-analysis of
+the cognitive and motivational effects of serious games. *Journal of Educational Psychology,
+105*(2), 249–265. https://doi.org/10.1037/a0031311
+
+Wouters, P., & van Oostendorp, H. (2013). A meta-analytic review of the role of instructional
+support in game-based learning. *Computers & Education, 60*(1), 412–425.
+https://doi.org/10.1016/j.compedu.2012.07.018
+
+## M82: co-operatives against companies
+
+Evidence for [M82](ROADMAP.md#m82-co-operatives-against-companies-10-h). Its aim: worker
+co-operatives and investor-owned companies side by side, with a crisis showing how each adjusts.
+
+The question for the research: do worker co-operatives really behave differently in a downturn,
+why, and what are their weak points?
+
+### What the evidence changes in the design
+
+1. **Co-ops adjust pay, companies adjust jobs.** The pattern holds across countries and decades:
+   the plywood co-operatives of the US Pacific Northwest (Craig & Pencavel, 1992), the whole
+   population of Uruguayan co-ops (Burdín & Dean, 2009), Italian production co-ops (Delbono &
+   Reggiani, 2013; Cristini et al., 2023), and an exhaustive French employer-employee panel
+   (Magne & Pérotin, 2026). So M82's acceptance test asks whether the pattern *emerges* in the
+   game; it is never coded in.
+2. **The reason is trust and information, which the vote models.** In investor-owned firms,
+   workers can't verify a claimed fall in demand, so they insist on fixed wages, which leads to
+   layoffs; in co-ops the "employer" answers to the workers, so flexible pay is credible (Albanese
+   et al., 2015). Hence M82's companies have fixed wages and owner-decided layoffs, and its co-ops
+   vote with full information.
+3. **Reserves smooth the shock.** Locked, indivisible reserves let Italian co-ops protect jobs
+   without cutting pay as much (Navarra, 2016), and co-ops built equity in good years instead of
+   paying large dividends (Delbono & Reggiani, 2013). Hence the indivisible reserve and the
+   "draw from the reserve" option in the vote.
+4. **Stability has costs and limits.** Co-ops' profitability and equity fell more than
+   conventional firms' during Italy's long recession (Cristini et al., 2023), and their resilience
+   faded in later years of prolonged stress (Costa & Delbono, 2025). Employment stability in French
+   co-ops benefited mainly men and low-skill workers (Magne & Pérotin, 2026). M82 reports these
+   costs, not only the benefits.
+5. **Survival is not automatic.** French producer co-ops showed high survival and no degeneration
+   over a decade (Estrin & Jones, 1992), but a matched study finds their survival advantage largely
+   disappears once starting resources are counted (Mirabel, 2025). Hence capital is harder to
+   raise for co-ops in M82, and the experiment reports survival with starting resources matched.
+6. **Degeneration happens, and so does regeneration.** Of 83 democratic enterprises in qualitative
+   studies, most resisted or reversed degeneration; few fully degenerated (Unterrainer et al.,
+   2022). Mondragon's international groups show both tendencies at once (Bretos et al., 2020).
+   Hence M82 measures the member share of the workforce daily and lets members vote on admitting
+   new members.
+7. **Not only worker co-ops.** In Italy, all types of co-operative protected employment better than
+   investor-owned firms through the 2008–2015 crisis (Borzaga et al., 2022). A later milestone
+   could add consumer and producer co-ops.
+
+### Findings by lever
+
+| Finding | Design consequence |
+|---|---|
+| Co-ops adjust pay more than employment (Craig & Pencavel, 1992; Burdín & Dean, 2009; Delbono & Reggiani, 2013). | Measure employment and pay volatility by firm type. |
+| French panel: same demand shock, more stable employment and more variable pay in co-ops; stability benefits mainly men and low-skill workers (Magne & Pérotin, 2026). | Report who gains from stability, not only averages. |
+| Spain: wage-earners in worker-owned firms had more stable jobs, but wages and hours were as responsive as elsewhere (Garcia-Louzao, 2021). | Regulations can limit pay flexibility; make it a config knob. |
+| Italy 2011–2018: co-ops contained job losses with larger pay cuts, but profitability and equity fell more (Cristini et al., 2023). | Show the financial cost of stability. |
+| Indivisible reserves smooth wages in downturns (Navarra, 2016). | The indivisible reserve and the reserve-draw vote option. |
+| Fixed wages in investor-owned firms follow from workers' distrust of claimed demand falls (Albanese et al., 2015). | Companies: fixed wages and owner-decided layoffs. |
+| All co-op types withstood 2008–2015 better than investor-owned firms in Italy (Borzaga et al., 2022). | A later extension to consumer and producer co-ops. |
+| Co-ops give labour a higher share of value added, even in downturns; resilience declined in later years (Costa & Delbono, 2025). | Report labour's share of value added and long-crisis outcomes. |
+| High survival and no degeneration among French producer co-ops in the 1970s (Estrin & Jones, 1992). | Co-ops can last; don't build in decline. |
+| The survival advantage largely disappears with entry resources matched (Mirabel, 2025). | Match starting resources in the experiment. |
+| Most democratic enterprises resist or reverse degeneration (Unterrainer et al., 2022); Mondragon shows both tendencies at once (Bretos et al., 2020). | Measure the member share daily; let members choose. |
+
+### What the evidence does not settle
+
+- Most studies are observational: co-ops may differ from other firms in sector, size and members
+  in ways the controls don't capture (Mirabel, 2025).
+- Effects differ by sector; in Italian construction and low-knowledge services, co-ops grew
+  employment rather than pay after the recession (Cristini et al., 2023).
+- The trust explanation is a model (Albanese et al., 2015); other explanations, such as members'
+  shared values, are not ruled out.
+
+### Gaps not yet searched
+
+- Productivity and job satisfaction in co-ops against conventional firms.
+- Mondragon's internal job transfers and the Fagor collapse, in peer-reviewed sources.
+- How co-ops raise capital (member loans, co-op banks) and what limits their growth.
+- Employee ownership plans (partial ownership without one member, one vote).
+
+### References
+
+Albanese, M., Navarra, C., & Tortia, E. C. (2015). Employer moral hazard and wage rigidity: The
+case of worker owned and investor owned firms. *International Review of Law and Economics, 43*,
+227–237. https://doi.org/10.1016/j.irle.2014.08.006
+
+Borzaga, C., Carini, C., & Tortia, E. C. (2022). Co-operative enterprise anti-cyclicality and the
+economic crisis: A comparative analysis of employment dynamics in Italy. *Annals of Public and
+Cooperative Economics, 93*(3), 551–577. https://doi.org/10.1111/apce.12337
+
+Bretos, I., Errasti, A., & Marcuello, C. (2020). Is there life after degeneration? The
+organizational life cycle of cooperatives under a "grow-or-die" dichotomy. *Annals of Public and
+Cooperative Economics, 91*(3), 435–458. https://doi.org/10.1111/apce.12258
+
+Burdín, G., & Dean, A. (2009). New evidence on wages and employment in worker cooperatives
+compared with capitalist firms. *Journal of Comparative Economics, 37*(4), 517–533.
+https://doi.org/10.1016/j.jce.2009.08.001
+
+Costa, M., & Delbono, F. (2025). Splitting the pie in Italian cooperatives: A comparative analysis
+with panel data (2014–2023). *Sustainability, 17*(22), Article 10354.
+https://doi.org/10.3390/su172210354
+
+Craig, B., & Pencavel, J. (1992). The behavior of worker cooperatives: The plywood companies of the
+Pacific Northwest. *The American Economic Review, 82*(5), 1083–1105.
+
+Cristini, A., Grasseni, M., & Signori, S. (2023). Can worker cooperatives stabilize employment and
+remain financially sound during a prolonged recession? *Applied Economics, 55*(33), 3863–3883.
+https://doi.org/10.1080/00036846.2022.2118963
+
+Delbono, F., & Reggiani, C. (2013). Cooperative firms and the crisis: Evidence from some Italian
+mixed oligopolies. *Annals of Public and Cooperative Economics, 84*(4), 383–397.
+https://doi.org/10.1111/apce.12020
+
+Estrin, S., & Jones, D. C. (1992). The viability of employee-owned firms: Evidence from France.
+*ILR Review, 45*(2), 323–338. https://doi.org/10.1177/001979399204500209
+
+Garcia-Louzao, J. (2021). Employment and wages over the business cycle in worker-owned firms:
+Evidence from Spain. *British Journal of Industrial Relations, 59*(2), 418–443.
+https://doi.org/10.1111/bjir.12559
+
+Magne, N., & Pérotin, V. (2026). When workers get to choose: Employment and wage responses to
+demand shocks in labour-managed and conventional firms. *Annals of Public and Cooperative
+Economics*. Advance online publication. https://doi.org/10.1111/apce.70046
+
+Mirabel, T. (2025). Entry resources and the survival of worker-owned firms. *Annals of Public and
+Cooperative Economics, 97*(2), 425–454. https://doi.org/10.1111/apce.70019
+
+Navarra, C. (2016). Employment stabilization inside firms: An empirical investigation of worker
+cooperatives. *Annals of Public and Cooperative Economics, 87*(4), 563–585.
+https://doi.org/10.1111/apce.12124
+
+Unterrainer, C., Weber, W. G., Höge, T., & Hornung, S. (2022). Organizational and psychological
+features of successful democratic enterprises: A systematic review of qualitative research.
+*Frontiers in Psychology, 13*, Article 947559. https://doi.org/10.3389/fpsyg.2022.947559

@@ -1,4 +1,4 @@
-# Roadmap: v0.2 to v0.5 build path
+# Roadmap: v0.2 to v0.6 build path
 
 Status: **planned, not started** · drafted 2026-10-21 · follows v0.1.0 and [REVIEW.md](REVIEW.md)
 
@@ -729,9 +729,16 @@ and long supply chains emerge from the same ledger.
 | M55 | **Infrastructure dependency maps** | M34 | 8 h |
 | M58 | **Fairness for late joiners** (evidence in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners)) | M17, M31; M34 for migration between regions | 8 h |
 | M60 | **Land and mine claims** (returns on capital; see [VALIDATION.md](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)) | none; M58 builds on it | 7 h |
+| M61 | **Spoilage and storage** (time costs goods) | none | 6 h |
+| M62 | **Know-how that rusts and is taught** (idle workers lose skill; apprentice contracts) | none; better after M61 | 7 h |
+| M63 | **Players hire NPCs** (a labour market with escrowed wages) | M17 (obligation registry); M31 for more than one employer | 8 h |
+| M64 | **Tool rental** (capital without ownership) | none; better after M60 | 6 h |
+| M65 | **Scrap and recycling** (worn tools come back as iron) | none | 6 h |
+| M66 | **Market fair days** (a weekly fair with outside traders) | none; better after M61 | 5 h |
+| M82 | **Co-operatives against companies** (worker-owned firms next to investor-owned ones; evidence in [RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies)) | M60, M63; M17 for loans | 10 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
-- **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
+- **Total:** about 160 h, roughly 20 working days; plan for **26 days**.
 - **Critical path:** M33 → M34 → M35/M36/M39/M53-M55. M37 and M38 can run in parallel once M31
   lands.
 - **Cut order if behind:** the surrogate experiment (M40), sanctions (keep treaties and
@@ -1015,6 +1022,311 @@ config-free follow-up once the basic loop is measured.
 - with claims off, every scenario's state hash is unchanged;
 - the export's per-NPC rent columns add up to the day's totals.
 
+## M61: spoilage and storage (6 h)
+
+**Goal:** holding goods has a cost. Today a sack of food kept for a year is as good as new, so
+stockpiling is free and a drought can be waited out on old harvests. In real economies, storage is
+where much of the work of fighting scarcity happens: granaries, cold chains, warehouses. M61 makes
+food spoil and lets the town build storage that slows it down, so a drought chain can reach back
+to "the granary was never built".
+
+**Design:**
+- **Spoilage is a daily rate per good.** Each good has a `spoil_rate` in `[goods.*]` (food spoils,
+  ore and tools barely do). Every day, each account loses that share of its stock, with fractional
+  units carried per account like production carry, so integer goods stay unbiased. Spoiled units
+  leave through `ledger.consume` with reason `spoiled`, which is the `spoiled` term the goods
+  balance in [PLAN.md](PLAN.md) already reserves. Conservation holds.
+- **Escrow and transit are exempt.** Goods held for contracts or in caravans don't spoil, so a
+  player is never punished for an obligation the engine itself holds.
+- **Storage is a building.** A granary at the market or the farms multiplies the spoil rate there
+  by `granary_factor` (for example 0.25) for up to `granary_capacity` units. Units above capacity
+  spoil at the full rate. The town or a guild funds construction through an ordinary contract
+  (players deliver the tools to build it), so storage competes with relief for the same treasury.
+- **NPCs respond.** With spoilage on, `stock_days` targets for food are capped at the number of
+  days before a unit loses half its value, so NPCs stop hoarding what will rot.
+- **Off by default** (`spoil_rate = 0` for every good). With it off, every state hash is unchanged.
+
+**Measured:** `TickStats.spoiled` per good, granary fill, and the share of each harvest that is
+eaten, sold or lost. The export adds them per day.
+
+**Evidence and chains:** a `spoilage` evidence kind with a measure key (units lost per day at a
+site). The causal walk for a food contract checks whether stored food would have covered the
+shortage without spoilage, and if so adds "food stocks spoiled faster than they were replaced",
+linked to the missing or full granary.
+
+**Simpler than reality, on purpose:** goods are fungible, so spoilage is a smooth rate, not
+per-batch ages (item biographies would add those later). There's no salting, smoking or cooling
+yet; each could be a recipe that turns food into a slow-spoiling good.
+
+**Accept when:**
+- goods are conserved with spoilage on, and every spoiled unit has a `spoiled` journal entry;
+- with every `spoil_rate` at 0, each scenario's state hash is unchanged;
+- in the drought scenario, a world with a granary has fewer hungry NPC-days than one without, across
+  paired seeds;
+- a food contract's chain includes spoilage only when the counterfactual (same seed, no spoilage)
+  would have covered the need, and the evidence re-verifies.
+
+## M62: know-how that rusts and is taught (7 h)
+
+**Goal:** a crisis leaves scars. Today a smith idle for a month returns at full skill the day the
+ore comes back, so every shock is fully reversible. Economists call the real effect *hysteresis*:
+long unemployment erodes skills, so output stays low after the cause is gone. M62 makes skill grow
+with practice and decay with idleness, and lets guilds pay masters to train apprentices, which
+gives players a quest that rebuilds a town's capacity, not only its stock.
+
+**Design:**
+- **Skill has two parts.** `traits.skill` stays as the NPC's talent. A new `experience` value
+  (0 to 1) multiplies it: `effective = skill × (floor + (1 − floor) × experience)`. Working days
+  raise experience by `learn_rate` toward 1; idle days lower it by `rust_rate` toward 0. At genesis
+  every NPC starts at `start_experience`.
+- **Teaching is a contract.** When a guild's average experience for a profession falls below
+  `teach_below`, the guild posts a training contract: the most experienced member teaches the
+  least experienced for `teach_days`. The master's output falls by `teach_cost` while teaching, and
+  the guild escrows the reward that makes up for it. A player fulfils the contract by delivering
+  the practice inputs (ore for a smith) and the pair's food for the course. On completion the apprentice's experience rises by `teach_gain`.
+- **Visible hysteresis.** A shock that ends no longer ends its effects. The engine records how long
+  output takes to return to 95% of baseline after a shock ends, per profession.
+- **Off by default** (`[knowhow] enabled = false`). With it off, every NPC's experience is 1 and
+  every state hash is unchanged.
+
+**Measured:** mean experience per profession per day, recovery time after each shock, and training
+contracts posted and completed.
+
+**Evidence and chains:** an `experience` evidence kind ("Smiths' average experience fell from 0.92
+to 0.61 after 24 idle days"), measured from `TickStats`. The causal walk for a tools shortage that
+outlives its ore shock walks back: tools output low ← smiths' experience low ← idle days ← the
+ore shortage, so the chain explains why recovery is slow.
+
+**Builds towards:** labour mobility in the backlog (NPCs who switch profession start with low
+experience) and M58's apprentice contracts for players.
+
+**Accept when:**
+- with know-how off, every scenario's state hash is unchanged;
+- in the mine disaster scenario, output recovers more slowly after the shock with know-how on than
+  off, across paired seeds, and training contracts shorten that recovery;
+- the training contract is fully escrowed and conserves coin and goods;
+- the `experience` evidence re-verifies, and a forged value is reported.
+
+## M63: players hire NPCs (8 h)
+
+**Goal:** a labour market. Today players buy goods, but they can't buy work. Idle NPCs (no ore,
+no demand) earn nothing while players lack hands. M63 lets a player hire an NPC for a wage, so
+players compete with guilds and the town for workers, and wages become a price the economy sets.
+It also gives players the first way to *start* production instead of only moving goods.
+
+**Design:**
+- **Hiring is a contract the player funds.** A player offers a daily wage for N days to an NPC.
+  The whole wage bill is escrowed up front (an obligation in M17's registry), so a player can't
+  hire what they can't pay. The NPC accepts if the wage beats their expected earnings from their
+  own work over the last 7 days, plus a `switch_premium`. Ties break by seeded order.
+- **What the player gets.** A hired NPC works their own trade with inputs the player supplies, and
+  the output goes to the player's account instead of the NPC's. The NPC still eats, wears tools
+  and pays the levy on their wage like any income.
+- **Guild rules apply.** Guilds can set a minimum wage for members (`[guilds.*] min_wage`). A
+  guild below its emergency threshold can't lose more than `max_hired_share` of its members, so a
+  rich player can't empty a guild during a crisis.
+- **Ending the job.** The contract ends at term, or early if the player stops supplying inputs for
+  `quit_after` days. Unpaid escrow returns to the player; the wage already earned stays with the
+  NPC. Every payment is a ledger transfer with reason `wage`.
+- **Off by default** (`[hiring] enabled = false`). With it off, every state hash is unchanged.
+
+**Measured:** NPCs hired per profession, the mean wage against each trade's expected earnings,
+unemployment (idle NPCs who weren't hired), and the share of output produced for players.
+
+**Evidence and chains:** a `hired` evidence kind. When a shortage follows a wave of hiring (smiths
+hired away to make tools for a player, so farmers lack tools), the causal walk names the employer
+and the wage, so the chain shows who outbid the town.
+
+**Simpler than reality, on purpose:** one NPC, one employer; no strikes or negotiation (strikes and
+unions are in the backlog); no firing before term except for missing inputs.
+
+**Accept when:**
+- coin and goods are conserved, and escrow equals the unpaid wages of live jobs every day;
+- with hiring off, every scenario's state hash is unchanged;
+- a player can't hire beyond their escrowable coin, or more than `max_hired_share` of a guild
+  in crisis;
+- an experiment over paired seeds reports the effect of hiring on idle NPC-days and on the price of
+  the hired trade's output;
+- the chain behind a shortage caused by hiring names the employer, and its evidence re-verifies.
+
+## M64: tool rental (6 h)
+
+**Goal:** a worker can use capital they don't own. Today a farmer who can't afford tools works at
+`no_tool_factor` until they can, so a poor worker stays poor. In real economies, renting
+equipment is how most people use capital: tractors, taxis, looms. M64 lets NPCs with spare tools
+rent them by the day, so a rental market sits beside the market for tools themselves, and the rent
+becomes a measured return on capital next to M60's land rent.
+
+**Design:**
+- **A rental is an obligation.** The owner moves one tool into a rental account; the renter uses
+  it as if it were theirs. Each day the renter pays `rental_fee` coin (reason `tool rent`). If the
+  renter can't pay for `default_after` days, the rental ends and the tool goes back to the owner.
+- **The owner bears the wear.** A rented tool wears like any tool. When it falls below the
+  replacement threshold, it is used up and the rental ends, so the fee has to cover wear. NPCs
+  who rent out tools price that in: `fee = tool price × wear per day × (1 + rental_margin)`.
+- **Who rents.** Each day, NPCs whose tools are below threshold and who can't afford a new tool
+  but can afford the fee rent from the owner with the lowest fee, in seeded order. Owners rent out
+  only tools beyond their own next replacement.
+- **Players can be owners.** A `rent_out` action lets a player put tools on the rental market at
+  their own fee, with the same rules.
+- **Off by default** (`[rental] enabled = false`). With it off, every state hash is unchanged.
+
+**Measured:** tools rented per day, mean fee against the tool price, NPC-days worked without
+tools, and rent income by owner, which the export adds next to M60's land rent.
+
+**Evidence and chains:** a `rental` evidence kind. When a farm shortage has workers without tools,
+the walk now separates "no tools for sale" from "tools for sale but unaffordable, and no one renting
+them out", so the chain names the missing market.
+
+**Accept when:**
+- coin and tools are conserved, and every rented tool is in exactly one rental account;
+- with rental off, every scenario's state hash is unchanged;
+- in the iron shortage scenario, NPC-days worked without tools fall with rental on, across paired
+  seeds;
+- an owner never rents out the tool they need for their own next replacement.
+
+## M65: scrap and recycling (6 h)
+
+**Goal:** a worn-out tool isn't just gone. Today replacing a tool destroys it. With M65 it
+becomes scrap that smiths can melt into iron, so a mine disaster has a second supply line and the
+price of scrap links to the price of ore. It's a small circular economy, and it teaches why
+recycling rises when raw materials get expensive.
+
+**Design:**
+- **Scrap is a good.** Replacing a tool or weapon turns it into `scrap_per_tool` units of a new
+  `scrap` good in the NPC's account (reason `scrapped`), instead of consuming it outright.
+  Conservation still counts every unit.
+- **Recycling is a recipe.** Smiths gain a recipe that turns `scrap_per_ore` scrap into one ore.
+  They pick between ore and scrap by the margin per input, as they already pick between recipes,
+  so recycling rises only when ore is expensive.
+- **Scrap trades.** NPCs sell scrap at the daily market like any good. A scrap collector contract
+  (R4) is posted when smiths are short of ore while scrap sits unsold at the farms, so players haul
+  it.
+- **Off by default** (`scrap_per_tool = 0`). With it off, no scrap appears.
+
+**Measured:** scrap made, sold and melted per day; the share of smiths' iron that comes from scrap;
+the scrap price against the ore price.
+
+**Evidence and chains:** a `recycled` evidence kind. A tools contract's chain during a mine
+disaster can show that recycling covered part of the gap ("scrap supplied 30% of smiths' iron
+since day 18"), so the contract is smaller and the evidence says why.
+
+**Simpler than reality, on purpose:** scrap doesn't wear and has one grade; there's no sorting or
+pollution yet (the backlog's pollution and Pigouvian taxes idea can add it).
+
+**Accept when:**
+- goods are conserved, and every scrap unit traces back to a scrapped tool or weapon;
+- with recycling off, every scenario's state hash is unchanged (see the pitfall on adding a good
+  in the build guide);
+- in the mine disaster scenario, tools output falls less with recycling on, across paired seeds;
+- smiths melt scrap only when it is cheaper per unit of iron than ore.
+
+## M66: market fair days (5 h)
+
+**Goal:** time with a rhythm. Today every day's market is the same. Historical towns had weekly
+markets and seasonal fairs where outside traders came with goods and money. M66 adds a fair every
+`fair_every` days: outside merchants buy and sell at their own prices, so NPCs and players plan
+around it, and prices rise and fall on a weekly pattern players can learn.
+
+**Design:**
+- **Outside traders join the market.** On a fair day, the `outside` account posts asks and bids at
+  `fair_price_factor` of its own reference prices, up to `fair_volume` units per good. Trades go
+  through the ordinary clearing, so they are ledger transfers like any other.
+- **NPCs plan for it.** Gatherers hold back up to `fair_hold_days` of output for the fair when the
+  last fair's price beat the daily price, and smiths stock ore before it. This is a small change
+  to the existing stock targets, not new behaviour.
+- **Fair fees fund the town.** Outside traders pay a stall fee (reason `fair fee`) to the town,
+  so a fair is a source of town income that a bandit shock (M56) on fair day hurts most.
+- **Players can plan.** The fair calendar is public and shown in the dashboard, unlike shock dates.
+- **Off by default** (`[fair] every = 0`). With it off, every state hash is unchanged.
+
+**Measured:** fair volume and prices against the days between fairs, the weekly price pattern, and
+town income from fees.
+
+**Evidence and chains:** a `fair` evidence kind. If a fair drained the town of food (outside buyers
+paid more than locals), the chain behind the next food contract says so, with the volume exported
+that day.
+
+**Accept when:**
+- coin and goods are conserved, and the outside account's balances move only on fair days and
+  through caravans and exports;
+- with fairs off, every scenario's state hash is unchanged;
+- prices show a weekly cycle with fairs on and none with fairs off, across seeds;
+- a food contract after a fair that exported food carries the `fair` evidence, which re-verifies.
+
+## M82: co-operatives against companies (10 h)
+
+**Goal:** players can found a worker co-operative (one member, one vote) next to an ordinary
+investor-owned company in the same trade, and watch how each comes through a crisis. Decades of
+research find the same pattern in Uruguay, Italy, France, Spain and the US: in a downturn,
+co-operatives tend to cut pay and keep jobs, while conventional firms keep pay and cut jobs
+([RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies)). M82 lets that difference
+*emerge* from the members' votes, so players can test it, break it and learn why it happens.
+
+**Two kinds of firm:**
+- **An investor-owned company.** Owners hold shares in proportion to the capital they put in
+  (claims from M60, tools, coin). It hires workers at a wage (M63). Profit goes to the owners.
+  When demand falls, the owner decides; workers can't see the books, so wages are fixed and the
+  firm adjusts by laying people off.
+- **A worker co-operative.** Members put in a share each and work in the firm. Every member has
+  one vote whatever their share. Pay comes from the day's surplus by a rule the members set, and a
+  share of every surplus goes into an **indivisible reserve** that can be spent on the firm but
+  never paid out to members. When demand falls, members vote: cut everyone's pay, spend from the
+  reserve, or lay people off.
+
+**Votes, not scripts:** each NPC member votes for the option that gives them the best expected
+income, counting the chance that they would be the one laid off. Nothing in the code says "co-ops
+keep jobs": if they do, it's because a majority preferred sharing the loss. A player can join and
+campaign for the other option.
+
+**The Mondragon layer (optional):**
+- **A group of co-ops** can pool a share of their surpluses into a common fund and move members
+  between co-ops when one is struggling, as the Basque Mondragon group does. When Mondragon's
+  appliance maker Fagor Electrodomésticos collapsed in 2013, the group found places for many of its
+  members in other co-ops; that's the kind of story the chain should be able to tell.
+- **A pay-ratio cap** that members can vote to set, limiting the gap between the highest and lowest
+  pay.
+
+**The hard parts, modelled honestly:**
+- **Raising capital is harder.** Co-ops can't sell voting shares, so they rely on members' shares,
+  the reserve and loans (M17). Research finds their survival advantage shrinks once you account
+  for the resources they start with.
+- **Drifting away from the model.** A successful co-op can hire non-member workers instead of
+  admitting new members, until few of its workers are owners. Researchers call this degeneration.
+  M82 measures the member share of the workforce every day, so players can watch it happen or
+  vote to prevent it.
+- **Long crises hurt too.** Pay cuts protect jobs for a while, but a long slump drains the reserve
+  and the members' patience. Recent Italian data finds co-ops' resilience fading in later years of
+  prolonged stress.
+
+**For the players:**
+- **Founding a firm is a choice with a trade-off,** not a better or worse option: a company is
+  quicker to finance and the owner decides alone; a co-op shares risk and power.
+- **Votes are short.** One question, a few options, each with its expected effect on the voter's
+  income, shown before they vote.
+- **Rivalry is the fun.** A co-op and a company in the same trade compete for the same customers,
+  workers and claims, and the economy check (M23) shows which did better in each scenario.
+
+**Measured:** for each firm type, employment and pay volatility through shocks, survival, reserves,
+the member share of the workforce, and the share of value added paid to labour. The experiment
+runs paired seeds through the mine disaster and drought scenarios with co-ops, companies and both.
+
+**Evidence and chains:** evidence kinds `firm_vote` ("The smiths' co-op voted 7 to 3 to cut pay by
+12% rather than lay off 2 members") and `layoff`. A shortage chain can now walk to a firm's
+decision and the vote or owner behind it.
+
+**Off by default** (`[firms] enabled = false`). With it off, every state hash is unchanged.
+
+**Accept when:**
+- coin and goods are conserved, and the indivisible reserve can never be paid out to members;
+- with firms off, every scenario's state hash is unchanged;
+- no code path sets a co-op's employment directly: layoffs and pay cuts happen only through votes
+  (co-ops) or the owner's rule (companies);
+- across paired seeds in the mine disaster, the experiment reports employment and pay volatility
+  by firm type, and the report states whether the research pattern appeared;
+- the member share of each co-op's workforce is recorded daily;
+- a `firm_vote` record re-verifies, and a forged tally is reported.
+
 ## M41: docs, both skins and v0.4.0 (3 h)
 
 - A theme switch in the dashboard; a multi-region map.
@@ -1041,9 +1353,15 @@ something players learn to check: what NPCs say happened, against what the log p
 | M47 | **Skill tracks: eleven real-world subjects taught through play** | M26, M45, and each track's mechanics | 14 h |
 | M50 | **Told history versus the log** (cultural memory and myths) | M49, M25 | 8 h |
 | M51 | **Records that decay** | M50, M25, M30; M33 for institution names | 6 h |
+| M69 | **Light check-ins by voice, and real breaks** | M37, M42, M59 | 8 h |
+| M70 | **The weekly newspaper** | M25, M43; M49 for slanted papers | 6 h |
+| M71 | **Play for everyone: accessibility and one-switch play** | none (dashboard checks can start now); M59 for the parity check | 10 h |
+| M75 | **Offline basics** (a few safe things to do with no connection) | M37, M69; M24's local world for practice runs | 8 h |
+| M79 | **Guilds on prescription** (gentle, time-limited guilds for lonely or isolated people, run with care partners) | M42, M44, M59, M69, M71 | 10 h |
+| M81 | **Career tasters** (try a role in the game, then see the real jobs behind it; evidence in [RESEARCH.md](RESEARCH.md#m81-career-tasters)) | M33, M45, M47, M62, M71; M75 for practice runs | 10 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 62 h, roughly 8 working days; plan for **10 days**.
+- **Total:** about 114 h, roughly 14 working days; plan for **18 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -1226,9 +1544,591 @@ M33).
 wiki pages fall back to told history; a recovery contract restores one; the M30 audit still
 verifies the full developer log throughout.
 
+## M69: light check-ins by voice, and real breaks (8 h)
+
+**Goal:** nobody falls behind for having a life, and nobody feels they can't step away. Some
+players have a few minutes on a commute; others go on holiday for two weeks with their family.
+M69 lets the first group handle the basics by voice in a couple of minutes, and lets the second
+group switch off completely without losing ground. It builds on M59, which already measures the
+pressure to play: M69 adds the tools, and M59's check proves they don't create new pressure.
+
+**Light check-ins:**
+- **A short, fixed list of actions:** hear the board summary, accept or hand back a contract,
+  change a standing order's limits (M37), and vote on a guild decision. Nothing else, so voice
+  never becomes a second, faster way to play.
+- **Speech becomes an action, never a decision.** A small on-device model maps what the player
+  said to one action from the list with its parameters, reads it back ("Accept the ore contract
+  for 12 units, reward 80 coin?") and waits for a yes. An unclear request does nothing. This
+  follows the project rule that models may phrase things but never decide outcomes.
+- **Voice stays on the device.** Audio and transcripts aren't stored or sent; only the confirmed
+  action reaches the server, like any other action (M42).
+- **The same reward for the same action.** A voice action pays exactly what the full client
+  pays. M59's check gains a **voice-only bot**, and its reward per hour must stay within the same
+  bound as everyone else's.
+
+**Real breaks:**
+- **Away mode.** A player sets the dates they'll be away. Their standing orders switch to a safe
+  profile (keep supplying what's already promised, take on nothing new), contracts that would
+  lapse are handed back without blame (M59's first lever), and nothing they own decays faster
+  for their absence. Up to `away_weeks` a year, so it can't be used to freeze a position
+  forever.
+- **Quiet hours by default.** No notifications at night or in hours the player marks as family
+  time. The default is on, and the game never asks the player to turn it off.
+- **A weekly digest instead of pings.** One summary a week of what happened while they weren't
+  looking (it can be the M70 newspaper), instead of a stream of alerts.
+- **A welcome back.** On return, a short summary of what changed and one suggested first step.
+
+**Accept when:** every voice action is one of the player actions and replays identically; an
+unconfirmed or unclear request changes nothing; no audio or transcript leaves the device in the
+default setup; M59's returner bot on away mode loses no more than a configured bound; the
+voice-only bot's reward per hour stays within M59's schedule-fairness bound; quiet hours are on in
+a new account.
+
+## M70: the weekly newspaper (6 h)
+
+**Goal:** a reason to look up from the board once a week. Every in-game week the world prints a
+newspaper from its own log: what happened, why, and what it cost. Players who only have time to
+read once a week still know their world, and every number in the paper can be checked.
+
+**Design:**
+- **Pages from the log.** Headlines are the week's biggest events by measured impact (shocks,
+  shortages, contracts that saved or failed a town). A market page shows prices and weekly
+  changes; a civic page covers guild votes, elections (M32), court rulings (M29) and the
+  treasury. A people page names the players and NPCs behind the week's notable contracts, with
+  their consent (M42).
+- **Every number checks out.** Each figure links to its measure key and carries a "checked" mark
+  from `verify()`. A language model may write the prose around the facts, from verified evidence
+  only, and the text is stored, so the same week always gives the same paper.
+- **Two papers, same facts.** Once M49 (beliefs and rumours) lands, a town can have two papers
+  owned by rival guilds. They choose which verified facts lead and how to frame them, but they
+  can't print a false number. Readers learn media literacy by comparing the two.
+- **Players write too.** Players can submit articles. Each numeric claim must link to a measure
+  key; claims that don't verify are marked, not deleted (the backlog's player journalism idea).
+- **Read it anywhere.** A web page, a printable PDF, an email if the player asks for it, and an
+  audio edition for listening (M71), in every language M43 supports.
+
+**Accept when:** every number in a generated paper re-verifies and a forged one is reported; the
+same week renders the same paper twice; two slanted papers of the same week report identical
+values for every number they share; the paper passes M71's accessibility check.
+
+## M71: play for everyone, accessibility and one-switch play (10 h)
+
+**Goal:** anyone can play, whatever their body or mind. Questless has a head start: the world
+moves one day at a time and every action is a choice, not a reflex. M71 turns that into a
+guarantee and builds the rest: one-switch play, screen readers, eye tracking, colour-blind safe
+charts and plain language. Players with disabilities are paid to co-design and test it; nothing
+ships on the developers' guesses alone.
+
+**Design:**
+- **No timed inputs, by construction.** No action may require a response faster than
+  `min_response_seconds`, and the world can be paused for a single player at any time. A test
+  fails any action with a deadline shorter than that.
+- **One-switch play.** The client offers a short ranked list of actions (the three most useful
+  right now, then "more"). A scanning interface steps through it, and one switch, a single key,
+  a sip-and-puff device or an eye-gaze dwell selects. Every action in the game is reachable this
+  way.
+- **Screen readers and keyboards.** The dashboard follows WCAG 2.2 AA and the Game Accessibility
+  Guidelines: full keyboard use, labels for every control, text alternatives for every chart and
+  map.
+- **Seeing and hearing.** Charts use patterns and labels as well as colour; text scales; motion
+  can be reduced; audio (M69, M70) has captions or a transcript.
+- **Thinking and reading.** A plain-language mode (the backlog's reading-level selector), a
+  "current goal" reminder, confirmation before anything costly, and undo where the rules allow.
+- **Measured parity.** M59's harness gains a **switch bot** that plays only through the scanning
+  interface. Its reward per hour must stay within the schedule-fairness bound.
+
+Studios that did this well show it pays: *The Last of Us Part II* shipped with more than 60
+accessibility options, and Microsoft's Xbox Adaptive Controller made one-switch and custom setups
+standard hardware.
+
+**Accept when:** an automated accessibility checker reports no serious violations on every
+dashboard page; the switch bot's reward per hour is within M59's bound; every chart has a text
+alternative and a non-colour encoding; no action has a deadline below `min_response_seconds`; at
+least one round of paid testing with disabled players is written up in the docs.
+
+## M75: offline basics (8 h)
+
+**Goal:** people on a train, a plane or a farm with a weak signal can still take part. Offline
+play is deliberately small: read the latest news of your world, plan, and queue a few simple
+choices that the server checks when you reconnect. Nothing done offline can earn an advantage
+over playing online, because nothing done offline takes effect until the server says so.
+
+**What works offline:**
+- **Read.** The client keeps a signed snapshot of what you last saw: your contracts, the board,
+  prices, your guild, the latest newspaper (M70). It shows its age plainly ("as of 2 days ago").
+- **Queue a few intentions.** Accept a contract if it's still open, hand one back, change a
+  standing order's limits within the bounds you already set (M37), vote on an open guild
+  question. That's the whole list, and it's capped at `offline_intents` a day.
+- **Practise.** Because the world is deterministic, the client can run a private copy of your
+  town forward from the snapshot to try ideas ("what if I supply ore for a week?"). Practice runs
+  are marked as such and nothing in them carries over except what you choose to queue.
+
+**Why it can't be exploited:**
+- **Intentions, not actions.** Queued items are requests. On reconnect the server applies them in
+  arrival order against the world *as it is now*, not as it was in the snapshot. A contract taken
+  by someone else meanwhile is simply refused, with a plain message.
+- **No trading offline.** Buying, selling, caravans and anything priced aren't on the list, so
+  old prices can't be used against new ones.
+- **The device clock isn't trusted.** Times come from the server on arrival. Changing the phone's
+  clock, or queuing on several devices, gains nothing; duplicates are dropped.
+- **No new information.** Practice runs use only the snapshot and seeded guesses for shocks; the
+  real schedule of shocks is never on the device (the same rule that hides the shock schedule from players today).
+- **Same reward, never more.** M59's harness gains an **offline traveller bot** that plays a day
+  online, then three days offline with queued intents. Its reward per hour must stay within the
+  schedule-fairness bound, and above the bot that does nothing while away.
+
+**Accept when:** every queued intent is either applied or refused with a reason on reconnect;
+nothing priced can be queued; a practice run never changes the server's state; a tampered
+snapshot or clock gains nothing in M52's attacker tests; the traveller bot stays within M59's
+bound.
+
+## M79: guilds on prescription (10 h)
+
+**Goal:** a kind place to belong, for people who need one. In the UK, the NHS employs social
+prescribing link workers who can refer lonely or isolated people to community activities: a
+walking group, a choir, a gardening club. M79 designs a guild that could be one of those
+activities: gentle, small, time-limited and run with care partners, for older people, people who
+are housebound, carers and anyone the link worker thinks it might help.
+
+**What a prescribed guild is:**
+- **Small and slow.** Six to ten people and a facilitator, meeting by voice (M69) or at a shared
+  table (M76) at the group's own pace. Contracts are cooperative only: no rankings, no competition,
+  no deadlines shorter than a week.
+- **Time-limited, with a next step.** A cohort runs for `cohort_weeks` (about 12), like many
+  community programmes. At the end, members can move into an ordinary guild together, keep meeting
+  as a social group, or be signposted to local activities by their link worker. The game never
+  tries to keep them.
+- **Built for every body.** Large text, voice, one-switch play and plain language from M71 are on
+  by default.
+
+**Who runs it:**
+- **Care partners** (charities, NHS link-worker services, councils, care homes) refer people and
+  own the relationship. The game is a venue, not a health service.
+- **Facilitators** are trained volunteers: people who want to volunteer, and psychology,
+  social-work or occupational-therapy students, for whom it can count as supervised placement or
+  volunteering hours where their university agrees.
+- **Safeguarding first.** Facilitators are vetted (in the UK, a DBS check) and supervised by a
+  qualified professional at the partner. Students never act as therapists. Every session has a
+  clear way to raise a concern and to signpost crisis services.
+
+**Privacy and health data:**
+- **No health records in the game.** The referral happens outside the game. The game only knows a
+  partner invited this player into a cohort; it never stores why (M42).
+- **Measured by the partner, with consent.** Whether it helps is measured by the care partner or a
+  university, with ethics approval, using validated loneliness and well-being questionnaires,
+  outside the game and only for people who agree.
+
+**Honest about the evidence:** reviews of social prescribing find promising but mixed results, and
+the studies are often small. M79 is built so it can be properly evaluated, not assumed to work.
+
+**Accept when:** a cohort can be created, joined by invitation only and closed at its end with a
+choice of next steps; no field in the world log or player record holds a reason for referral;
+facilitator tools include concern reporting and signposting; M71's accessibility check passes with
+the cohort defaults; an evaluation protocol template for partners is in the docs.
+
+## M81: career tasters (10 h)
+
+**Goal:** a player tries a role in the game, enjoys it as play, and comes away knowing what the real
+jobs behind it are like. The research ([RESEARCH.md](RESEARCH.md#m81-career-tasters)) is clear on
+one point: a career game alone teaches little. What works is play, then reflection, then contact
+with real people and real information, repeated over months. M81 builds that loop around ordinary
+play, so the game stays a game.
+
+**The loop:**
+1. **Do.** "Try a week as a smith" drops the player into a real situation: the live world, or a
+   practice copy of a live crisis for new players (M75). Real stakes, real shortages, nothing
+   scripted.
+2. **Notice.** At a natural pause (the end of a world day, never mid-action), the game may name
+   one skill the player just used: "You planned production through a shortage." At most one a
+   session, and it can be switched off.
+3. **Reflect.** After the session, three short questions: what did you enjoy, what was hard, what
+   surprised you? About a minute, always skippable, answers private unless the player saves them.
+4. **Connect.** A "Then and now" card, outside the fiction, links what the player did to real
+   jobs: the same and different tasks, pay ranges, and routes in (apprenticeships first, then
+   college and degrees). Every figure shows its source and year and links to an official careers
+   service.
+5. **Talk.** The player can export a one-page taster report (what they did, which skills, what
+   they thought) to bring to a careers adviser, a parent or a mentor.
+6. **Meet.** Partner schools can attach real encounters to a taster: a video Q&A with a working
+   welder or farmer, or a workplace visit.
+7. **Repeat.** Tasters exist for every role. The next suggestion rotates through roles the player
+   hasn't tried.
+
+**Keeping it fun:**
+- **Tasters are play, not lessons.** No quizzes, no pop-ups during action, no tutorial voice. The
+  learning happens around the session, not inside it.
+- **No grades and no verdicts.** Taster performance is never scored, ranked or compared, and the
+  game never says "you should be a smith". It shows; the player decides.
+- **No rewards for completing careers.** No points, badges or items for finishing tasters or
+  answering questions: rewards turn reflection into box-ticking, and the evidence says thinking,
+  not enjoyment or rewards, drives learning.
+- **Optional, always.** A player who never opens a card loses nothing in the game.
+
+**Fair to everyone:**
+- **Suggestions never use gender or background.** The suggestion function has no access to them,
+  and rotates every player through every role. Career games don't fix stereotypes by default, so
+  the design has to.
+- **Every role shows a range of people,** and non-degree routes sit alongside degrees, not below.
+
+**Any setting, honestly:**
+- **Cards attach to the engine's role, not the skin's name** (M33), so one card works for the
+  fantasy smith and the sci-fi fabricator.
+- **History is the bridge in fantasy:** most fantasy roles are ancestors of real ones, and
+  apprenticeships began in medieval guilds, which M62's training contracts already mirror.
+- **No honest match, no card.** A role with no real skill behind it (a dragon tamer) gets none;
+  each card lists the shared activities that justify it, and a reviewer checks them.
+
+**Content and data:** cards are short, hand-written files in the repo, one per role and country,
+reviewed once a year, with links to official careers services for the details. Contributors can
+write cards for their own country without touching code. ESCO skill tags can fill each card's
+skills section automatically later; a full statistics pipeline is only worth building if a partner
+needs it.
+
+**Measured, not assumed:** a partner school runs a before-and-after evaluation with a follow-up
+months later, with ethics approval and outside the game. The docs include the protocol.
+
+**Accept when:**
+- a taster runs in the live or practice world with no notices during action and at most one per
+  session;
+- reflection can be skipped and stores nothing unless the player saves it;
+- every card figure shows a source and year, and every card lists the activities that justify it;
+- no reward, score or ranking depends on tasters or reflection;
+- the suggestion function takes no gender or background input, and every player is offered every
+  role;
+- the fantasy and sci-fi skins show the same card for the same role;
+- the evaluation protocol is in the docs.
+
 ## M46: docs and v0.5.0 (2 h)
 
 PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT updated with what was built; changelog; tag v0.5.0.
+
+## v0.6 scope: a world connected to the real one
+
+Status: **in scope, planned after v0.5** · added 2026-11-01
+
+v0.6 connects the world to the one outside it. Real weather drives the seasons; the engine shows
+what it costs in energy and does its heavy work when the grid is clean; other games feed their
+shortages in as contracts; play contributes to real science, with players told when it does; the
+map can sit on a real table; a world that shuts down stays alive as open data; idle devices help
+research on clean power; and real towns can test a policy before they vote on it.
+Each milestone keeps the five guarantees: real-world data enters only through the world log, so
+every run still replays exactly with the network off.
+
+### Build order
+
+| # | Milestone | Depends on | Estimate |
+|---|---|---|---|
+| M67 | **Real weather, real places** | M30 (world log); M34 for many regions; better after M61 | 6 h |
+| M68 | **Clean-energy simulation** (energy shown to players; heavy work when the grid is green) | M23, M34, M40 | 10 h |
+| M72 | **Cross-game federation** (other games' shortages become contracts here) | M30, M34, M39; the backlog's Open Quest Protocol | 14 h |
+| M73 | **Science from play** (your town in a paper; real citizen-science tasks) | M42, M45; the research export (v0.1) | 10 h |
+| M76 | **A tabletop AR map** (the region on the kitchen table, for playing together) | M35, M55, M71 | 8 h |
+| M77 | **Worlds never die** (a world that shuts down becomes open data anyone can restart) | M30, M42; M33 for replaceable assets | 6 h |
+| M78 | **Idle devices do science on clean power** (opt-in volunteer computing) | M68, M73 | 6 h |
+| M80 | **Play the policy before it becomes law** (a policy lab for real towns) | M23, M33, M40, M67; the backlog's referendum preview | 16 h |
+| M74 | Docs and v0.6.0 tag | all | 2 h |
+
+- **Total:** about 78 h, roughly 10 working days; plan for **13 days**.
+- **Can start now:** M68's energy meter (M68.1) and M73's dataset citation (M73.1) need nothing
+  from earlier versions.
+
+## M67: real weather, real places (6 h)
+
+**Goal:** the world's weather is the real weather somewhere. Each region is twinned with a real
+place the designer picks. When that place has a dry month, the region has a drought; when a storm
+crosses it, the roads close. Players can look up the real place and watch the same weather arrive.
+It makes climate something players feel, and it's a natural lesson in data: how a rainfall
+anomaly becomes a harvest.
+
+**Design:**
+- **A twin per region.** Region config names a public weather station or grid point and the
+  source. The designer picks the place; the player's own location is never used (M42).
+- **Weather becomes modifiers.** Rainfall against the place's normal sets farm output; storms set
+  transport capacity; temperature sets spoilage (M61) and food need. The mapping is config, so a
+  sci-fi skin can map the same data to solar flares or dust storms.
+- **The log, not the network.** A separate ingest job fetches each day's weather and writes it into
+  the world log (M30) before the tick, with its source, licence and a hash. The simulation reads
+  only the log, so a replay never touches the network and gives the same hash.
+- **A fallback that is honest.** If the feed is missing, the day is drawn from the place's
+  historical normals with a seeded stream, and the log marks it as filled in.
+- **Respect for real disasters.** Real weather can kill people. Designers can list events to
+  soften or skip (`exclude_events`), and the default caps the in-game severity of any single day,
+  so a real tragedy is never turned into a spectacle.
+- **Open data only.** Sources must allow reuse (national met services' open data, open weather
+  APIs); each record carries its licence.
+
+**Evidence and chains:** a `weather` evidence kind ("Rainfall at the Seville twin station was 14% of
+normal over 30 days, source and licence attached"). A drought chain now starts at a real-world
+measurement.
+
+**Accept when:** replay with the network off gives the same hash; a missing day falls back to
+normals and is marked; the drought chain cites the station, source and licence and re-verifies;
+with the feature off, every scenario's state hash is unchanged.
+
+## M68: clean-energy simulation (10 h)
+
+**Goal:** the engine uses clean power when it can, and everyone can see what the world costs. A
+megaserver's simulation, experiments and model training draw real electricity. M68 measures it,
+moves the heavy work to hours when the grid runs on wind, sun and water, and slows optional work
+when it doesn't. Players see the energy their world uses, and the game rewards patience instead
+of rewarding playing at certain hours.
+
+**Measure:**
+- **An energy meter.** Each run records CPU time by system (tick, contracts, provenance, wiki,
+  experiments). An energy model turns it into kWh (hardware counters where the machine has them,
+  a stated per-core estimate otherwise) and multiplies by the grid's carbon intensity for the
+  server's region and hour, from a grid-data feed. The method and its error are documented next
+  to every number.
+- **What the world cost today.** The dashboard and the newspaper (M70) show energy and emissions
+  per world day, per region and per kind of work, and the share that ran on low-carbon power.
+
+**Schedule:**
+- **Three kinds of work.** *Live* work (the tick players are in) always runs. *Deferrable* work
+  (experiments, M23 sweeps, M40 surrogate training, wiki rebuilds, research exports, forecasts)
+  has a deadline and runs in the cleanest forecast window before it. *Optional* work (extra seeds,
+  precomputed views) runs only below an intensity threshold.
+- **Level of detail follows the grid.** When the grid is dirty, dormant regions (M34) use the
+  cheaper surrogate (M40); when it's clean, they run in full and catch up. The choice is logged,
+  so replays use the same one.
+- **Results never depend on timing.** The scheduler changes when work runs, never what it
+  computes: the same inputs give the same hash whenever they run.
+
+**Encourage, without pressure:**
+- **A green queue for players.** Heavy requests (a 30-day forecast, a consequence-mirror replay,
+  a big research export) cost less in-game coin if the player lets them wait for clean power. The
+  result arrives later; nobody has to be online at a particular hour, so M59's appointment check
+  still passes.
+- **The world's own energy.** In the fantasy skin, towns can build windmills and water wheels; in
+  sci-fi, solar arrays. They're ordinary infrastructure (M55) that lower the town's in-game costs,
+  a small, honest mirror of the real transition.
+- **Server targets in the open.** The studio publishes its clean-share target and the measured
+  share each month, like the economy check publishes balance.
+
+**Accept when:** every run reports energy and emissions with its method; replaying a recorded
+week of real grid data, the scheduler moves at least `clean_shift_target` of deferrable work into
+lower-carbon hours than running it at once; the same inputs give the same hash at any time of day;
+the green queue passes M59's check.
+
+## M72: cross-game federation (14 h)
+
+**Goal:** different games, one connected world. A shooter, a farming game, a strategy game and an
+economy game each stay their own game, made for the players who love that style, but they share
+needs and consequences. A famine in a farming game becomes a supply contract here; a convoy that
+shooter players defended reopens a road; a strategy game's treaty opens a border (M39). Every
+kind of player contributes to the same story.
+
+**What we learn from EVE Online:** CCP tried this with *Dust 514* (2013), a PlayStation 3 shooter
+whose battles decided planetary control in EVE. It closed in 2016: the link was thin, few EVE
+players felt it, and the shooter was on a different platform. CCP is trying again with *EVE
+Vanguard*, a PC shooter set in EVE's universe. (*EVE Echoes* is a separate mobile game with its
+own servers and economy, not a link to EVE Online.) The lesson for M72: the exchange must matter
+to both sides every day, not only in rare battles.
+
+**Design:**
+- **A shared protocol.** The backlog's Open Quest Protocol becomes the federation format: a
+  versioned JSON schema for contracts, deliveries, outcomes and evidence, with a validator and
+  reference clients.
+- **Bridges conserve value.** Each partner game has a bridge account with an escrowed balance and
+  a daily cap. Goods and coin cross only through it, at rates set by trade, so no partner can
+  create value from nothing. Conservation is checked on each side plus the bridge.
+- **Signed, logged messages.** Every message is signed by the sending world and written to both
+  worlds' logs (M30). Each side can replay alone from its log and get the same hash.
+- **Chains cross worlds.** A contract that came from a partner carries the partner's evidence,
+  verified with the partner's published measures, so "Why does this quest exist?" can answer
+  "because a famine in the valley, in another game, on its day 212".
+- **Quarantine.** A partner that sends forged or impossible messages has its bridge frozen
+  automatically, with the evidence; M52's attacker bots try to break the bridge before anything
+  goes live.
+- **No real money, no tokens.** Federation exchanges in-game value only (see
+  [BLOCKCHAIN.md](BLOCKCHAIN.md)).
+
+**Proof at small scale:** two Questless worlds in different skins, plus a tiny reference "convoy
+skirmish" game (a few hundred lines) whose results set a route-security factor here.
+
+**Accept when:** conservation holds in both worlds and the bridges; each world replays alone from
+its log with the same hash; a forged message is rejected and quarantines the bridge; a famine in
+world A posts a funded contract in world B whose chain crosses worlds and re-verifies; the bridge
+cap holds under M52's attackers.
+
+## M73: science from play (10 h)
+
+**Goal:** time in the world is fun, teaches something and contributes to something bigger, and
+players know it. Two parts: the world itself becomes open research data, with players told when a
+study uses their town; and real citizen-science tasks fit naturally into play.
+
+**What already works elsewhere:** EVE Online's *Project Discovery* has had players classify cell
+images for the Human Protein Atlas (2016), search telescope data for exoplanets (2017) and analyse
+COVID-19 immune-cell data (2020). *Foldit* players have solved protein structures, *Eyewire*
+players have mapped neurons, and *Borderlands Science* players have aligned gut-microbe DNA
+sequences for researchers at McGill. The common thread: the task is real, scored against known
+answers, and the game wraps it, not the other way round.
+
+**Your town in a paper:**
+- **Citable data.** Each public run export (v0.1's research export) gets a stable identifier and a
+  citation file, so a paper can cite exactly which region and days it used.
+- **A public study register.** Researchers register a study before running it (preregistration),
+  with its question and the data slice. Players can read every study that uses their world.
+- **Told when it matters.** When a paper is published, players whose actions appear in the cited
+  slice get a notice and a "contributed to research" entry in their skills passport (M45), and the
+  crisis's wiki page links to the paper. Players are pseudonymous in the data (M42), can opt out,
+  and small groups are only released in aggregate.
+
+**Citizen science in play:**
+- **Real tasks, in-world.** A partner project's tasks (classifying images, checking sequences,
+  spotting patterns) appear as an in-world activity: assaying ore samples or reading star charts in
+  fantasy, scanning samples in sci-fi. Tasks come through an adapter for citizen-science platforms
+  such as Zooniverse.
+- **Scored honestly.** Rewards come from hidden known-answer items and agreement between players,
+  so random clicking earns nothing and good work counts.
+- **Modest rewards, never required.** Reward per hour stays at or below ordinary play, there are no
+  streaks, and nothing in the world needs it (M59's check covers it). People do it because it
+  matters, and the game shows them why.
+- **Impact you can see.** A page per project shows what the community has done and what the
+  researchers found, with links to their papers.
+- **Data ethics.** Only partners with ethics approval and data released for public analysis.
+  Player data never trains anyone's models without explicit opt-in.
+
+**What it is not:** the economy simulation itself doesn't train health models; a game's moves
+aren't medical data. The world's log is useful research data for economics and AI (M24), and
+health research is served by embedding real tasks, as Project Discovery does.
+
+**Accept when:** a known-answer check rejects random answers; the adapter never sends a player's
+identity to a partner; M59's check passes with citizen science on; a test citation creates notices
+only for opted-in players in the cited slice; every export carries its identifier and citation
+file.
+
+## M76: a tabletop AR map (8 h)
+
+**Goal:** a world you gather around. With AR glasses or a phone, the region appears on the kitchen
+table: towns, roads, caravans moving, a mine glowing red when it collapses. A family or a group
+of friends sits around it together, points at a town and asks "why is this one hungry?", and
+hears the chain. It turns play back into something social and in the same room, like a board game
+night.
+
+**Design:**
+- **One map, many viewers.** Devices in the same room share one anchored map, so everyone sees the
+  same thing in the same place. One person can play while others watch, or each plays their own
+  character on the shared map.
+- **The economy made visible.** Trade flows are lines whose thickness is volume (M35's roads),
+  shortages are colours with patterns (M71), and dependencies light up when you touch a site
+  (M55). Tapping anything opens its "why" chain, read aloud if you like.
+- **The same game, not a new one.** The AR client uses the same public view and the same ranked
+  action list as every other client (M71), so it has no special powers and no exclusive rewards.
+- **Made for a session, then put away.** A table session has a natural end ("the week's market
+  closes"), suggested when the group starts. M59's stopping points apply.
+- **Privacy in the room.** Room scanning and camera images stay on the device; only the map's
+  position on the table is shared between the devices in the room, and nothing reaches the
+  server.
+- **Open format.** The map is published as standard 3D scene data from the public view, so the
+  community can build their own clients, and a plain 2D map always works for people without AR.
+
+**Accept when:** the AR client reads only the public view and sends only ordinary actions; two
+devices show the same map state for the same tick; no camera or room data leaves the device; every
+AR view has a 2D equivalent; the shared map passes M71's colour and contrast checks.
+
+## M77: worlds never die (6 h)
+
+**Goal:** a world players spent years in never just disappears. When an online game shuts down,
+everything its players built usually vanishes with it. The shutdown of Ubisoft's *The Crew* in
+2024 started the *Stop Killing Games* campaign, a European Citizens' Initiative that passed a
+million signatures in 2025. Questless can show the alternative in code: if a server shuts down,
+its world becomes an open archive that anyone can verify and restart.
+
+**Design:**
+- **An ark export.** One command bundles the world log (M30), the latest snapshots, the scenario
+  and config, the engine version and the hash chain into an archive. Any machine with the open
+  engine can boot it and replay it to the published final hash, so the restarted world is provably
+  the same world.
+- **Nothing personal in it.** The world log holds pseudonymous ids and no personal data by design
+  (M42), so it can be published. The export runs M42's scanner and refuses to finish if anything
+  personal is found.
+- **Players can come home.** Each player can download a signed key for their characters. On a
+  restarted world, the key proves the character is theirs without revealing who they are. It's
+  opt-in: characters nobody claims become ordinary NPCs, so towns don't empty.
+- **Assets that can be replaced.** Third-party art and music may not be releasable. Because skins
+  are separate from the engine (M33), an ark runs with the open default skin when an asset can't
+  be shared.
+- **A pledge in the repo.** A short `SUNSET.md` template that studios can adopt: what they'll
+  release, how much notice players get, and how long the final archive stays up.
+- **Drills, not promises.** CI builds an ark from a test world every week and boots it on a clean
+  machine. A restart that doesn't reproduce the hash fails the build, so the promise is checked
+  long before it's needed.
+
+**Accept when:** an ark from a long run boots on a clean machine and replays to the final hash; the
+export refuses to finish when a planted personal record is present; a player key claims its
+character on the restarted world and nothing else; the weekly drill runs in CI.
+
+## M78: idle devices do science on clean power (6 h)
+
+**Goal:** a player's machine can help real research while they sleep. Volunteer computing has a
+long record: Folding@home and BOINC projects have used donated computer time for protein folding,
+climate models and astronomy, and from 2007 to 2012 Sony's PlayStation 3 ran Folding@home from its
+home menu. M78 adds the same option to Questless clients, with one rule the old projects didn't
+have: it runs only when the local grid is clean (M68).
+
+**Design:**
+- **Opt-in, off by default.** A player chooses to join and which project to support, from a list of
+  vetted projects (M73's partners and established volunteer-computing projects).
+- **Only when it costs nothing else.** Work runs only when the device is idle, plugged in and cool,
+  and when the carbon intensity of the player's grid zone is below a threshold. The player gives
+  their grid zone (a country or region they pick), never their location. Phones and laptops on
+  battery are never used.
+- **Honest about the cost.** It uses the player's electricity. The client shows the estimated energy
+  and its cost at the player's own tariff before they opt in, and every month after. A daily cap is
+  set by the player.
+- **Sandboxed work.** Work units come through an established volunteer-computing client in its own
+  sandbox; the game never runs arbitrary code from a project.
+- **Recognition, not power.** Players see what their machine contributed and what the project
+  found. Rewards are cosmetic and in the skills passport (M45) only, never coin or items: anything
+  that buys power would turn electricity into an advantage and penalise players who can't afford
+  it, and M59's check would fail.
+
+**Accept when:** nothing runs without opt-in; no work runs on battery, while the device is in use,
+or above the carbon threshold in a recorded week of grid data; the cost estimate is shown before
+opting in; no in-game reward depends on computing contributed; M59's check passes with it on.
+
+## M80: play the policy before it becomes law (16 h)
+
+**Goal:** a town can see a policy's likely side effects before it votes. Before a real city changes
+a tax, bus fares or parking rules, the policy lab runs the change in a model of the town, built
+from the city's open data, and shows who is likely to gain and lose, with honest uncertainty. The
+result feeds a public debate or a citizens' assembly. It informs a decision; it never makes one.
+
+**Why this engine:** Questless already does the hard parts: exact replay, paired runs with and
+without a change (the M23 economy check), and a "why" chain for every effect. Agent-based models are
+already used in policy work, for example in housing-market research at central banks and in
+epidemic planning. What Questless adds is that every result can be traced and re-checked.
+
+**Design:**
+- **A town from open data.** A modern-town theme pack (M33) maps population, jobs, household
+  budgets, bus routes and fares from public statistics into a scenario. The mapping is a file anyone
+  can read and challenge.
+- **Paired runs, many seeds.** The lab runs the town with and without the policy across seeds and
+  reports the distribution of effects by group (by area, income band, age band): who pays more,
+  who travels less, what happens to local shops.
+- **Backtest before trusting.** The lab first reruns a past policy in the same town (an earlier fare
+  rise, say) and compares its estimate with what really happened. Results for a new policy are only
+  shown alongside that backtest score, and a town whose backtest fails gets a warning, not a chart.
+- **What the model leaves out.** Every report lists what isn't modelled, in plain words, next to the
+  numbers.
+- **Optional play.** Residents can play the policy in the town's twin. How players respond is
+  reported separately from the model's estimate, as a signal of how people feel, not as a
+  prediction.
+- **Open by default.** Scenario, data mapping, runs and reports are published, so anyone can
+  reproduce or contest them.
+
+**Ethics:** partners are public bodies and universities; the lab never targets individuals; results
+are never presented as forecasts without their uncertainty and backtest; and no political campaign
+can commission a private run.
+
+**Accept when:** a town scenario builds from a documented open-data file; a backtest of a past
+policy reports its error against the real outcome; reports show effects by group with uncertainty
+bands and the "left out" list; every run reproduces from the published files; a report cannot be
+generated without a backtest result attached.
+
+## M74: docs and v0.6.0 (2 h)
+
+BLUEPRINT, RESEARCH and PRIVACY_AND_IDENTITY updated with what was built; changelog; tag v0.6.0.
 
 ## Idea backlog (not scheduled)
 

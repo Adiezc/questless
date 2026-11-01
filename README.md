@@ -17,7 +17,7 @@ Questless has two halves:
 | | What it is | Status |
 |---|---|---|
 | **The engine** | A small, tested Python engine (one settlement, 100 NPCs, 4 goods) with a dashboard, API and CLI. Coin and goods are conserved every simulated day, every quest is funded and explains itself, and every run replays exactly. | **Working today** (v0.1.0, 153 tests) |
-| **The blueprint** | A public [roadmap](docs/ROADMAP.md) and [build guide](docs/BUILD_GUIDE.md) for the systems a 2030s megaserver MMO would need: futures and central banks, courts, elections, diplomacy, ecology, fair automation instead of bots, privacy by design, AI steward NPCs, and real-world skills taught through play. | **Planned and open for contributors** (v0.2 to v0.5, about 45 milestones) |
+| **The blueprint** | A public [roadmap](docs/ROADMAP.md) and [build guide](docs/BUILD_GUIDE.md) for the systems a 2030s megaserver MMO would need: futures and central banks, courts, elections, diplomacy, ecology, fair automation instead of bots, privacy by design, AI steward NPCs, and real-world skills taught through play. | **Planned and open for contributors** (v0.2 to v0.6, about 60 milestones) |
 
 It is **not a game**: there's no 3D client, no combat and no multiplayer server. It's the
 groundwork: working proofs of the hard systems at small scale, and a detailed plan for the rest.
@@ -214,7 +214,7 @@ Python API.
 **What it is not:** a game client, multiplayer, an LLM agent system, or production-ready engine
 integration.
 
-**What's next:** the [roadmap](docs/ROADMAP.md) runs from v0.2 to v0.5:
+**What's next:** the [roadmap](docs/ROADMAP.md) runs from v0.2 to v0.6:
 - **v0.2:** relief and loan quests, futures, smuggling, a central bank, run reports, a clearer
   dashboard.
 - **v0.3:** economy checks on every pull request, an AI-agent training environment, a self-writing
@@ -223,9 +223,15 @@ integration.
   campaign-finance register.
 - **v0.4, megaserver foundations:** fantasy and sci-fi themes, regions with simulation level of
   detail, a map and ecology shaped by the economy, standing orders instead of bots,
-  player-posted quests, treaties and embargoes.
+  player-posted quests, treaties and embargoes, spoilage, know-how, hiring, tool rental,
+  recycling, fair days, and worker co-operatives against companies.
 - **v0.5, people, privacy and learning:** privacy as code, a language bridge with English as the
-  common language, steward NPCs, a skills passport and eleven skill tracks.
+  common language, steward NPCs, a skills passport and eleven skill tracks, voice check-ins and
+  real breaks, a weekly newspaper, accessibility with one-switch play, offline basics,
+  guilds on prescription for lonely or isolated people, and career tasters.
+- **v0.6, a world connected to the real one:** real weather, clean-energy simulation,
+  cross-game federation, science from play, a tabletop AR map, worlds that never die,
+  volunteer computing on clean power, and a policy lab for real towns.
 
 Background reading: [blueprint](docs/BLUEPRINT.md) ·
 [crypto and blockchain assessment](docs/BLOCKCHAIN.md) (why there are no tokens or NFTs) ·
