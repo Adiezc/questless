@@ -39,7 +39,8 @@ guarantees, propose it in the issue before building it.
     [M39](#m39-treaties-sanctions-and-embargoes) · [M40](#m40-surrogate-fast-forward-experiment) ·
     [M41](#m41-docs-both-skins-and-v040) · [M53](#m53-the-invisible-border) ·
     [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps) ·
-    [M58](#m58-fairness-for-late-joiners)
+    [M58](#m58-fairness-for-late-joiners) · [M61](#m61-spoilage-and-storage) ·
+    [M62](#m62-know-how-that-rusts-and-is-taught) · [M63](#m63-players-hire-npcs)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
     [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
@@ -1022,6 +1023,95 @@ newcomer rewards to a main through alts is caught (M52, M31).
 before M31's one-person-one-character safeguards. Don't tune the levers until veterans' rewards
 collapse: the second acceptance bound exists to stop that. Keep each lever's effect separately
 measurable; turning on five at once makes the report unreadable.
+
+### M61: spoilage and storage
+
+**Where:** `config.py` (`spoil_rate` in `[goods.*]`, a `[storage]` section), new
+`src/questless/sim/spoilage.py`, `sim/world.py` (a tick slot and `TickStats.spoiled`),
+`sim/behaviour.py` (food stock targets), `contracts/engine.py` (the granary contract),
+`contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** once a day, after the market clears and before `TickStats` is
+appended, every account except escrow and in-transit accounts loses `spoil_rate` of each good it
+holds, minus the share a granary protects. Fractions carry per account and good, as production
+does, so integer stocks stay unbiased. Spoiled units leave through `ledger.consume(...,
+reason="spoiled")`. A granary is a site property with a capacity, built when a town-funded contract
+for tools is delivered.
+
+| Task | Size | How |
+|---|---|---|
+| M61.1 Config **(good first issue)** | S | `spoil_rate` per good (default 0) and `[storage]` (`granary_factor`, `granary_capacity`), following R1. |
+| M61.2 Daily spoilage | M | `spoilage.apply(world)` in sorted account order. Skip escrow and `IN_TRANSIT`. Keep carry in a dict on the world and in `state_dict()`. Record `TickStats.spoiled`. |
+| M61.3 Granaries | M | A `granaries: dict[Site, int]` on the world (capacity built). Protected units spoil at `rate × granary_factor`; the rest at `rate`. |
+| M61.4 Granary contract | M | A contract kind (R4) the town posts when food spoiled at a site over 14 days exceeds a threshold; fulfilment adds capacity. |
+| M61.5 NPC stock targets | S | Cap food `stock_days` at the half-life `ln 2 / spoil_rate` while spoilage is on. |
+| M61.6 Evidence and walk | M | Evidence kind `spoilage` with a measure key (R3). In `causes.py`, for a food need, add it only when the same-seed run without spoilage covers the need. |
+
+**Tests:** with every rate at 0 the baseline and every scenario hash are unchanged; conservation
+with spoilage on; escrowed goods never spoil; a granary lowers losses by the configured factor up to
+its capacity; the evidence re-verifies and a forged value is reported.
+
+**Pitfalls:** spoilage slots before the needs tracker, so a farmer who sold everything today can't
+be charged for spoilage they didn't hold. Keep `spoil_rate` small for food (about 1-2% a day) or
+the drought scenario turns into a famine and the results stop being comparable.
+
+### M62: know-how that rusts and is taught
+
+**Where:** `sim/entities.py` (`NPC.experience`), `sim/behaviour.py` (`productivity`,
+`_update_state`), `config.py` (`[knowhow]`), `contracts/engine.py` (the training contract),
+`metrics.py` (recovery time), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** `productivity()` multiplies by `floor + (1 − floor) × experience`.
+At the end of each NPC's day, a working NPC's experience moves `learn_rate` of the way to 1 and an
+idle one's moves `rust_rate` of the way to 0. Guilds watch their members' average and post a
+training contract when it falls below `teach_below`; delivering it raises the apprentice's
+experience and pays the master for the output they gave up.
+
+| Task | Size | How |
+|---|---|---|
+| M62.1 Experience value **(good first issue)** | S | Add `experience: float = 1.0` to `NPC` and `state_dict()`; `[knowhow]` config (R1). |
+| M62.2 Learn and rust | S | Update in `_update_state` from `rec.idle`; apply in `productivity()`. |
+| M62.3 Recovery metric | M | In `metrics.py`, days from a shock's end until the profession's output is back to 95% of the pre-shock baseline. Report it in the run report and the export. |
+| M62.4 Training contract | M | A contract kind (R4) funded by the guild; the master and apprentice are picked in sorted order; the master's output falls by `teach_cost` for `teach_days`; the player delivers practice inputs and food. |
+| M62.5 Evidence and walk | M | Evidence kind `experience` (R3). In `causes.py`, when output stays low after its shock ends, walk to the profession's experience and the idle days behind it. |
+
+**Tests:** with know-how off the hashes are unchanged; experience stays in [0, 1]; recovery is
+slower with know-how on across seeds; the training contract conserves coin and goods; the chain
+re-verifies.
+
+**Pitfalls:** rust must be slower than learning, or a single short shock leaves a permanent
+scar and every scenario drifts into a slump. Guards don't idle in the same way, so leave them out
+of the first version.
+
+### M63: players hire NPCs
+
+**Where:** `player.py` (`hire` and `dismiss` actions), new `src/questless/sim/hiring.py`,
+`sim/behaviour.py` (where output lands), `sim/guilds.py` (minimum wage, crisis cap),
+`config.py` (`[hiring]`), M17's obligation registry, `contracts/provenance.py`,
+`contracts/causes.py`.
+
+**Design in one paragraph:** a `hire` action escrows `wage × days` from the player into a job
+account and records an obligation. Each day, before the NPC's day runs, the job pays one day's wage
+(reason `wage`) and points the NPC's output at the player's account. The NPC accepts only if the
+wage beats their own 7-day earnings plus `switch_premium`, and their guild allows it. The job ends
+at term, when inputs run out for `quit_after` days, or on `dismiss`; leftover escrow returns to the
+player.
+
+| Task | Size | How |
+|---|---|---|
+| M63.1 Config and accounts **(good first issue after M17)** | S | `[hiring]` (R1) and a `job_account(job_id)` helper (R2) opened before the ledger is sealed. |
+| M63.2 Hire action | M | `player.hire(npc_id, wage, days)` (R5): check the NPC's earnings, the guild's `min_wage` and `max_hired_share`, then escrow. Add an invariant: job escrow equals unpaid wages. |
+| M63.3 Output to employer | M | In `produce`, when the NPC has a job, land output on the player's account; craft inputs come from the player's account. |
+| M63.4 Daily wage and ending | S | Pay from escrow each day; end at term or after `quit_after` days without inputs; refund the rest. |
+| M63.5 Evidence and walk | M | Evidence kind `hired` (R3). In `causes.py`, when a profession's output falls while its members are hired, name the employer and the wage. |
+| M63.6 Dashboard | S | A "Hire" panel listing idle NPCs, their expected earnings and the minimum wage that would win them. |
+
+**Tests:** with hiring off the hashes are unchanged; conservation and the escrow invariant hold
+under a chaos player that hires and dismisses at random; the crisis cap blocks a hire; a shortage
+caused by hiring names the employer and re-verifies.
+
+**Pitfalls:** a rich player can hire every smith and corner tools. The crisis cap is the first
+defence; M52's attacker bots should try it before the feature is switched on in any overlay.
 
 ### M42: privacy as code
 

@@ -729,6 +729,9 @@ and long supply chains emerge from the same ledger.
 | M55 | **Infrastructure dependency maps** | M34 | 8 h |
 | M58 | **Fairness for late joiners** (evidence in [RESEARCH.md](RESEARCH.md#m58-fairness-for-late-joiners)) | M17, M31; M34 for migration between regions | 8 h |
 | M60 | **Land and mine claims** (returns on capital; see [VALIDATION.md](VALIDATION.md#d2-coin-concentrates-to-real-world-levels-but-not-through-capital)) | none; M58 builds on it | 7 h |
+| M61 | **Spoilage and storage** (time costs goods) | none | 6 h |
+| M62 | **Know-how that rusts and is taught** (idle workers lose skill; apprentice contracts) | none; better after M61 | 7 h |
+| M63 | **Players hire NPCs** (a labour market with escrowed wages) | M17 (obligation registry); M31 for more than one employer | 8 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
 - **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
@@ -1014,6 +1017,133 @@ config-free follow-up once the basic loop is measured.
   into claims;
 - with claims off, every scenario's state hash is unchanged;
 - the export's per-NPC rent columns add up to the day's totals.
+
+## M61: spoilage and storage (6 h)
+
+**Goal:** holding goods has a cost. Today a sack of food kept for a year is as good as new, so
+stockpiling is free and a drought can be waited out on old harvests. In real economies, storage is
+where much of the work of fighting scarcity happens: granaries, cold chains, warehouses. M61 makes
+food spoil and lets the town build storage that slows it down, so a drought chain can reach back
+to "the granary was never built".
+
+**Design:**
+- **Spoilage is a daily rate per good.** Each good has a `spoil_rate` in `[goods.*]` (food spoils,
+  ore and tools barely do). Every day, each account loses that share of its stock, with fractional
+  units carried per account like production carry, so integer goods stay unbiased. Spoiled units
+  leave through `ledger.consume` with reason `spoiled`, which is the `spoiled` term the goods
+  balance in [PLAN.md](PLAN.md) already reserves. Conservation holds.
+- **Escrow and transit are exempt.** Goods held for contracts or in caravans don't spoil, so a
+  player is never punished for an obligation the engine itself holds.
+- **Storage is a building.** A granary at the market or the farms multiplies the spoil rate there
+  by `granary_factor` (for example 0.25) for up to `granary_capacity` units. Units above capacity
+  spoil at the full rate. The town or a guild funds construction through an ordinary contract
+  (players deliver the tools to build it), so storage competes with relief for the same treasury.
+- **NPCs respond.** With spoilage on, `stock_days` targets for food are capped at the number of
+  days before a unit loses half its value, so NPCs stop hoarding what will rot.
+- **Off by default** (`spoil_rate = 0` for every good). With it off, every state hash is unchanged.
+
+**Measured:** `TickStats.spoiled` per good, granary fill, and the share of each harvest that is
+eaten, sold or lost. The export adds them per day.
+
+**Evidence and chains:** a `spoilage` evidence kind with a measure key (units lost per day at a
+site). The causal walk for a food contract checks whether stored food would have covered the
+shortage without spoilage, and if so adds "food stocks spoiled faster than they were replaced",
+linked to the missing or full granary.
+
+**Simpler than reality, on purpose:** goods are fungible, so spoilage is a smooth rate, not
+per-batch ages (item biographies would add those later). There's no salting, smoking or cooling
+yet; each could be a recipe that turns food into a slow-spoiling good.
+
+**Accept when:**
+- goods are conserved with spoilage on, and every spoiled unit has a `spoiled` journal entry;
+- with every `spoil_rate` at 0, each scenario's state hash is unchanged;
+- in the drought scenario, a world with a granary has fewer hungry NPC-days than one without, across
+  paired seeds;
+- a food contract's chain includes spoilage only when the counterfactual (same seed, no spoilage)
+  would have covered the need, and the evidence re-verifies.
+
+## M62: know-how that rusts and is taught (7 h)
+
+**Goal:** a crisis leaves scars. Today a smith idle for a month returns at full skill the day the
+ore comes back, so every shock is fully reversible. Economists call the real effect *hysteresis*:
+long unemployment erodes skills, so output stays low after the cause is gone. M62 makes skill grow
+with practice and decay with idleness, and lets guilds pay masters to train apprentices, which
+gives players a quest that rebuilds a town's capacity, not only its stock.
+
+**Design:**
+- **Skill has two parts.** `traits.skill` stays as the NPC's talent. A new `experience` value
+  (0 to 1) multiplies it: `effective = skill × (floor + (1 − floor) × experience)`. Working days
+  raise experience by `learn_rate` toward 1; idle days lower it by `rust_rate` toward 0. At genesis
+  every NPC starts at `start_experience`.
+- **Teaching is a contract.** When a guild's average experience for a profession falls below
+  `teach_below`, the guild posts a training contract: the most experienced member teaches the
+  least experienced for `teach_days`. The master's output falls by `teach_cost` while teaching, and
+  the guild escrows the reward that makes up for it. A player fulfils the contract by delivering
+  the practice inputs (ore for a smith) and the pair's food for the course. On completion the apprentice's experience rises by `teach_gain`.
+- **Visible hysteresis.** A shock that ends no longer ends its effects. The engine records how long
+  output takes to return to 95% of baseline after a shock ends, per profession.
+- **Off by default** (`[knowhow] enabled = false`). With it off, every NPC's experience is 1 and
+  every state hash is unchanged.
+
+**Measured:** mean experience per profession per day, recovery time after each shock, and training
+contracts posted and completed.
+
+**Evidence and chains:** an `experience` evidence kind ("Smiths' average experience fell from 0.92
+to 0.61 after 24 idle days"), measured from `TickStats`. The causal walk for a tools shortage that
+outlives its ore shock walks back: tools output low ← smiths' experience low ← idle days ← the
+ore shortage, so the chain explains why recovery is slow.
+
+**Builds towards:** labour mobility in the backlog (NPCs who switch profession start with low
+experience) and M58's apprentice contracts for players.
+
+**Accept when:**
+- with know-how off, every scenario's state hash is unchanged;
+- in the mine disaster scenario, output recovers more slowly after the shock with know-how on than
+  off, across paired seeds, and training contracts shorten that recovery;
+- the training contract is fully escrowed and conserves coin and goods;
+- the `experience` evidence re-verifies, and a forged value is reported.
+
+## M63: players hire NPCs (8 h)
+
+**Goal:** a labour market. Today players buy goods, but they can't buy work. Idle NPCs (no ore,
+no demand) earn nothing while players lack hands. M63 lets a player hire an NPC for a wage, so
+players compete with guilds and the town for workers, and wages become a price the economy sets.
+It also gives players the first way to *start* production instead of only moving goods.
+
+**Design:**
+- **Hiring is a contract the player funds.** A player offers a daily wage for N days to an NPC.
+  The whole wage bill is escrowed up front (an obligation in M17's registry), so a player can't
+  hire what they can't pay. The NPC accepts if the wage beats their expected earnings from their
+  own work over the last 7 days, plus a `switch_premium`. Ties break by seeded order.
+- **What the player gets.** A hired NPC works their own trade with inputs the player supplies, and
+  the output goes to the player's account instead of the NPC's. The NPC still eats, wears tools
+  and pays the levy on their wage like any income.
+- **Guild rules apply.** Guilds can set a minimum wage for members (`[guilds.*] min_wage`). A
+  guild below its emergency threshold can't lose more than `max_hired_share` of its members, so a
+  rich player can't empty a guild during a crisis.
+- **Ending the job.** The contract ends at term, or early if the player stops supplying inputs for
+  `quit_after` days. Unpaid escrow returns to the player; the wage already earned stays with the
+  NPC. Every payment is a ledger transfer with reason `wage`.
+- **Off by default** (`[hiring] enabled = false`). With it off, every state hash is unchanged.
+
+**Measured:** NPCs hired per profession, the mean wage against each trade's expected earnings,
+unemployment (idle NPCs who weren't hired), and the share of output produced for players.
+
+**Evidence and chains:** a `hired` evidence kind. When a shortage follows a wave of hiring (smiths
+hired away to make tools for a player, so farmers lack tools), the causal walk names the employer
+and the wage, so the chain shows who outbid the town.
+
+**Simpler than reality, on purpose:** one NPC, one employer; no strikes or negotiation (strikes and
+unions are in the backlog); no firing before term except for missing inputs.
+
+**Accept when:**
+- coin and goods are conserved, and escrow equals the unpaid wages of live jobs every day;
+- with hiring off, every scenario's state hash is unchanged;
+- a player can't hire beyond their escrowable coin, or more than `max_hired_share` of a guild
+  in crisis;
+- an experiment over paired seeds reports the effect of hiring on idle NPC-days and on the price of
+  the hired trade's output;
+- the chain behind a shortage caused by hiring names the employer, and its evidence re-verifies.
 
 ## M41: docs, both skins and v0.4.0 (3 h)
 
