@@ -41,7 +41,8 @@ guarantees, propose it in the issue before building it.
     [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps) ·
     [M58](#m58-fairness-for-late-joiners) · [M61](#m61-spoilage-and-storage) ·
     [M62](#m62-know-how-that-rusts-and-is-taught) · [M63](#m63-players-hire-npcs) ·
-    [M64](#m64-tool-rental) · [M65](#m65-scrap-and-recycling) · [M66](#m66-market-fair-days)
+    [M64](#m64-tool-rental) · [M65](#m65-scrap-and-recycling) · [M66](#m66-market-fair-days) ·
+    [M82](#m82-co-operatives-against-companies)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
     [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
@@ -1199,6 +1200,39 @@ days; a weekly price cycle appears with fairs on.
 
 **Pitfalls:** if outside prices are too generous, the fair empties the town of food every week. Keep
 `fair_volume` small against daily consumption, and check the drought scenario with fairs on.
+
+### M82: co-operatives against companies
+
+**Where:** new `src/questless/sim/firms.py` (firm accounts, membership, shares), new
+`src/questless/sim/votes.py` (member votes), `config.py` (`[firms]`), `sim/world.py` (a tick slot
+after the market clears), M60's claims and M63's hiring, `player.py` (`found_firm`, `join`, `vote`),
+`contracts/provenance.py`, `experiments/firms.py`. Evidence:
+[RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies).
+
+**Design in one paragraph:** a firm is an account that owns capital (claims, tools) and employs
+workers. After the market clears, it sells the day's output and computes the surplus. A company
+pays fixed wages and sends the rest to owners by shares; when its margin falls below
+`layoff_margin` for `layoff_days`, it lays off the most recent hires. A co-op moves
+`reserve_share` of the surplus into an indivisible reserve and pays members by its pay rule; when
+the margin falls, it holds a vote among pay cut, reserve draw and layoffs, and each NPC member
+votes for the option with the best expected income for them.
+
+| Task | Size | How |
+|---|---|---|
+| M82.1 Firm accounts **(good first issue after M60)** | S | `firm_account(id)` (R2), shares or membership records in `state_dict()`, `[firms]` config (R1). |
+| M82.2 Companies | M | Fixed wages via M63, owner payout by share, the layoff rule. |
+| M82.3 Co-ops and reserve | M | Surplus split, indivisible reserve (an invariant: never paid to members), pay rule. |
+| M82.4 Votes | M | Options with expected income per member; seeded tie-breaks; `firm_vote` evidence (R3). |
+| M82.5 Degeneration and group | M | Non-member hires and the daily member share; optional co-op group fund and member transfers. |
+| M82.6 Experiment | M | Paired seeds, firm types as arms, volatility and survival in the report. |
+
+**Tests:** conservation; the reserve invariant; hashes unchanged when off; votes replay
+identically; a planted rule that sets co-op employment directly fails the test that layoffs only
+come from votes.
+
+**Pitfalls:** it is tempting to tune the vote until co-ops "win". Don't: report what emerges,
+including when co-ops fail. And keep votes rare (only when the margin falls), or the game turns
+into meetings.
 
 ### M42: privacy as code
 

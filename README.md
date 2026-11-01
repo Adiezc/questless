@@ -224,7 +224,7 @@ integration.
 - **v0.4, megaserver foundations:** fantasy and sci-fi themes, regions with simulation level of
   detail, a map and ecology shaped by the economy, standing orders instead of bots,
   player-posted quests, treaties and embargoes, spoilage, know-how, hiring, tool rental,
-  recycling and fair days.
+  recycling, fair days, and worker co-operatives against companies.
 - **v0.5, people, privacy and learning:** privacy as code, a language bridge with English as the
   common language, steward NPCs, a skills passport and eleven skill tracks, voice check-ins and
   real breaks, a weekly newspaper, accessibility with one-switch play, offline basics,

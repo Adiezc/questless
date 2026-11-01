@@ -735,9 +735,10 @@ and long supply chains emerge from the same ledger.
 | M64 | **Tool rental** (capital without ownership) | none; better after M60 | 6 h |
 | M65 | **Scrap and recycling** (worn tools come back as iron) | none | 6 h |
 | M66 | **Market fair days** (a weekly fair with outside traders) | none; better after M61 | 5 h |
+| M82 | **Co-operatives against companies** (worker-owned firms next to investor-owned ones; evidence in [RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies)) | M60, M63; M17 for loans | 10 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
-- **Total:** about 150 h, roughly 19 working days; plan for **24 days**.
+- **Total:** about 160 h, roughly 20 working days; plan for **26 days**.
 - **Critical path:** M33 → M34 → M35/M36/M39/M53-M55. M37 and M38 can run in parallel once M31
   lands.
 - **Cut order if behind:** the surrogate experiment (M40), sanctions (keep treaties and
@@ -1252,6 +1253,79 @@ that day.
 - with fairs off, every scenario's state hash is unchanged;
 - prices show a weekly cycle with fairs on and none with fairs off, across seeds;
 - a food contract after a fair that exported food carries the `fair` evidence, which re-verifies.
+
+## M82: co-operatives against companies (10 h)
+
+**Goal:** players can found a worker co-operative (one member, one vote) next to an ordinary
+investor-owned company in the same trade, and watch how each comes through a crisis. Decades of
+research find the same pattern in Uruguay, Italy, France, Spain and the US: in a downturn,
+co-operatives tend to cut pay and keep jobs, while conventional firms keep pay and cut jobs
+([RESEARCH.md](RESEARCH.md#m82-co-operatives-against-companies)). M82 lets that difference
+*emerge* from the members' votes, so players can test it, break it and learn why it happens.
+
+**Two kinds of firm:**
+- **An investor-owned company.** Owners hold shares in proportion to the capital they put in
+  (claims from M60, tools, coin). It hires workers at a wage (M63). Profit goes to the owners.
+  When demand falls, the owner decides; workers can't see the books, so wages are fixed and the
+  firm adjusts by laying people off.
+- **A worker co-operative.** Members put in a share each and work in the firm. Every member has
+  one vote whatever their share. Pay comes from the day's surplus by a rule the members set, and a
+  share of every surplus goes into an **indivisible reserve** that can be spent on the firm but
+  never paid out to members. When demand falls, members vote: cut everyone's pay, spend from the
+  reserve, or lay people off.
+
+**Votes, not scripts:** each NPC member votes for the option that gives them the best expected
+income, counting the chance that they would be the one laid off. Nothing in the code says "co-ops
+keep jobs": if they do, it's because a majority preferred sharing the loss. A player can join and
+campaign for the other option.
+
+**The Mondragon layer (optional):**
+- **A group of co-ops** can pool a share of their surpluses into a common fund and move members
+  between co-ops when one is struggling, as the Basque Mondragon group does. When Mondragon's
+  appliance maker Fagor Electrodomésticos collapsed in 2013, the group found places for many of its
+  members in other co-ops; that's the kind of story the chain should be able to tell.
+- **A pay-ratio cap** that members can vote to set, limiting the gap between the highest and lowest
+  pay.
+
+**The hard parts, modelled honestly:**
+- **Raising capital is harder.** Co-ops can't sell voting shares, so they rely on members' shares,
+  the reserve and loans (M17). Research finds their survival advantage shrinks once you account
+  for the resources they start with.
+- **Drifting away from the model.** A successful co-op can hire non-member workers instead of
+  admitting new members, until few of its workers are owners. Researchers call this degeneration.
+  M82 measures the member share of the workforce every day, so players can watch it happen or
+  vote to prevent it.
+- **Long crises hurt too.** Pay cuts protect jobs for a while, but a long slump drains the reserve
+  and the members' patience. Recent Italian data finds co-ops' resilience fading in later years of
+  prolonged stress.
+
+**For the players:**
+- **Founding a firm is a choice with a trade-off,** not a better or worse option: a company is
+  quicker to finance and the owner decides alone; a co-op shares risk and power.
+- **Votes are short.** One question, a few options, each with its expected effect on the voter's
+  income, shown before they vote.
+- **Rivalry is the fun.** A co-op and a company in the same trade compete for the same customers,
+  workers and claims, and the economy check (M23) shows which did better in each scenario.
+
+**Measured:** for each firm type, employment and pay volatility through shocks, survival, reserves,
+the member share of the workforce, and the share of value added paid to labour. The experiment
+runs paired seeds through the mine disaster and drought scenarios with co-ops, companies and both.
+
+**Evidence and chains:** evidence kinds `firm_vote` ("The smiths' co-op voted 7 to 3 to cut pay by
+12% rather than lay off 2 members") and `layoff`. A shortage chain can now walk to a firm's
+decision and the vote or owner behind it.
+
+**Off by default** (`[firms] enabled = false`). With it off, every state hash is unchanged.
+
+**Accept when:**
+- coin and goods are conserved, and the indivisible reserve can never be paid out to members;
+- with firms off, every scenario's state hash is unchanged;
+- no code path sets a co-op's employment directly: layoffs and pay cuts happen only through votes
+  (co-ops) or the owner's rule (companies);
+- across paired seeds in the mine disaster, the experiment reports employment and pay volatility
+  by firm type, and the report states whether the research pattern appeared;
+- the member share of each co-op's workforce is recorded daily;
+- a `firm_vote` record re-verifies, and a forged tally is reported.
 
 ## M41: docs, both skins and v0.4.0 (3 h)
 

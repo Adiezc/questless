@@ -20,6 +20,7 @@ with DOI links. Link to it from the milestone in [ROADMAP.md](ROADMAP.md).
 - [M58: fairness for late joiners](#m58-fairness-for-late-joiners) (searched 2026-10-23)
 - [M59: respectful play](#m59-respectful-play) (searched 2026-10-23)
 - [M81: career tasters](#m81-career-tasters) (searched 2026-11-01)
+- [M82: co-operatives against companies](#m82-co-operatives-against-companies) (searched 2026-11-01)
 
 ## M58: fairness for late joiners
 
@@ -619,3 +620,133 @@ the cognitive and motivational effects of serious games. *Journal of Educational
 Wouters, P., & van Oostendorp, H. (2013). A meta-analytic review of the role of instructional
 support in game-based learning. *Computers & Education, 60*(1), 412–425.
 https://doi.org/10.1016/j.compedu.2012.07.018
+
+## M82: co-operatives against companies
+
+Evidence for [M82](ROADMAP.md#m82-co-operatives-against-companies-10-h). Its aim: worker
+co-operatives and investor-owned companies side by side, with a crisis showing how each adjusts.
+
+The question for the research: do worker co-operatives really behave differently in a downturn,
+why, and what are their weak points?
+
+### What the evidence changes in the design
+
+1. **Co-ops adjust pay, companies adjust jobs.** The pattern holds across countries and decades:
+   the plywood co-operatives of the US Pacific Northwest (Craig & Pencavel, 1992), the whole
+   population of Uruguayan co-ops (Burdín & Dean, 2009), Italian production co-ops (Delbono &
+   Reggiani, 2013; Cristini et al., 2023), and an exhaustive French employer-employee panel
+   (Magne & Pérotin, 2026). So M82's acceptance test asks whether the pattern *emerges* in the
+   game; it is never coded in.
+2. **The reason is trust and information, which the vote models.** In investor-owned firms,
+   workers can't verify a claimed fall in demand, so they insist on fixed wages, which leads to
+   layoffs; in co-ops the "employer" answers to the workers, so flexible pay is credible (Albanese
+   et al., 2015). Hence M82's companies have fixed wages and owner-decided layoffs, and its co-ops
+   vote with full information.
+3. **Reserves smooth the shock.** Locked, indivisible reserves let Italian co-ops protect jobs
+   without cutting pay as much (Navarra, 2016), and co-ops built equity in good years instead of
+   paying large dividends (Delbono & Reggiani, 2013). Hence the indivisible reserve and the
+   "draw from the reserve" option in the vote.
+4. **Stability has costs and limits.** Co-ops' profitability and equity fell more than
+   conventional firms' during Italy's long recession (Cristini et al., 2023), and their resilience
+   faded in later years of prolonged stress (Costa & Delbono, 2025). Employment stability in French
+   co-ops benefited mainly men and low-skill workers (Magne & Pérotin, 2026). M82 reports these
+   costs, not only the benefits.
+5. **Survival is not automatic.** French producer co-ops showed high survival and no degeneration
+   over a decade (Estrin & Jones, 1992), but a matched study finds their survival advantage largely
+   disappears once starting resources are counted (Mirabel, 2025). Hence capital is harder to
+   raise for co-ops in M82, and the experiment reports survival with starting resources matched.
+6. **Degeneration happens, and so does regeneration.** Of 83 democratic enterprises in qualitative
+   studies, most resisted or reversed degeneration; few fully degenerated (Unterrainer et al.,
+   2022). Mondragon's international groups show both tendencies at once (Bretos et al., 2020).
+   Hence M82 measures the member share of the workforce daily and lets members vote on admitting
+   new members.
+7. **Not only worker co-ops.** In Italy, all types of co-operative protected employment better than
+   investor-owned firms through the 2008–2015 crisis (Borzaga et al., 2022). A later milestone
+   could add consumer and producer co-ops.
+
+### Findings by lever
+
+| Finding | Design consequence |
+|---|---|
+| Co-ops adjust pay more than employment (Craig & Pencavel, 1992; Burdín & Dean, 2009; Delbono & Reggiani, 2013). | Measure employment and pay volatility by firm type. |
+| French panel: same demand shock, more stable employment and more variable pay in co-ops; stability benefits mainly men and low-skill workers (Magne & Pérotin, 2026). | Report who gains from stability, not only averages. |
+| Spain: wage-earners in worker-owned firms had more stable jobs, but wages and hours were as responsive as elsewhere (Garcia-Louzao, 2021). | Regulations can limit pay flexibility; make it a config knob. |
+| Italy 2011–2018: co-ops contained job losses with larger pay cuts, but profitability and equity fell more (Cristini et al., 2023). | Show the financial cost of stability. |
+| Indivisible reserves smooth wages in downturns (Navarra, 2016). | The indivisible reserve and the reserve-draw vote option. |
+| Fixed wages in investor-owned firms follow from workers' distrust of claimed demand falls (Albanese et al., 2015). | Companies: fixed wages and owner-decided layoffs. |
+| All co-op types withstood 2008–2015 better than investor-owned firms in Italy (Borzaga et al., 2022). | A later extension to consumer and producer co-ops. |
+| Co-ops give labour a higher share of value added, even in downturns; resilience declined in later years (Costa & Delbono, 2025). | Report labour's share of value added and long-crisis outcomes. |
+| High survival and no degeneration among French producer co-ops in the 1970s (Estrin & Jones, 1992). | Co-ops can last; don't build in decline. |
+| The survival advantage largely disappears with entry resources matched (Mirabel, 2025). | Match starting resources in the experiment. |
+| Most democratic enterprises resist or reverse degeneration (Unterrainer et al., 2022); Mondragon shows both tendencies at once (Bretos et al., 2020). | Measure the member share daily; let members choose. |
+
+### What the evidence does not settle
+
+- Most studies are observational: co-ops may differ from other firms in sector, size and members
+  in ways the controls don't capture (Mirabel, 2025).
+- Effects differ by sector; in Italian construction and low-knowledge services, co-ops grew
+  employment rather than pay after the recession (Cristini et al., 2023).
+- The trust explanation is a model (Albanese et al., 2015); other explanations, such as members'
+  shared values, are not ruled out.
+
+### Gaps not yet searched
+
+- Productivity and job satisfaction in co-ops against conventional firms.
+- Mondragon's internal job transfers and the Fagor collapse, in peer-reviewed sources.
+- How co-ops raise capital (member loans, co-op banks) and what limits their growth.
+- Employee ownership plans (partial ownership without one member, one vote).
+
+### References
+
+Albanese, M., Navarra, C., & Tortia, E. C. (2015). Employer moral hazard and wage rigidity: The
+case of worker owned and investor owned firms. *International Review of Law and Economics, 43*,
+227–237. https://doi.org/10.1016/j.irle.2014.08.006
+
+Borzaga, C., Carini, C., & Tortia, E. C. (2022). Co-operative enterprise anti-cyclicality and the
+economic crisis: A comparative analysis of employment dynamics in Italy. *Annals of Public and
+Cooperative Economics, 93*(3), 551–577. https://doi.org/10.1111/apce.12337
+
+Bretos, I., Errasti, A., & Marcuello, C. (2020). Is there life after degeneration? The
+organizational life cycle of cooperatives under a "grow-or-die" dichotomy. *Annals of Public and
+Cooperative Economics, 91*(3), 435–458. https://doi.org/10.1111/apce.12258
+
+Burdín, G., & Dean, A. (2009). New evidence on wages and employment in worker cooperatives
+compared with capitalist firms. *Journal of Comparative Economics, 37*(4), 517–533.
+https://doi.org/10.1016/j.jce.2009.08.001
+
+Costa, M., & Delbono, F. (2025). Splitting the pie in Italian cooperatives: A comparative analysis
+with panel data (2014–2023). *Sustainability, 17*(22), Article 10354.
+https://doi.org/10.3390/su172210354
+
+Craig, B., & Pencavel, J. (1992). The behavior of worker cooperatives: The plywood companies of the
+Pacific Northwest. *The American Economic Review, 82*(5), 1083–1105.
+
+Cristini, A., Grasseni, M., & Signori, S. (2023). Can worker cooperatives stabilize employment and
+remain financially sound during a prolonged recession? *Applied Economics, 55*(33), 3863–3883.
+https://doi.org/10.1080/00036846.2022.2118963
+
+Delbono, F., & Reggiani, C. (2013). Cooperative firms and the crisis: Evidence from some Italian
+mixed oligopolies. *Annals of Public and Cooperative Economics, 84*(4), 383–397.
+https://doi.org/10.1111/apce.12020
+
+Estrin, S., & Jones, D. C. (1992). The viability of employee-owned firms: Evidence from France.
+*ILR Review, 45*(2), 323–338. https://doi.org/10.1177/001979399204500209
+
+Garcia-Louzao, J. (2021). Employment and wages over the business cycle in worker-owned firms:
+Evidence from Spain. *British Journal of Industrial Relations, 59*(2), 418–443.
+https://doi.org/10.1111/bjir.12559
+
+Magne, N., & Pérotin, V. (2026). When workers get to choose: Employment and wage responses to
+demand shocks in labour-managed and conventional firms. *Annals of Public and Cooperative
+Economics*. Advance online publication. https://doi.org/10.1111/apce.70046
+
+Mirabel, T. (2025). Entry resources and the survival of worker-owned firms. *Annals of Public and
+Cooperative Economics, 97*(2), 425–454. https://doi.org/10.1111/apce.70019
+
+Navarra, C. (2016). Employment stabilization inside firms: An empirical investigation of worker
+cooperatives. *Annals of Public and Cooperative Economics, 87*(4), 563–585.
+https://doi.org/10.1111/apce.12124
+
+Unterrainer, C., Weber, W. G., Höge, T., & Hornung, S. (2022). Organizational and psychological
+features of successful democratic enterprises: A systematic review of qualitative research.
+*Frontiers in Psychology, 13*, Article 947559. https://doi.org/10.3389/fpsyg.2022.947559
