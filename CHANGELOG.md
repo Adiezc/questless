@@ -6,8 +6,9 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
-- Roadmap and build guide: three new v0.4 milestones, open for contributors. Spoilage and
-  storage (M61), know-how that rusts and is taught (M62), and players hiring NPCs (M63).
+- Roadmap and build guide: six new v0.4 milestones, open for contributors. Spoilage and
+  storage (M61), know-how that rusts and is taught (M62), players hiring NPCs (M63), tool rental
+  (M64), scrap and recycling (M65), and market fair days (M66).
 - Land and mine claims (M60), off by default: `[claims] enabled = true` gives every gatherer the
   claim they work. A tenant pays the owner `rent_share` of the day's output value. An owner short
   of coin sells a claim to the richest NPC and rents it back. `TickStats` gains `claims` (rent,

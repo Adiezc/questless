@@ -732,6 +732,9 @@ and long supply chains emerge from the same ledger.
 | M61 | **Spoilage and storage** (time costs goods) | none | 6 h |
 | M62 | **Know-how that rusts and is taught** (idle workers lose skill; apprentice contracts) | none; better after M61 | 7 h |
 | M63 | **Players hire NPCs** (a labour market with escrowed wages) | M17 (obligation registry); M31 for more than one employer | 8 h |
+| M64 | **Tool rental** (capital without ownership) | none; better after M60 | 6 h |
+| M65 | **Scrap and recycling** (worn tools come back as iron) | none | 6 h |
+| M66 | **Market fair days** (a weekly fair with outside traders) | none; better after M61 | 5 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
 - **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
@@ -1144,6 +1147,111 @@ unions are in the backlog); no firing before term except for missing inputs.
 - an experiment over paired seeds reports the effect of hiring on idle NPC-days and on the price of
   the hired trade's output;
 - the chain behind a shortage caused by hiring names the employer, and its evidence re-verifies.
+
+## M64: tool rental (6 h)
+
+**Goal:** a worker can use capital they don't own. Today a farmer who can't afford tools works at
+`no_tool_factor` until they can, so a poor worker stays poor. In real economies, renting
+equipment is how most people use capital: tractors, taxis, looms. M64 lets NPCs with spare tools
+rent them by the day, so a rental market sits beside the market for tools themselves, and the rent
+becomes a measured return on capital next to M60's land rent.
+
+**Design:**
+- **A rental is an obligation.** The owner moves one tool into a rental account; the renter uses
+  it as if it were theirs. Each day the renter pays `rental_fee` coin (reason `tool rent`). If the
+  renter can't pay for `default_after` days, the rental ends and the tool goes back to the owner.
+- **The owner bears the wear.** A rented tool wears like any tool. When it falls below the
+  replacement threshold, it is used up and the rental ends, so the fee has to cover wear. NPCs
+  who rent out tools price that in: `fee = tool price × wear per day × (1 + rental_margin)`.
+- **Who rents.** Each day, NPCs whose tools are below threshold and who can't afford a new tool
+  but can afford the fee rent from the owner with the lowest fee, in seeded order. Owners rent out
+  only tools beyond their own next replacement.
+- **Players can be owners.** A `rent_out` action lets a player put tools on the rental market at
+  their own fee, with the same rules.
+- **Off by default** (`[rental] enabled = false`). With it off, every state hash is unchanged.
+
+**Measured:** tools rented per day, mean fee against the tool price, NPC-days worked without
+tools, and rent income by owner, which the export adds next to M60's land rent.
+
+**Evidence and chains:** a `rental` evidence kind. When a farm shortage has workers without tools,
+the walk now separates "no tools for sale" from "tools for sale but unaffordable, and no one renting
+them out", so the chain names the missing market.
+
+**Accept when:**
+- coin and tools are conserved, and every rented tool is in exactly one rental account;
+- with rental off, every scenario's state hash is unchanged;
+- in the iron shortage scenario, NPC-days worked without tools fall with rental on, across paired
+  seeds;
+- an owner never rents out the tool they need for their own next replacement.
+
+## M65: scrap and recycling (6 h)
+
+**Goal:** a worn-out tool isn't just gone. Today replacing a tool destroys it. With M65 it
+becomes scrap that smiths can melt into iron, so a mine disaster has a second supply line and the
+price of scrap links to the price of ore. It's a small circular economy, and it teaches why
+recycling rises when raw materials get expensive.
+
+**Design:**
+- **Scrap is a good.** Replacing a tool or weapon turns it into `scrap_per_tool` units of a new
+  `scrap` good in the NPC's account (reason `scrapped`), instead of consuming it outright.
+  Conservation still counts every unit.
+- **Recycling is a recipe.** Smiths gain a recipe that turns `scrap_per_ore` scrap into one ore.
+  They pick between ore and scrap by the margin per input, as they already pick between recipes,
+  so recycling rises only when ore is expensive.
+- **Scrap trades.** NPCs sell scrap at the daily market like any good. A scrap collector contract
+  (R4) is posted when smiths are short of ore while scrap sits unsold at the farms, so players haul
+  it.
+- **Off by default** (`scrap_per_tool = 0`). With it off, no scrap appears.
+
+**Measured:** scrap made, sold and melted per day; the share of smiths' iron that comes from scrap;
+the scrap price against the ore price.
+
+**Evidence and chains:** a `recycled` evidence kind. A tools contract's chain during a mine
+disaster can show that recycling covered part of the gap ("scrap supplied 30% of smiths' iron
+since day 18"), so the contract is smaller and the evidence says why.
+
+**Simpler than reality, on purpose:** scrap doesn't wear and has one grade; there's no sorting or
+pollution yet (the backlog's pollution and Pigouvian taxes idea can add it).
+
+**Accept when:**
+- goods are conserved, and every scrap unit traces back to a scrapped tool or weapon;
+- with recycling off, every scenario's state hash is unchanged (see the pitfall on adding a good
+  in the build guide);
+- in the mine disaster scenario, tools output falls less with recycling on, across paired seeds;
+- smiths melt scrap only when it is cheaper per unit of iron than ore.
+
+## M66: market fair days (5 h)
+
+**Goal:** time with a rhythm. Today every day's market is the same. Historical towns had weekly
+markets and seasonal fairs where outside traders came with goods and money. M66 adds a fair every
+`fair_every` days: outside merchants buy and sell at their own prices, so NPCs and players plan
+around it, and prices rise and fall on a weekly pattern players can learn.
+
+**Design:**
+- **Outside traders join the market.** On a fair day, the `outside` account posts asks and bids at
+  `fair_price_factor` of its own reference prices, up to `fair_volume` units per good. Trades go
+  through the ordinary clearing, so they are ledger transfers like any other.
+- **NPCs plan for it.** Gatherers hold back up to `fair_hold_days` of output for the fair when the
+  last fair's price beat the daily price, and smiths stock ore before it. This is a small change
+  to the existing stock targets, not new behaviour.
+- **Fair fees fund the town.** Outside traders pay a stall fee (reason `fair fee`) to the town,
+  so a fair is a source of town income that a bandit shock (M56) on fair day hurts most.
+- **Players can plan.** The fair calendar is public and shown in the dashboard, unlike shock dates.
+- **Off by default** (`[fair] every = 0`). With it off, every state hash is unchanged.
+
+**Measured:** fair volume and prices against the days between fairs, the weekly price pattern, and
+town income from fees.
+
+**Evidence and chains:** a `fair` evidence kind. If a fair drained the town of food (outside buyers
+paid more than locals), the chain behind the next food contract says so, with the volume exported
+that day.
+
+**Accept when:**
+- coin and goods are conserved, and the outside account's balances move only on fair days and
+  through caravans and exports;
+- with fairs off, every scenario's state hash is unchanged;
+- prices show a weekly cycle with fairs on and none with fairs off, across seeds;
+- a food contract after a fair that exported food carries the `fair` evidence, which re-verifies.
 
 ## M41: docs, both skins and v0.4.0 (3 h)
 

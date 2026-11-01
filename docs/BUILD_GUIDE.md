@@ -40,7 +40,8 @@ guarantees, propose it in the issue before building it.
     [M41](#m41-docs-both-skins-and-v040) · [M53](#m53-the-invisible-border) ·
     [M54](#m54-civilization-dna) · [M55](#m55-infrastructure-dependency-maps) ·
     [M58](#m58-fairness-for-late-joiners) · [M61](#m61-spoilage-and-storage) ·
-    [M62](#m62-know-how-that-rusts-and-is-taught) · [M63](#m63-players-hire-npcs)
+    [M62](#m62-know-how-that-rusts-and-is-taught) · [M63](#m63-players-hire-npcs) ·
+    [M64](#m64-tool-rental) · [M65](#m65-scrap-and-recycling) · [M66](#m66-market-fair-days)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
     [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
@@ -1112,6 +1113,84 @@ caused by hiring names the employer and re-verifies.
 
 **Pitfalls:** a rich player can hire every smith and corner tools. The crisis cap is the first
 defence; M52's attacker bots should try it before the feature is switched on in any overlay.
+
+### M64: tool rental
+
+**Where:** `config.py` (`[rental]`), new `src/questless/sim/rental.py`, `sim/behaviour.py`
+(`maintain` uses a rented tool), `sim/entities.py` (`rental_account(id)`), `player.py`
+(`rent_out`), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** after the market clears, NPCs without usable tools who can't afford
+one but can pay the fee rent from the cheapest owner, in seeded order. The tool sits in a rental
+account tied to the renter; `maintain` treats it as the renter's. Each day the renter pays the fee
+or counts a missed day; past `default_after` the tool goes back. When it wears out, it is used up
+and the rental closes.
+
+| Task | Size | How |
+|---|---|---|
+| M64.1 Config and accounts **(good first issue)** | S | `[rental]` (R1); `rental_account` helper (R2); a `rentals` dict on the world in `state_dict()`. |
+| M64.2 Matching | M | Owners offer tools beyond their own next replacement at the cost-based fee; renters match by lowest fee, sorted ids for ties. |
+| M64.3 Daily fee and ending | S | Fee transfer (reason `tool rent`); missed-day counter; return or close. Invariant: each rented tool is in exactly one rental account. |
+| M64.4 Player owners | S | `rent_out(qty, fee)` action (R5). |
+| M64.5 Evidence and walk | M | Evidence kind `rental` (R3); in `causes.py`, split equipment shortages into unavailable and unaffordable. |
+
+**Tests:** hashes unchanged with rental off; conservation; default returns the tool; the owner keeps
+their own replacement; fewer tool-less days in the iron shortage scenario.
+
+**Pitfalls:** don't let a tool be both rented out and used for the owner's own replacement in the
+same tick: match after `maintain` has run for everyone.
+
+### M65: scrap and recycling
+
+**Where:** `sim/ledger.py` (a `scrap` asset), `config.py` (`[goods.scrap]`, `scrap_per_tool`, a
+smith recipe), `sim/behaviour.py` (`maintain` scraps instead of consuming), `contracts/engine.py`
+(the collector contract), `contracts/provenance.py`.
+
+**Design in one paragraph:** `maintain` moves the old tool out with `consume` and then `produce`s
+`scrap_per_tool` scrap, both journalled, so the ledger shows the transformation. Smiths get a
+recipe `iron_ore = { scrap = scrap_per_ore }` as a second way to get iron, chosen with the
+existing `_margin_per_input`.
+
+| Task | Size | How |
+|---|---|---|
+| M65.1 The scrap good | M | Add `SCRAP` to `Asset` and `[goods.scrap]` to the baseline. See the pitfall below. |
+| M65.2 Scrapping **(good first issue after M65.1)** | S | In `maintain`, produce scrap after consuming the old tool, reason `scrapped`. |
+| M65.3 Melting | M | A smith recipe from scrap to ore, chosen by margin; record the share of iron from scrap in `TickStats`. |
+| M65.4 Collector contract | M | A contract kind (R4) for hauling scrap to the market when smiths lack ore and scrap is unsold. |
+| M65.5 Evidence | S | Evidence kind `recycled` with a measure key (R3). |
+
+**Tests:** conservation; every scrap unit traces to a scrapped tool; smiths prefer ore when it's
+cheaper; tools output falls less in the mine disaster with recycling on.
+
+**Pitfalls:** adding a value to `Asset` changes every account's balance dict, and so every state
+hash, even with recycling off. Leave zero balances out of `state_dict()` for new goods (or for all
+goods, once), and record the one-time hash change in the changelog. This is also the first test of
+how hard it is to add a good, and a reason to make adding goods a config change in future.
+
+### M66: market fair days
+
+**Where:** `config.py` (`[fair]`), `sim/market.py` (outside asks and bids on fair days),
+`sim/behaviour.py` (holding output for the fair), `sim/world.py` (`TickStats.fair`),
+`app/` (the fair calendar), `contracts/provenance.py`, `contracts/causes.py`.
+
+**Design in one paragraph:** when `tick % every == offset`, the market adds the outside account's
+orders before clearing: asks and bids at `fair_price_factor` of reference prices, capped by
+`fair_volume` and by the outside account's balances. Stall fees move to the town. Gatherers keep up
+to `fair_hold_days` of output when the last fair paid better than the daily market.
+
+| Task | Size | How |
+|---|---|---|
+| M66.1 Config and calendar **(good first issue)** | S | `[fair]` (R1) and a fair-day helper; show upcoming fairs in the dashboard. |
+| M66.2 Outside orders | M | Extra asks and bids in `market.clear` on fair days, through the existing rationing. |
+| M66.3 Holding for the fair | S | Raise the unsold cap for gatherers before a fair when the last fair's price beat the daily one. |
+| M66.4 Fees and stats | S | Stall fees (reason `fair fee`); `TickStats.fair` with volume and prices. |
+| M66.5 Evidence | M | Evidence kind `fair` (R3); in `causes.py`, a food need after a fair export walks to it. |
+
+**Tests:** hashes unchanged with fairs off; conservation; the outside account only trades on fair
+days; a weekly price cycle appears with fairs on.
+
+**Pitfalls:** if outside prices are too generous, the fair empties the town of food every week. Keep
+`fair_volume` small against daily consumption, and check the drought scenario with fairs on.
 
 ### M42: privacy as code
 
