@@ -1283,9 +1283,10 @@ something players learn to check: what NPCs say happened, against what the log p
 | M70 | **The weekly newspaper** | M25, M43; M49 for slanted papers | 6 h |
 | M71 | **Play for everyone: accessibility and one-switch play** | none (dashboard checks can start now); M59 for the parity check | 10 h |
 | M75 | **Offline basics** (a few safe things to do with no connection) | M37, M69; M24's local world for practice runs | 8 h |
+| M79 | **Guilds on prescription** (gentle, time-limited guilds for lonely or isolated people, run with care partners) | M42, M44, M59, M69, M71 | 10 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 94 h, roughly 12 working days; plan for **15 days**.
+- **Total:** about 104 h, roughly 13 working days; plan for **17 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -1606,6 +1607,50 @@ nothing priced can be queued; a practice run never changes the server's state; a
 snapshot or clock gains nothing in M52's attacker tests; the traveller bot stays within M59's
 bound.
 
+## M79: guilds on prescription (10 h)
+
+**Goal:** a kind place to belong, for people who need one. In the UK, the NHS employs social
+prescribing link workers who can refer lonely or isolated people to community activities: a
+walking group, a choir, a gardening club. M79 designs a guild that could be one of those
+activities: gentle, small, time-limited and run with care partners, for older people, people who
+are housebound, carers and anyone the link worker thinks it might help.
+
+**What a prescribed guild is:**
+- **Small and slow.** Six to ten people and a facilitator, meeting by voice (M69) or at a shared
+  table (M76) at the group's own pace. Contracts are cooperative only: no rankings, no competition,
+  no deadlines shorter than a week.
+- **Time-limited, with a next step.** A cohort runs for `cohort_weeks` (about 12), like many
+  community programmes. At the end, members can move into an ordinary guild together, keep meeting
+  as a social group, or be signposted to local activities by their link worker. The game never
+  tries to keep them.
+- **Built for every body.** Large text, voice, one-switch play and plain language from M71 are on
+  by default.
+
+**Who runs it:**
+- **Care partners** (charities, NHS link-worker services, councils, care homes) refer people and
+  own the relationship. The game is a venue, not a health service.
+- **Facilitators** are trained volunteers: people who want to volunteer, and psychology,
+  social-work or occupational-therapy students, for whom it can count as supervised placement or
+  volunteering hours where their university agrees.
+- **Safeguarding first.** Facilitators are vetted (in the UK, a DBS check) and supervised by a
+  qualified professional at the partner. Students never act as therapists. Every session has a
+  clear way to raise a concern and to signpost crisis services.
+
+**Privacy and health data:**
+- **No health records in the game.** The referral happens outside the game. The game only knows a
+  partner invited this player into a cohort; it never stores why (M42).
+- **Measured by the partner, with consent.** Whether it helps is measured by the care partner or a
+  university, with ethics approval, using validated loneliness and well-being questionnaires,
+  outside the game and only for people who agree.
+
+**Honest about the evidence:** reviews of social prescribing find promising but mixed results, and
+the studies are often small. M79 is built so it can be properly evaluated, not assumed to work.
+
+**Accept when:** a cohort can be created, joined by invitation only and closed at its end with a
+choice of next steps; no field in the world log or player record holds a reason for referral;
+facilitator tools include concern reporting and signposting; M71's accessibility check passes with
+the cohort defaults; an evaluation protocol template for partners is in the docs.
+
 ## M46: docs and v0.5.0 (2 h)
 
 PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT updated with what was built; changelog; tag v0.5.0.
@@ -1617,7 +1662,8 @@ Status: **in scope, planned after v0.5** · added 2026-11-01
 v0.6 connects the world to the one outside it. Real weather drives the seasons; the engine shows
 what it costs in energy and does its heavy work when the grid is clean; other games feed their
 shortages in as contracts; play contributes to real science, with players told when it does; the
-map can sit on a real table; and a world that shuts down stays alive as open data.
+map can sit on a real table; a world that shuts down stays alive as open data; idle devices help
+research on clean power; and real towns can test a policy before they vote on it.
 Each milestone keeps the five guarantees: real-world data enters only through the world log, so
 every run still replays exactly with the network off.
 
@@ -1631,9 +1677,11 @@ every run still replays exactly with the network off.
 | M73 | **Science from play** (your town in a paper; real citizen-science tasks) | M42, M45; the research export (v0.1) | 10 h |
 | M76 | **A tabletop AR map** (the region on the kitchen table, for playing together) | M35, M55, M71 | 8 h |
 | M77 | **Worlds never die** (a world that shuts down becomes open data anyone can restart) | M30, M42; M33 for replaceable assets | 6 h |
+| M78 | **Idle devices do science on clean power** (opt-in volunteer computing) | M68, M73 | 6 h |
+| M80 | **Play the policy before it becomes law** (a policy lab for real towns) | M23, M33, M40, M67; the backlog's referendum preview | 16 h |
 | M74 | Docs and v0.6.0 tag | all | 2 h |
 
-- **Total:** about 56 h, roughly 7 working days; plan for **9 days**.
+- **Total:** about 78 h, roughly 10 working days; plan for **13 days**.
 - **Can start now:** M68's energy meter (M68.1) and M73's dataset citation (M73.1) need nothing
   from earlier versions.
 
@@ -1862,6 +1910,74 @@ its world becomes an open archive that anyone can verify and restart.
 **Accept when:** an ark from a long run boots on a clean machine and replays to the final hash; the
 export refuses to finish when a planted personal record is present; a player key claims its
 character on the restarted world and nothing else; the weekly drill runs in CI.
+
+## M78: idle devices do science on clean power (6 h)
+
+**Goal:** a player's machine can help real research while they sleep. Volunteer computing has a
+long record: Folding@home and BOINC projects have used donated computer time for protein folding,
+climate models and astronomy, and from 2007 to 2012 Sony's PlayStation 3 ran Folding@home from its
+home menu. M78 adds the same option to Questless clients, with one rule the old projects didn't
+have: it runs only when the local grid is clean (M68).
+
+**Design:**
+- **Opt-in, off by default.** A player chooses to join and which project to support, from a list of
+  vetted projects (M73's partners and established volunteer-computing projects).
+- **Only when it costs nothing else.** Work runs only when the device is idle, plugged in and cool,
+  and when the carbon intensity of the player's grid zone is below a threshold. The player gives
+  their grid zone (a country or region they pick), never their location. Phones and laptops on
+  battery are never used.
+- **Honest about the cost.** It uses the player's electricity. The client shows the estimated energy
+  and its cost at the player's own tariff before they opt in, and every month after. A daily cap is
+  set by the player.
+- **Sandboxed work.** Work units come through an established volunteer-computing client in its own
+  sandbox; the game never runs arbitrary code from a project.
+- **Recognition, not power.** Players see what their machine contributed and what the project
+  found. Rewards are cosmetic and in the skills passport (M45) only, never coin or items: anything
+  that buys power would turn electricity into an advantage and penalise players who can't afford
+  it, and M59's check would fail.
+
+**Accept when:** nothing runs without opt-in; no work runs on battery, while the device is in use,
+or above the carbon threshold in a recorded week of grid data; the cost estimate is shown before
+opting in; no in-game reward depends on computing contributed; M59's check passes with it on.
+
+## M80: play the policy before it becomes law (16 h)
+
+**Goal:** a town can see a policy's likely side effects before it votes. Before a real city changes
+a tax, bus fares or parking rules, the policy lab runs the change in a model of the town, built
+from the city's open data, and shows who is likely to gain and lose, with honest uncertainty. The
+result feeds a public debate or a citizens' assembly. It informs a decision; it never makes one.
+
+**Why this engine:** Questless already does the hard parts: exact replay, paired runs with and
+without a change (the M23 economy check), and a "why" chain for every effect. Agent-based models are
+already used in policy work, for example in housing-market research at central banks and in
+epidemic planning. What Questless adds is that every result can be traced and re-checked.
+
+**Design:**
+- **A town from open data.** A modern-town theme pack (M33) maps population, jobs, household
+  budgets, bus routes and fares from public statistics into a scenario. The mapping is a file anyone
+  can read and challenge.
+- **Paired runs, many seeds.** The lab runs the town with and without the policy across seeds and
+  reports the distribution of effects by group (by area, income band, age band): who pays more,
+  who travels less, what happens to local shops.
+- **Backtest before trusting.** The lab first reruns a past policy in the same town (an earlier fare
+  rise, say) and compares its estimate with what really happened. Results for a new policy are only
+  shown alongside that backtest score, and a town whose backtest fails gets a warning, not a chart.
+- **What the model leaves out.** Every report lists what isn't modelled, in plain words, next to the
+  numbers.
+- **Optional play.** Residents can play the policy in the town's twin. How players respond is
+  reported separately from the model's estimate, as a signal of how people feel, not as a
+  prediction.
+- **Open by default.** Scenario, data mapping, runs and reports are published, so anyone can
+  reproduce or contest them.
+
+**Ethics:** partners are public bodies and universities; the lab never targets individuals; results
+are never presented as forecasts without their uncertainty and backtest; and no political campaign
+can commission a private run.
+
+**Accept when:** a town scenario builds from a documented open-data file; a backtest of a past
+policy reports its error against the real outcome; reports show effects by group with uncertainty
+bands and the "left out" list; every run reproduces from the published files; a report cannot be
+generated without a backtest result attached.
 
 ## M74: docs and v0.6.0 (2 h)
 

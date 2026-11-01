@@ -227,9 +227,11 @@ integration.
   recycling and fair days.
 - **v0.5, people, privacy and learning:** privacy as code, a language bridge with English as the
   common language, steward NPCs, a skills passport and eleven skill tracks, voice check-ins and
-  real breaks, a weekly newspaper, accessibility with one-switch play, and offline basics.
+  real breaks, a weekly newspaper, accessibility with one-switch play, offline basics, and
+  guilds on prescription for lonely or isolated people.
 - **v0.6, a world connected to the real one:** real weather, clean-energy simulation,
-  cross-game federation, science from play, a tabletop AR map, and worlds that never die.
+  cross-game federation, science from play, a tabletop AR map, worlds that never die,
+  volunteer computing on clean power, and a policy lab for real towns.
 
 Background reading: [blueprint](docs/BLUEPRINT.md) ·
 [crypto and blockchain assessment](docs/BLOCKCHAIN.md) (why there are no tokens or NFTs) ·

@@ -47,10 +47,12 @@ guarantees, propose it in the issue before building it.
     [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
     [M70](#m70-the-weekly-newspaper) ·
     [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M75](#m75-offline-basics) ·
-    [M46](#m46-docs-and-v050)
+    [M79](#m79-guilds-on-prescription) · [M46](#m46-docs-and-v050)
   - v0.6: [M67](#m67-real-weather-real-places) · [M68](#m68-clean-energy-simulation) ·
     [M72](#m72-cross-game-federation) · [M73](#m73-science-from-play) ·
-    [M76](#m76-a-tabletop-ar-map) · [M77](#m77-worlds-never-die) · [M74](#m74-docs-and-v060)
+    [M76](#m76-a-tabletop-ar-map) · [M77](#m77-worlds-never-die) ·
+    [M78](#m78-idle-devices-do-science-on-clean-power) ·
+    [M80](#m80-play-the-policy-before-it-becomes-law) · [M74](#m74-docs-and-v060)
 - [Part 5: backlog ideas, sketched](#part-5-backlog-ideas-sketched)
 
 ---
@@ -1406,6 +1408,32 @@ state; attacker tests gain nothing.
 **Pitfalls:** the temptation is to let offline players "catch up" with a bonus. Don't: the
 standing orders already keep them working while they're away, and a bonus is what attackers farm.
 
+### M79: guilds on prescription
+
+**Where:** `src/questless/cohorts/` (`cohort.py`, `facilitator.py`), M44's steward tools for
+facilitators, M42's privacy rules, client defaults from M71, `docs/PRESCRIBED_GUILDS.md` (partner
+guide and evaluation template).
+
+**Design in one paragraph:** a cohort is a guild with a start and end date, invitation-only
+membership, cooperative contract kinds only, and accessibility defaults on. Partners create cohorts
+and issue invitations; the game stores the invitation, never a reason. Facilitators get session
+tools, a concern button that goes to the partner's safeguarding lead, and a signposting page.
+
+| Task | Size | How |
+|---|---|---|
+| M79.1 Cohort record **(good first issue after M44)** | S | Dates, invitation-only membership, partner id; no free-text reason field. |
+| M79.2 Cooperative contracts | M | Contract kinds that only pay the group; no deadlines under a week. |
+| M79.3 Facilitator tools | M | Session view, concern reporting to the partner, signposting page. |
+| M79.4 Ending well | S | End-of-cohort choice: join a guild together, keep meeting, or signposting. |
+| M79.5 Partner guide | M | Safeguarding requirements, student supervision, an evaluation protocol template. |
+
+**Tests:** invitation-only joining; no referral data in any record; cohorts close on their end
+date; accessibility defaults on.
+
+**Pitfalls:** this is the milestone where a mistake can hurt someone. Don't launch without a care
+partner's safeguarding lead reviewing the facilitator tools, and don't measure outcomes inside the
+game.
+
 ### M46: docs and v0.5.0
 
 Update PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT with what was built; changelog; tag v0.5.0.
@@ -1558,6 +1586,53 @@ only their own characters.
 
 **Pitfalls:** the engine version matters: an ark must name the exact engine release it replays
 with, and old releases must stay installable.
+
+### M78: idle devices do science on clean power
+
+**Where:** client settings, an adapter to an established volunteer-computing client, M68's
+`grid.py`, M45's passport, M73's partner list.
+
+**Design in one paragraph:** the client checks four conditions (idle, plugged in, cool, grid below
+threshold) and only then lets the volunteer-computing client run, up to the player's daily cap. It
+reports work done and estimated energy to the player and, as a total only, to the project page.
+
+| Task | Size | How |
+|---|---|---|
+| M78.1 Conditions and cap **(good first issue after M68.2)** | S | The four checks and a daily cap, all logged locally. |
+| M78.2 Cost estimate | S | Energy and cost at the player's tariff, shown before opt-in and monthly. |
+| M78.3 Adapter | M | Start and stop an established volunteer-computing client in its sandbox. |
+| M78.4 Recognition | S | Contribution totals on the project page and in the passport; no in-game items. |
+
+**Tests:** recorded grid and device traces never run work outside the conditions; no reward path
+from contribution to coin or items.
+
+**Pitfalls:** never make it the default, and never hint that players who contribute will do better
+in the game.
+
+### M80: play the policy before it becomes law
+
+**Where:** a modern-town theme pack (M33), new `src/questless/policylab/` (`build.py`,
+`backtest.py`, `report.py`), M23's paired-run machinery, M40's surrogate for many seeds, the
+research export.
+
+**Design in one paragraph:** `build.py` reads a documented open-data file into a scenario.
+`backtest.py` runs a past policy and scores the estimate against the recorded real outcome.
+`report.py` runs paired seeds for the new policy and renders effects by group with uncertainty
+bands, the backtest score and the "left out" list; it refuses to render without a backtest.
+
+| Task | Size | How |
+|---|---|---|
+| M80.1 Open-data mapping **(good first issue)** | M | A documented file format from public statistics to scenario fields. |
+| M80.2 Modern-town pack | M | Households, jobs, bus routes and fares as a theme pack. |
+| M80.3 Backtest | M | A past policy, its real outcome and the error. |
+| M80.4 Group report | M | Effects by area, income and age with uncertainty; the "left out" list. |
+| M80.5 Optional play | M | Residents play the twin; reported separately. |
+
+**Tests:** the build reproduces from the file; the report refuses without a backtest; runs
+reproduce from the published files.
+
+**Pitfalls:** a toy town can look more certain than it is. Lead every report with the backtest
+error and the "left out" list, and resist requests to hide them.
 
 ### M74: docs and v0.6.0
 
