@@ -44,7 +44,12 @@ guarantees, propose it in the issue before building it.
     [M64](#m64-tool-rental) · [M65](#m65-scrap-and-recycling) · [M66](#m66-market-fair-days)
   - v0.5: [M42](#m42-privacy-as-code) · [M43](#m43-language-bridge) · [M44](#m44-steward-npcs) ·
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
-    [M51](#m51-records-that-decay) · [M46](#m46-docs-and-v050)
+    [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
+    [M70](#m70-the-weekly-newspaper) ·
+    [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M46](#m46-docs-and-v050)
+  - v0.6: [M67](#m67-real-weather-real-places) · [M68](#m68-clean-energy-simulation) ·
+    [M72](#m72-cross-game-federation) · [M73](#m73-science-from-play) ·
+    [M74](#m74-docs-and-v060)
 - [Part 5: backlog ideas, sketched](#part-5-backlog-ideas-sketched)
 
 ---
@@ -1300,9 +1305,189 @@ M30 audit verifies the developer log across every loss.
 **Pitfalls:** in-world loss must never touch the engine's own journal or the evidence `verify()`
 reads. The archive is a separate, in-world copy.
 
+### M69: light check-ins by voice, and real breaks
+
+**Where:** new `src/questless/checkin/` (`actions.py`, `confirm.py`), `player.py` (an away-mode
+action), M37's standing orders (a safe profile), M59's harness (voice-only and away bots), the
+notification settings in the client.
+
+**Design in one paragraph:** the check-in layer is a thin, fixed menu over `player.ACTIONS`. A
+speech front end (on the device, outside this repo) produces a candidate action and parameters;
+`confirm.py` renders the read-back sentence from the same templates the dashboard uses and applies
+the action only after an explicit yes. Away mode is a dated record on the player that switches
+their standing orders to a safe profile and hands back lapsing contracts through M59's no-blame
+lever.
+
+| Task | Size | How |
+|---|---|---|
+| M69.1 Check-in menu **(good first issue after M37)** | S | A list of allowed actions with parameter schemas; anything else is refused. |
+| M69.2 Read-back and confirm | M | Render the sentence from templates; apply only on a confirmed token; log nothing about the audio. |
+| M69.3 Away mode | M | Dated away record, safe standing-order profile, no-blame hand-back, `away_weeks` cap per year. |
+| M69.4 Quiet hours and digest | S | Default quiet hours on new accounts; a weekly digest in place of per-event notifications. |
+| M69.5 Bots | M | Voice-only bot (only menu actions) and returner-on-away-mode in M59's harness. |
+
+**Tests:** an unconfirmed action changes nothing; every menu action replays identically; the away
+cap holds; M59 bounds hold for both new bots.
+
+**Pitfalls:** don't add "just one more" voice action that is faster than the full client: voice
+must never be the efficient way to play. And away mode must not freeze prices or markets, only the
+player's own obligations.
+
+### M70: the weekly newspaper
+
+**Where:** new `src/questless/press/` (`select.py`, `render.py`), M25's wiki renderer, M43's
+templates, `contracts/provenance.py` (measure keys), the client.
+
+**Design in one paragraph:** each week, `select.py` ranks the week's evidence by measured impact
+and picks stories per page; `render.py` fills page templates with the facts and their measure
+keys, and optional model-written prose is stored with the issue so the issue is fixed once
+printed. Rival papers (after M49) use the same facts with different selection weights and
+headline templates.
+
+| Task | Size | How |
+|---|---|---|
+| M70.1 Story selection **(good first issue after M25)** | M | Rank evidence by impact; a market page from `TickStats`. |
+| M70.2 Rendering and checks | M | HTML and PDF; every figure links to its measure key and shows `verify()`'s result. |
+| M70.3 Player articles | M | Submission format; numeric claims must carry a measure key; failures are marked. |
+| M70.4 Rival papers | S | Selection weights and headline templates per paper, after M49. |
+
+**Tests:** every figure re-verifies; a forged figure is reported; rendering twice gives identical
+output; rival papers share identical values.
+
+**Pitfalls:** stored prose must be regenerated only when the facts change, never silently. Don't
+rank stories by clicks: rank by measured impact, or the paper drifts towards drama.
+
+### M71: play for everyone, accessibility and one-switch play
+
+**Where:** `app/` (the dashboard), a new scanning interface, `player.py` (a deadline check), M59's
+harness (switch bot), CI (an accessibility checker), `docs/` (test write-ups).
+
+**Design in one paragraph:** a single ranked action list is the backbone: the dashboard, the
+scanning interface and voice (M69) all read it. Accessibility is checked in CI on every page, and
+the switch bot proves in numbers that one-switch players aren't worse off.
+
+| Task | Size | How |
+|---|---|---|
+| M71.1 Dashboard audit **(good first issue, can start now)** | S | Run an automated accessibility checker on every dashboard page; fix contrast, labels and keyboard order. |
+| M71.2 Chart alternatives **(can start now)** | S | Patterns and direct labels on every chart; a text summary under each. |
+| M71.3 Ranked action list | M | The three most useful actions now, then the rest, from the board and the player's state. |
+| M71.4 Scanning interface | M | Step through the list with one input; dwell or switch to select; configurable speed. |
+| M71.5 Deadline guarantee | S | A test that no action or offer needs a response faster than `min_response_seconds`. |
+| M71.6 Switch bot and paid testing | M | Bot in M59's harness; one paid round with disabled players, written up. |
+
+**Tests:** the accessibility checker in CI; the deadline test; the switch bot's parity bound.
+
+**Pitfalls:** automated checks find maybe a third of real problems. The paid testing round is not
+optional, and its findings go into the docs even when they're unflattering.
+
 ### M46: docs and v0.5.0
 
 Update PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT with what was built; changelog; tag v0.5.0.
+
+### M67: real weather, real places
+
+**Where:** `config.py` (a `[weather]` section per region), new `src/questless/weather/`
+(`ingest.py`, `mapping.py`), M30's world log, `sim/shocks.py` (weather as a `world` shock
+source), `contracts/provenance.py`.
+
+**Design in one paragraph:** `ingest.py` runs outside the tick: it fetches the twin place's daily
+weather, normalises it against that place's historical normals, and appends a signed record to
+the world log. `mapping.py` turns each record into modifiers (farm output, transport, spoilage,
+food need) through config curves. The tick reads only log records, so it never touches the
+network.
+
+| Task | Size | How |
+|---|---|---|
+| M67.1 Log record format **(good first issue after M30)** | S | Fields: place, date, values, normals, source, licence, hash, `filled_in` flag. |
+| M67.2 Ingest and fallback | M | Fetch, normalise, append; seeded draw from normals when missing. |
+| M67.3 Mapping | M | Config curves from anomalies to modifiers; a severity cap; `exclude_events`. |
+| M67.4 Evidence | S | Evidence kind `weather` with source and licence (R3). |
+
+**Tests:** replay offline gives the same hash; fallback marks the day; the cap holds; hashes
+unchanged with the feature off.
+
+**Pitfalls:** never call the network from the tick, even for a cache miss. And check each source's
+licence before adding it.
+
+### M68: clean-energy simulation
+
+**Where:** new `src/questless/energy/` (`meter.py`, `grid.py`, `scheduler.py`), M23's CI jobs,
+M34's level of detail, M40's surrogate, the dashboard and M70's newspaper.
+
+**Design in one paragraph:** `meter.py` wraps each system's work and records CPU time (or
+hardware energy counters when available). `grid.py` reads carbon-intensity data and forecasts for
+the server's region. `scheduler.py` holds deferrable and optional jobs and starts each in the
+cleanest window before its deadline. Level-of-detail choices are written to the log so replays
+follow them.
+
+| Task | Size | How |
+|---|---|---|
+| M68.1 Energy meter **(good first issue, can start now)** | S | Time each tick phase; report kWh with a stated per-core estimate; add it to the run report. |
+| M68.2 Grid data | M | An adapter for a carbon-intensity feed with recorded test data for CI. |
+| M68.3 Scheduler | M | Deadlines, thresholds, cleanest-window choice; a replay of a recorded week. |
+| M68.4 Level of detail | M | Surrogate when dirty, full when clean; logged choice. |
+| M68.5 Green queue and display | M | Discounted, delayed heavy requests; energy per world day in the dashboard. |
+
+**Tests:** the same inputs give the same hash at any hour; the recorded-week replay meets
+`clean_shift_target`; M59's check passes with the green queue.
+
+**Pitfalls:** don't overstate precision: a per-core estimate can be off by half, so print the method
+and range beside every number. Never let the scheduler skip live work.
+
+### M72: cross-game federation
+
+**Where:** new `src/questless/federation/` (`protocol/` JSON schemas, `bridge.py`, `gateway.py`),
+M30's log, `contracts/engine.py` (contracts from partners), `contracts/provenance.py` (foreign
+evidence), M52's attackers, an `examples/convoy_skirmish/` reference game.
+
+**Design in one paragraph:** the gateway validates every incoming message against the schema and
+the partner's signature, writes it to the log, and only then lets the tick read it. Value crosses
+through a bridge account per partner with escrow and a daily cap. A partner's need becomes a
+funded contract whose evidence includes the partner's facts with their measure keys.
+
+| Task | Size | How |
+|---|---|---|
+| M72.1 Protocol schema **(good first issue)** | M | JSON schemas for contract, delivery, outcome and evidence; a validator and fixtures. |
+| M72.2 Bridge accounts | M | Escrow, daily caps, rates from trade; conservation across worlds. |
+| M72.3 Gateway and log | M | Signature checks, log writes, replay from log only. |
+| M72.4 Foreign evidence | M | Evidence that cites a partner's measure; verification against their published values. |
+| M72.5 Quarantine and attackers | M | Automatic bridge freeze on bad messages; M52 attacks. |
+| M72.6 Reference game | M | A tiny convoy game whose results set a route-security factor. |
+
+**Tests:** two-world conservation; each side replays alone; forged messages rejected; the cap holds
+under attack.
+
+**Pitfalls:** the hardest part is social, not technical: partners must want to keep the link alive.
+Start with a link that matters every day (supplies and routes), not with rare showcase battles.
+
+### M73: science from play
+
+**Where:** `export.py` (identifiers and citation files), new `src/questless/science/`
+(`register.py`, `notices.py`, `tasks.py`), M42's privacy rules, M45's passport, M25's wiki.
+
+**Design in one paragraph:** every public export gets an identifier and a citation file listing its
+region and days. The study register is a public list of registered studies. When a citation is
+recorded, `notices.py` finds opted-in players whose actions fall in the slice and notifies them.
+`tasks.py` fetches tasks from a partner platform, mixes in known-answer items, and scores players
+by those and by agreement.
+
+| Task | Size | How |
+|---|---|---|
+| M73.1 Citation file **(good first issue, can start now)** | S | A `CITATION.cff` and a stable identifier per export, listing the data slice. |
+| M73.2 Study register | M | Public register with question, slice and status; links from the wiki. |
+| M73.3 Notices and passport | M | Opt-in notices for players in a cited slice; a passport entry. |
+| M73.4 Task adapter | M | Fetch tasks from a partner platform; known-answer items; agreement scoring; no player identity sent. |
+| M73.5 Impact pages | S | Per project: community totals and the researchers' findings. |
+
+**Tests:** random answers score zero; no identity in adapter requests; notices only to opted-in
+players in the slice; M59's check passes.
+
+**Pitfalls:** never inflate the claim of impact. Show only what partners have confirmed, and let
+players see a task's purpose before they start it.
+
+### M74: docs and v0.6.0
+
+Update BLUEPRINT, RESEARCH and PRIVACY_AND_IDENTITY with what was built; changelog; tag v0.6.0.
 
 ---
 

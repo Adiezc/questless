@@ -1,4 +1,4 @@
-# Roadmap: v0.2 to v0.5 build path
+# Roadmap: v0.2 to v0.6 build path
 
 Status: **planned, not started** · drafted 2026-10-21 · follows v0.1.0 and [REVIEW.md](REVIEW.md)
 
@@ -737,7 +737,7 @@ and long supply chains emerge from the same ledger.
 | M66 | **Market fair days** (a weekly fair with outside traders) | none; better after M61 | 5 h |
 | M41 | Docs, both skins in the dashboard, v0.4.0 tag | all | 3 h |
 
-- **Total:** about 105 h, roughly 13 working days; plan for **17 days**.
+- **Total:** about 150 h, roughly 19 working days; plan for **24 days**.
 - **Critical path:** M33 → M34 → M35/M36/M39/M53-M55. M37 and M38 can run in parallel once M31
   lands.
 - **Cut order if behind:** the surrogate experiment (M40), sanctions (keep treaties and
@@ -1279,9 +1279,12 @@ something players learn to check: what NPCs say happened, against what the log p
 | M47 | **Skill tracks: eleven real-world subjects taught through play** | M26, M45, and each track's mechanics | 14 h |
 | M50 | **Told history versus the log** (cultural memory and myths) | M49, M25 | 8 h |
 | M51 | **Records that decay** | M50, M25, M30; M33 for institution names | 6 h |
+| M69 | **Light check-ins by voice, and real breaks** | M37, M42, M59 | 8 h |
+| M70 | **The weekly newspaper** | M25, M43; M49 for slanted papers | 6 h |
+| M71 | **Play for everyone: accessibility and one-switch play** | none (dashboard checks can start now); M59 for the parity check | 10 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 62 h, roughly 8 working days; plan for **10 days**.
+- **Total:** about 86 h, roughly 11 working days; plan for **14 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -1464,9 +1467,304 @@ M33).
 wiki pages fall back to told history; a recovery contract restores one; the M30 audit still
 verifies the full developer log throughout.
 
+## M69: light check-ins by voice, and real breaks (8 h)
+
+**Goal:** nobody falls behind for having a life, and nobody feels they can't step away. Some
+players have a few minutes on a commute; others go on holiday for two weeks with their family.
+M69 lets the first group handle the basics by voice in a couple of minutes, and lets the second
+group switch off completely without losing ground. It builds on M59, which already measures the
+pressure to play: M69 adds the tools, and M59's check proves they don't create new pressure.
+
+**Light check-ins:**
+- **A short, fixed list of actions:** hear the board summary, accept or hand back a contract,
+  change a standing order's limits (M37), and vote on a guild decision. Nothing else, so voice
+  never becomes a second, faster way to play.
+- **Speech becomes an action, never a decision.** A small on-device model maps what the player
+  said to one action from the list with its parameters, reads it back ("Accept the ore contract
+  for 12 units, reward 80 coin?") and waits for a yes. An unclear request does nothing. This
+  follows the project rule that models may phrase things but never decide outcomes.
+- **Voice stays on the device.** Audio and transcripts aren't stored or sent; only the confirmed
+  action reaches the server, like any other action (M42).
+- **The same reward for the same action.** A voice action pays exactly what the full client
+  pays. M59's check gains a **voice-only bot**, and its reward per hour must stay within the same
+  bound as everyone else's.
+
+**Real breaks:**
+- **Away mode.** A player sets the dates they'll be away. Their standing orders switch to a safe
+  profile (keep supplying what's already promised, take on nothing new), contracts that would
+  lapse are handed back without blame (M59's first lever), and nothing they own decays faster
+  for their absence. Up to `away_weeks` a year, so it can't be used to freeze a position
+  forever.
+- **Quiet hours by default.** No notifications at night or in hours the player marks as family
+  time. The default is on, and the game never asks the player to turn it off.
+- **A weekly digest instead of pings.** One summary a week of what happened while they weren't
+  looking (it can be the M70 newspaper), instead of a stream of alerts.
+- **A welcome back.** On return, a short summary of what changed and one suggested first step.
+
+**Accept when:** every voice action is one of the player actions and replays identically; an
+unconfirmed or unclear request changes nothing; no audio or transcript leaves the device in the
+default setup; M59's returner bot on away mode loses no more than a configured bound; the
+voice-only bot's reward per hour stays within M59's schedule-fairness bound; quiet hours are on in
+a new account.
+
+## M70: the weekly newspaper (6 h)
+
+**Goal:** a reason to look up from the board once a week. Every in-game week the world prints a
+newspaper from its own log: what happened, why, and what it cost. Players who only have time to
+read once a week still know their world, and every number in the paper can be checked.
+
+**Design:**
+- **Pages from the log.** Headlines are the week's biggest events by measured impact (shocks,
+  shortages, contracts that saved or failed a town). A market page shows prices and weekly
+  changes; a civic page covers guild votes, elections (M32), court rulings (M29) and the
+  treasury. A people page names the players and NPCs behind the week's notable contracts, with
+  their consent (M42).
+- **Every number checks out.** Each figure links to its measure key and carries a "checked" mark
+  from `verify()`. A language model may write the prose around the facts, from verified evidence
+  only, and the text is stored, so the same week always gives the same paper.
+- **Two papers, same facts.** Once M49 (beliefs and rumours) lands, a town can have two papers
+  owned by rival guilds. They choose which verified facts lead and how to frame them, but they
+  can't print a false number. Readers learn media literacy by comparing the two.
+- **Players write too.** Players can submit articles. Each numeric claim must link to a measure
+  key; claims that don't verify are marked, not deleted (the backlog's player journalism idea).
+- **Read it anywhere.** A web page, a printable PDF, an email if the player asks for it, and an
+  audio edition for listening (M71), in every language M43 supports.
+
+**Accept when:** every number in a generated paper re-verifies and a forged one is reported; the
+same week renders the same paper twice; two slanted papers of the same week report identical
+values for every number they share; the paper passes M71's accessibility check.
+
+## M71: play for everyone, accessibility and one-switch play (10 h)
+
+**Goal:** anyone can play, whatever their body or mind. Questless has a head start: the world
+moves one day at a time and every action is a choice, not a reflex. M71 turns that into a
+guarantee and builds the rest: one-switch play, screen readers, eye tracking, colour-blind safe
+charts and plain language. Players with disabilities are paid to co-design and test it; nothing
+ships on the developers' guesses alone.
+
+**Design:**
+- **No timed inputs, by construction.** No action may require a response faster than
+  `min_response_seconds`, and the world can be paused for a single player at any time. A test
+  fails any action with a deadline shorter than that.
+- **One-switch play.** The client offers a short ranked list of actions (the three most useful
+  right now, then "more"). A scanning interface steps through it, and one switch, a single key,
+  a sip-and-puff device or an eye-gaze dwell selects. Every action in the game is reachable this
+  way.
+- **Screen readers and keyboards.** The dashboard follows WCAG 2.2 AA and the Game Accessibility
+  Guidelines: full keyboard use, labels for every control, text alternatives for every chart and
+  map.
+- **Seeing and hearing.** Charts use patterns and labels as well as colour; text scales; motion
+  can be reduced; audio (M69, M70) has captions or a transcript.
+- **Thinking and reading.** A plain-language mode (the backlog's reading-level selector), a
+  "current goal" reminder, confirmation before anything costly, and undo where the rules allow.
+- **Measured parity.** M59's harness gains a **switch bot** that plays only through the scanning
+  interface. Its reward per hour must stay within the schedule-fairness bound.
+
+Studios that did this well show it pays: *The Last of Us Part II* shipped with more than 60
+accessibility options, and Microsoft's Xbox Adaptive Controller made one-switch and custom setups
+standard hardware.
+
+**Accept when:** an automated accessibility checker reports no serious violations on every
+dashboard page; the switch bot's reward per hour is within M59's bound; every chart has a text
+alternative and a non-colour encoding; no action has a deadline below `min_response_seconds`; at
+least one round of paid testing with disabled players is written up in the docs.
+
 ## M46: docs and v0.5.0 (2 h)
 
 PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT updated with what was built; changelog; tag v0.5.0.
+
+## v0.6 scope: a world connected to the real one
+
+Status: **in scope, planned after v0.5** · added 2026-11-01
+
+v0.6 connects the world to the one outside it. Real weather drives the seasons; the engine shows
+what it costs in energy and does its heavy work when the grid is clean; other games feed their
+shortages in as contracts; and play contributes to real science, with players told when it does.
+Each milestone keeps the five guarantees: real-world data enters only through the world log, so
+every run still replays exactly with the network off.
+
+### Build order
+
+| # | Milestone | Depends on | Estimate |
+|---|---|---|---|
+| M67 | **Real weather, real places** | M30 (world log); M34 for many regions; better after M61 | 6 h |
+| M68 | **Clean-energy simulation** (energy shown to players; heavy work when the grid is green) | M23, M34, M40 | 10 h |
+| M72 | **Cross-game federation** (other games' shortages become contracts here) | M30, M34, M39; the backlog's Open Quest Protocol | 14 h |
+| M73 | **Science from play** (your town in a paper; real citizen-science tasks) | M42, M45; the research export (v0.1) | 10 h |
+| M74 | Docs and v0.6.0 tag | all | 2 h |
+
+- **Total:** about 42 h, roughly 5.5 working days; plan for **7 days**.
+- **Can start now:** M68's energy meter (M68.1) and M73's dataset citation (M73.1) need nothing
+  from earlier versions.
+
+## M67: real weather, real places (6 h)
+
+**Goal:** the world's weather is the real weather somewhere. Each region is twinned with a real
+place the designer picks. When that place has a dry month, the region has a drought; when a storm
+crosses it, the roads close. Players can look up the real place and watch the same weather arrive.
+It makes climate something players feel, and it's a natural lesson in data: how a rainfall
+anomaly becomes a harvest.
+
+**Design:**
+- **A twin per region.** Region config names a public weather station or grid point and the
+  source. The designer picks the place; the player's own location is never used (M42).
+- **Weather becomes modifiers.** Rainfall against the place's normal sets farm output; storms set
+  transport capacity; temperature sets spoilage (M61) and food need. The mapping is config, so a
+  sci-fi skin can map the same data to solar flares or dust storms.
+- **The log, not the network.** A separate ingest job fetches each day's weather and writes it into
+  the world log (M30) before the tick, with its source, licence and a hash. The simulation reads
+  only the log, so a replay never touches the network and gives the same hash.
+- **A fallback that is honest.** If the feed is missing, the day is drawn from the place's
+  historical normals with a seeded stream, and the log marks it as filled in.
+- **Respect for real disasters.** Real weather can kill people. Designers can list events to
+  soften or skip (`exclude_events`), and the default caps the in-game severity of any single day,
+  so a real tragedy is never turned into a spectacle.
+- **Open data only.** Sources must allow reuse (national met services' open data, open weather
+  APIs); each record carries its licence.
+
+**Evidence and chains:** a `weather` evidence kind ("Rainfall at the Seville twin station was 14% of
+normal over 30 days, source and licence attached"). A drought chain now starts at a real-world
+measurement.
+
+**Accept when:** replay with the network off gives the same hash; a missing day falls back to
+normals and is marked; the drought chain cites the station, source and licence and re-verifies;
+with the feature off, every scenario's state hash is unchanged.
+
+## M68: clean-energy simulation (10 h)
+
+**Goal:** the engine uses clean power when it can, and everyone can see what the world costs. A
+megaserver's simulation, experiments and model training draw real electricity. M68 measures it,
+moves the heavy work to hours when the grid runs on wind, sun and water, and slows optional work
+when it doesn't. Players see the energy their world uses, and the game rewards patience instead
+of rewarding playing at certain hours.
+
+**Measure:**
+- **An energy meter.** Each run records CPU time by system (tick, contracts, provenance, wiki,
+  experiments). An energy model turns it into kWh (hardware counters where the machine has them,
+  a stated per-core estimate otherwise) and multiplies by the grid's carbon intensity for the
+  server's region and hour, from a grid-data feed. The method and its error are documented next
+  to every number.
+- **What the world cost today.** The dashboard and the newspaper (M70) show energy and emissions
+  per world day, per region and per kind of work, and the share that ran on low-carbon power.
+
+**Schedule:**
+- **Three kinds of work.** *Live* work (the tick players are in) always runs. *Deferrable* work
+  (experiments, M23 sweeps, M40 surrogate training, wiki rebuilds, research exports, forecasts)
+  has a deadline and runs in the cleanest forecast window before it. *Optional* work (extra seeds,
+  precomputed views) runs only below an intensity threshold.
+- **Level of detail follows the grid.** When the grid is dirty, dormant regions (M34) use the
+  cheaper surrogate (M40); when it's clean, they run in full and catch up. The choice is logged,
+  so replays use the same one.
+- **Results never depend on timing.** The scheduler changes when work runs, never what it
+  computes: the same inputs give the same hash whenever they run.
+
+**Encourage, without pressure:**
+- **A green queue for players.** Heavy requests (a 30-day forecast, a consequence-mirror replay,
+  a big research export) cost less in-game coin if the player lets them wait for clean power. The
+  result arrives later; nobody has to be online at a particular hour, so M59's appointment check
+  still passes.
+- **The world's own energy.** In the fantasy skin, towns can build windmills and water wheels; in
+  sci-fi, solar arrays. They're ordinary infrastructure (M55) that lower the town's in-game costs,
+  a small, honest mirror of the real transition.
+- **Server targets in the open.** The studio publishes its clean-share target and the measured
+  share each month, like the economy check publishes balance.
+
+**Accept when:** every run reports energy and emissions with its method; replaying a recorded
+week of real grid data, the scheduler moves at least `clean_shift_target` of deferrable work into
+lower-carbon hours than running it at once; the same inputs give the same hash at any time of day;
+the green queue passes M59's check.
+
+## M72: cross-game federation (14 h)
+
+**Goal:** different games, one connected world. A shooter, a farming game, a strategy game and an
+economy game each stay their own game, made for the players who love that style, but they share
+needs and consequences. A famine in a farming game becomes a supply contract here; a convoy that
+shooter players defended reopens a road; a strategy game's treaty opens a border (M39). Every
+kind of player contributes to the same story.
+
+**What we learn from EVE Online:** CCP tried this with *Dust 514* (2013), a PlayStation 3 shooter
+whose battles decided planetary control in EVE. It closed in 2016: the link was thin, few EVE
+players felt it, and the shooter was on a different platform. CCP is trying again with *EVE
+Vanguard*, a PC shooter set in EVE's universe. (*EVE Echoes* is a separate mobile game with its
+own servers and economy, not a link to EVE Online.) The lesson for M72: the exchange must matter
+to both sides every day, not only in rare battles.
+
+**Design:**
+- **A shared protocol.** The backlog's Open Quest Protocol becomes the federation format: a
+  versioned JSON schema for contracts, deliveries, outcomes and evidence, with a validator and
+  reference clients.
+- **Bridges conserve value.** Each partner game has a bridge account with an escrowed balance and
+  a daily cap. Goods and coin cross only through it, at rates set by trade, so no partner can
+  create value from nothing. Conservation is checked on each side plus the bridge.
+- **Signed, logged messages.** Every message is signed by the sending world and written to both
+  worlds' logs (M30). Each side can replay alone from its log and get the same hash.
+- **Chains cross worlds.** A contract that came from a partner carries the partner's evidence,
+  verified with the partner's published measures, so "Why does this quest exist?" can answer
+  "because a famine in the valley, in another game, on its day 212".
+- **Quarantine.** A partner that sends forged or impossible messages has its bridge frozen
+  automatically, with the evidence; M52's attacker bots try to break the bridge before anything
+  goes live.
+- **No real money, no tokens.** Federation exchanges in-game value only (see
+  [BLOCKCHAIN.md](BLOCKCHAIN.md)).
+
+**Proof at small scale:** two Questless worlds in different skins, plus a tiny reference "convoy
+skirmish" game (a few hundred lines) whose results set a route-security factor here.
+
+**Accept when:** conservation holds in both worlds and the bridges; each world replays alone from
+its log with the same hash; a forged message is rejected and quarantines the bridge; a famine in
+world A posts a funded contract in world B whose chain crosses worlds and re-verifies; the bridge
+cap holds under M52's attackers.
+
+## M73: science from play (10 h)
+
+**Goal:** time in the world is fun, teaches something and contributes to something bigger, and
+players know it. Two parts: the world itself becomes open research data, with players told when a
+study uses their town; and real citizen-science tasks fit naturally into play.
+
+**What already works elsewhere:** EVE Online's *Project Discovery* has had players classify cell
+images for the Human Protein Atlas (2016), search telescope data for exoplanets (2017) and analyse
+COVID-19 immune-cell data (2020). *Foldit* players have solved protein structures, *Eyewire*
+players have mapped neurons, and *Borderlands Science* players have aligned gut-microbe DNA
+sequences for researchers at McGill. The common thread: the task is real, scored against known
+answers, and the game wraps it, not the other way round.
+
+**Your town in a paper:**
+- **Citable data.** Each public run export (v0.1's research export) gets a stable identifier and a
+  citation file, so a paper can cite exactly which region and days it used.
+- **A public study register.** Researchers register a study before running it (preregistration),
+  with its question and the data slice. Players can read every study that uses their world.
+- **Told when it matters.** When a paper is published, players whose actions appear in the cited
+  slice get a notice and a "contributed to research" entry in their skills passport (M45), and the
+  crisis's wiki page links to the paper. Players are pseudonymous in the data (M42), can opt out,
+  and small groups are only released in aggregate.
+
+**Citizen science in play:**
+- **Real tasks, in-world.** A partner project's tasks (classifying images, checking sequences,
+  spotting patterns) appear as an in-world activity: assaying ore samples or reading star charts in
+  fantasy, scanning samples in sci-fi. Tasks come through an adapter for citizen-science platforms
+  such as Zooniverse.
+- **Scored honestly.** Rewards come from hidden known-answer items and agreement between players,
+  so random clicking earns nothing and good work counts.
+- **Modest rewards, never required.** Reward per hour stays at or below ordinary play, there are no
+  streaks, and nothing in the world needs it (M59's check covers it). People do it because it
+  matters, and the game shows them why.
+- **Impact you can see.** A page per project shows what the community has done and what the
+  researchers found, with links to their papers.
+- **Data ethics.** Only partners with ethics approval and data released for public analysis.
+  Player data never trains anyone's models without explicit opt-in.
+
+**What it is not:** the economy simulation itself doesn't train health models; a game's moves
+aren't medical data. The world's log is useful research data for economics and AI (M24), and
+health research is served by embedding real tasks, as Project Discovery does.
+
+**Accept when:** a known-answer check rejects random answers; the adapter never sends a player's
+identity to a partner; M59's check passes with citizen science on; a test citation creates notices
+only for opted-in players in the cited slice; every export carries its identifier and citation
+file.
+
+## M74: docs and v0.6.0 (2 h)
+
+BLUEPRINT, RESEARCH and PRIVACY_AND_IDENTITY updated with what was built; changelog; tag v0.6.0.
 
 ## Idea backlog (not scheduled)
 

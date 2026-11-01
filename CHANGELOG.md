@@ -9,6 +9,10 @@ All notable changes to this project are documented here. The format follows
 - Roadmap and build guide: six new v0.4 milestones, open for contributors. Spoilage and
   storage (M61), know-how that rusts and is taught (M62), players hiring NPCs (M63), tool rental
   (M64), scrap and recycling (M65), and market fair days (M66).
+- Roadmap and build guide: three new v0.5 milestones (voice check-ins and real breaks, M69; the
+  weekly newspaper, M70; accessibility and one-switch play, M71) and a new v0.6 scope, a world
+  connected to the real one: real weather (M67), clean-energy simulation (M68), cross-game
+  federation (M72) and science from play (M73).
 - Land and mine claims (M60), off by default: `[claims] enabled = true` gives every gatherer the
   claim they work. A tenant pays the owner `rent_share` of the day's output value. An owner short
   of coin sells a claim to the richest NPC and rents it back. `TickStats` gains `claims` (rent,
