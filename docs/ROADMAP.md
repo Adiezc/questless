@@ -1282,9 +1282,10 @@ something players learn to check: what NPCs say happened, against what the log p
 | M69 | **Light check-ins by voice, and real breaks** | M37, M42, M59 | 8 h |
 | M70 | **The weekly newspaper** | M25, M43; M49 for slanted papers | 6 h |
 | M71 | **Play for everyone: accessibility and one-switch play** | none (dashboard checks can start now); M59 for the parity check | 10 h |
+| M75 | **Offline basics** (a few safe things to do with no connection) | M37, M69; M24's local world for practice runs | 8 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 86 h, roughly 11 working days; plan for **14 days**.
+- **Total:** about 94 h, roughly 12 working days; plan for **15 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -1569,6 +1570,42 @@ dashboard page; the switch bot's reward per hour is within M59's bound; every ch
 alternative and a non-colour encoding; no action has a deadline below `min_response_seconds`; at
 least one round of paid testing with disabled players is written up in the docs.
 
+## M75: offline basics (8 h)
+
+**Goal:** people on a train, a plane or a farm with a weak signal can still take part. Offline
+play is deliberately small: read the latest news of your world, plan, and queue a few simple
+choices that the server checks when you reconnect. Nothing done offline can earn an advantage
+over playing online, because nothing done offline takes effect until the server says so.
+
+**What works offline:**
+- **Read.** The client keeps a signed snapshot of what you last saw: your contracts, the board,
+  prices, your guild, the latest newspaper (M70). It shows its age plainly ("as of 2 days ago").
+- **Queue a few intentions.** Accept a contract if it's still open, hand one back, change a
+  standing order's limits within the bounds you already set (M37), vote on an open guild
+  question. That's the whole list, and it's capped at `offline_intents` a day.
+- **Practise.** Because the world is deterministic, the client can run a private copy of your
+  town forward from the snapshot to try ideas ("what if I supply ore for a week?"). Practice runs
+  are marked as such and nothing in them carries over except what you choose to queue.
+
+**Why it can't be exploited:**
+- **Intentions, not actions.** Queued items are requests. On reconnect the server applies them in
+  arrival order against the world *as it is now*, not as it was in the snapshot. A contract taken
+  by someone else meanwhile is simply refused, with a plain message.
+- **No trading offline.** Buying, selling, caravans and anything priced aren't on the list, so
+  old prices can't be used against new ones.
+- **The device clock isn't trusted.** Times come from the server on arrival. Changing the phone's
+  clock, or queuing on several devices, gains nothing; duplicates are dropped.
+- **No new information.** Practice runs use only the snapshot and seeded guesses for shocks; the
+  real schedule of shocks is never on the device (the same rule that hides the shock schedule from players today).
+- **Same reward, never more.** M59's harness gains an **offline traveller bot** that plays a day
+  online, then three days offline with queued intents. Its reward per hour must stay within the
+  schedule-fairness bound, and above the bot that does nothing while away.
+
+**Accept when:** every queued intent is either applied or refused with a reason on reconnect;
+nothing priced can be queued; a practice run never changes the server's state; a tampered
+snapshot or clock gains nothing in M52's attacker tests; the traveller bot stays within M59's
+bound.
+
 ## M46: docs and v0.5.0 (2 h)
 
 PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT updated with what was built; changelog; tag v0.5.0.
@@ -1579,7 +1616,8 @@ Status: **in scope, planned after v0.5** · added 2026-11-01
 
 v0.6 connects the world to the one outside it. Real weather drives the seasons; the engine shows
 what it costs in energy and does its heavy work when the grid is clean; other games feed their
-shortages in as contracts; and play contributes to real science, with players told when it does.
+shortages in as contracts; play contributes to real science, with players told when it does; the
+map can sit on a real table; and a world that shuts down stays alive as open data.
 Each milestone keeps the five guarantees: real-world data enters only through the world log, so
 every run still replays exactly with the network off.
 
@@ -1591,9 +1629,11 @@ every run still replays exactly with the network off.
 | M68 | **Clean-energy simulation** (energy shown to players; heavy work when the grid is green) | M23, M34, M40 | 10 h |
 | M72 | **Cross-game federation** (other games' shortages become contracts here) | M30, M34, M39; the backlog's Open Quest Protocol | 14 h |
 | M73 | **Science from play** (your town in a paper; real citizen-science tasks) | M42, M45; the research export (v0.1) | 10 h |
+| M76 | **A tabletop AR map** (the region on the kitchen table, for playing together) | M35, M55, M71 | 8 h |
+| M77 | **Worlds never die** (a world that shuts down becomes open data anyone can restart) | M30, M42; M33 for replaceable assets | 6 h |
 | M74 | Docs and v0.6.0 tag | all | 2 h |
 
-- **Total:** about 42 h, roughly 5.5 working days; plan for **7 days**.
+- **Total:** about 56 h, roughly 7 working days; plan for **9 days**.
 - **Can start now:** M68's energy meter (M68.1) and M73's dataset citation (M73.1) need nothing
   from earlier versions.
 
@@ -1761,6 +1801,67 @@ health research is served by embedding real tasks, as Project Discovery does.
 identity to a partner; M59's check passes with citizen science on; a test citation creates notices
 only for opted-in players in the cited slice; every export carries its identifier and citation
 file.
+
+## M76: a tabletop AR map (8 h)
+
+**Goal:** a world you gather around. With AR glasses or a phone, the region appears on the kitchen
+table: towns, roads, caravans moving, a mine glowing red when it collapses. A family or a group
+of friends sits around it together, points at a town and asks "why is this one hungry?", and
+hears the chain. It turns play back into something social and in the same room, like a board game
+night.
+
+**Design:**
+- **One map, many viewers.** Devices in the same room share one anchored map, so everyone sees the
+  same thing in the same place. One person can play while others watch, or each plays their own
+  character on the shared map.
+- **The economy made visible.** Trade flows are lines whose thickness is volume (M35's roads),
+  shortages are colours with patterns (M71), and dependencies light up when you touch a site
+  (M55). Tapping anything opens its "why" chain, read aloud if you like.
+- **The same game, not a new one.** The AR client uses the same public view and the same ranked
+  action list as every other client (M71), so it has no special powers and no exclusive rewards.
+- **Made for a session, then put away.** A table session has a natural end ("the week's market
+  closes"), suggested when the group starts. M59's stopping points apply.
+- **Privacy in the room.** Room scanning and camera images stay on the device; only the map's
+  position on the table is shared between the devices in the room, and nothing reaches the
+  server.
+- **Open format.** The map is published as standard 3D scene data from the public view, so the
+  community can build their own clients, and a plain 2D map always works for people without AR.
+
+**Accept when:** the AR client reads only the public view and sends only ordinary actions; two
+devices show the same map state for the same tick; no camera or room data leaves the device; every
+AR view has a 2D equivalent; the shared map passes M71's colour and contrast checks.
+
+## M77: worlds never die (6 h)
+
+**Goal:** a world players spent years in never just disappears. When an online game shuts down,
+everything its players built usually vanishes with it. The shutdown of Ubisoft's *The Crew* in
+2024 started the *Stop Killing Games* campaign, a European Citizens' Initiative that passed a
+million signatures in 2025. Questless can show the alternative in code: if a server shuts down,
+its world becomes an open archive that anyone can verify and restart.
+
+**Design:**
+- **An ark export.** One command bundles the world log (M30), the latest snapshots, the scenario
+  and config, the engine version and the hash chain into an archive. Any machine with the open
+  engine can boot it and replay it to the published final hash, so the restarted world is provably
+  the same world.
+- **Nothing personal in it.** The world log holds pseudonymous ids and no personal data by design
+  (M42), so it can be published. The export runs M42's scanner and refuses to finish if anything
+  personal is found.
+- **Players can come home.** Each player can download a signed key for their characters. On a
+  restarted world, the key proves the character is theirs without revealing who they are. It's
+  opt-in: characters nobody claims become ordinary NPCs, so towns don't empty.
+- **Assets that can be replaced.** Third-party art and music may not be releasable. Because skins
+  are separate from the engine (M33), an ark runs with the open default skin when an asset can't
+  be shared.
+- **A pledge in the repo.** A short `SUNSET.md` template that studios can adopt: what they'll
+  release, how much notice players get, and how long the final archive stays up.
+- **Drills, not promises.** CI builds an ark from a test world every week and boots it on a clean
+  machine. A restart that doesn't reproduce the hash fails the build, so the promise is checked
+  long before it's needed.
+
+**Accept when:** an ark from a long run boots on a clean machine and replays to the final hash; the
+export refuses to finish when a planted personal record is present; a player key claims its
+character on the restarted world and nothing else; the weekly drill runs in CI.
 
 ## M74: docs and v0.6.0 (2 h)
 

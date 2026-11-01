@@ -46,10 +46,11 @@ guarantees, propose it in the issue before building it.
     [M45](#m45-skills-passport) · [M50](#m50-told-history-versus-the-log) ·
     [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
     [M70](#m70-the-weekly-newspaper) ·
-    [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M46](#m46-docs-and-v050)
+    [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M75](#m75-offline-basics) ·
+    [M46](#m46-docs-and-v050)
   - v0.6: [M67](#m67-real-weather-real-places) · [M68](#m68-clean-energy-simulation) ·
     [M72](#m72-cross-game-federation) · [M73](#m73-science-from-play) ·
-    [M74](#m74-docs-and-v060)
+    [M76](#m76-a-tabletop-ar-map) · [M77](#m77-worlds-never-die) · [M74](#m74-docs-and-v060)
 - [Part 5: backlog ideas, sketched](#part-5-backlog-ideas-sketched)
 
 ---
@@ -1380,6 +1381,31 @@ the switch bot proves in numbers that one-switch players aren't worse off.
 **Pitfalls:** automated checks find maybe a third of real problems. The paid testing round is not
 optional, and its findings go into the docs even when they're unflattering.
 
+### M75: offline basics
+
+**Where:** new `src/questless/offline/` (`snapshot.py`, `intents.py`, `practice.py`),
+`player.py` (applying intents on arrival), M37's standing orders, M59's harness, M52's attackers.
+
+**Design in one paragraph:** the server signs a snapshot of the player's public view. Offline, the
+client stores intents from a fixed list with a local sequence number. On reconnect, the server
+drops duplicates, applies intents in arrival order as ordinary actions against the current world,
+and returns applied or refused for each. Practice runs build a local world from the snapshot with
+seeded stand-ins for unknown shocks and never sync.
+
+| Task | Size | How |
+|---|---|---|
+| M75.1 Signed snapshot **(good first issue)** | S | Public view, tick and signature; the client shows its age. |
+| M75.2 Intent list and cap | S | Fixed list, parameter schemas, `offline_intents` a day; anything priced refused. |
+| M75.3 Apply on arrival | M | Deduplicate by device sequence, apply in arrival order, return reasons for refusals. |
+| M75.4 Practice runs | M | Local world from the snapshot; no shock schedule; never synced. |
+| M75.5 Bots and attackers | M | Traveller bot in M59's harness; clock, replay and multi-device attacks in M52. |
+
+**Tests:** refusals carry reasons; priced intents rejected; practice never touches the server
+state; attacker tests gain nothing.
+
+**Pitfalls:** the temptation is to let offline players "catch up" with a bonus. Don't: the
+standing orders already keep them working while they're away, and a bonus is what attackers farm.
+
 ### M46: docs and v0.5.0
 
 Update PRIVACY_AND_IDENTITY, SKILLS and BLUEPRINT with what was built; changelog; tag v0.5.0.
@@ -1484,6 +1510,54 @@ players in the slice; M59's check passes.
 
 **Pitfalls:** never inflate the claim of impact. Show only what partners have confirmed, and let
 players see a task's purpose before they start it.
+
+### M76: a tabletop AR map
+
+**Where:** a public view endpoint in `api.py` (map scene), a reference client in
+`clients/tabletop/` (outside the engine package), M71's ranked action list, M35 and M55's map
+data.
+
+**Design in one paragraph:** the engine publishes a map scene per tick (sites, roads with volumes,
+shortages, dependencies) as plain data. The reference client turns it into a 3D scene anchored on
+a table and shares only the anchor between devices in the room. Actions go through the same API as
+every other client.
+
+| Task | Size | How |
+|---|---|---|
+| M76.1 Map scene data **(good first issue after M35)** | M | Sites, roads, flows and shortages per tick in a documented format. |
+| M76.2 Reference client | M | Anchored scene, shared anchor, touch to open a chain. |
+| M76.3 Accessibility and 2D | S | Patterns as well as colours; the same scene as a 2D map. |
+| M76.4 Session ends | S | A suggested session length and a natural end, from M59's stopping points. |
+
+**Tests:** scene data matches the tick's `TickStats`; the client sends only ordinary actions; no
+camera data in network traces.
+
+**Pitfalls:** keep game logic out of the AR client. Anything the table can do, the 2D client must
+be able to do too.
+
+### M77: worlds never die
+
+**Where:** new `src/questless/ark/` (`export.py`, `boot.py`, `keys.py`), M30's log, M42's
+scanner, `docs/SUNSET.md`, a weekly CI job.
+
+**Design in one paragraph:** `export.py` writes the log, snapshots, scenario, engine version and
+hash chain into one archive after M42's scanner passes. `boot.py` starts a world from an archive
+and replays it to the recorded hash. `keys.py` issues signed character keys and checks them on a
+restarted world.
+
+| Task | Size | How |
+|---|---|---|
+| M77.1 Ark format **(good first issue after M30)** | S | A manifest listing every file, its hash and the engine version. |
+| M77.2 Export with privacy scan | M | Bundle and refuse on personal data. |
+| M77.3 Boot and verify | M | Boot on a clean machine; replay to the final hash. |
+| M77.4 Character keys | M | Signed keys; claim on restart; unclaimed characters become NPCs. |
+| M77.5 Weekly drill and pledge | S | CI job; `SUNSET.md` template. |
+
+**Tests:** round trip export, boot and replay; planted personal data blocks the export; keys claim
+only their own characters.
+
+**Pitfalls:** the engine version matters: an ark must name the exact engine release it replays
+with, and old releases must stay installable.
 
 ### M74: docs and v0.6.0
 
