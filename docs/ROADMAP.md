@@ -1284,9 +1284,10 @@ something players learn to check: what NPCs say happened, against what the log p
 | M71 | **Play for everyone: accessibility and one-switch play** | none (dashboard checks can start now); M59 for the parity check | 10 h |
 | M75 | **Offline basics** (a few safe things to do with no connection) | M37, M69; M24's local world for practice runs | 8 h |
 | M79 | **Guilds on prescription** (gentle, time-limited guilds for lonely or isolated people, run with care partners) | M42, M44, M59, M69, M71 | 10 h |
+| M81 | **Career tasters** (try a role in the game, then see the real jobs behind it; evidence in [RESEARCH.md](RESEARCH.md#m81-career-tasters)) | M33, M45, M47, M62, M71; M75 for practice runs | 10 h |
 | M46 | Docs and v0.5.0 tag | all | 2 h |
 
-- **Total:** about 104 h, roughly 13 working days; plan for **17 days**.
+- **Total:** about 114 h, roughly 14 working days; plan for **18 days**.
 
 ## M42: privacy as code (6 h)
 
@@ -1650,6 +1651,78 @@ the studies are often small. M79 is built so it can be properly evaluated, not a
 choice of next steps; no field in the world log or player record holds a reason for referral;
 facilitator tools include concern reporting and signposting; M71's accessibility check passes with
 the cohort defaults; an evaluation protocol template for partners is in the docs.
+
+## M81: career tasters (10 h)
+
+**Goal:** a player tries a role in the game, enjoys it as play, and comes away knowing what the real
+jobs behind it are like. The research ([RESEARCH.md](RESEARCH.md#m81-career-tasters)) is clear on
+one point: a career game alone teaches little. What works is play, then reflection, then contact
+with real people and real information, repeated over months. M81 builds that loop around ordinary
+play, so the game stays a game.
+
+**The loop:**
+1. **Do.** "Try a week as a smith" drops the player into a real situation: the live world, or a
+   practice copy of a live crisis for new players (M75). Real stakes, real shortages, nothing
+   scripted.
+2. **Notice.** At a natural pause (the end of a world day, never mid-action), the game may name
+   one skill the player just used: "You planned production through a shortage." At most one a
+   session, and it can be switched off.
+3. **Reflect.** After the session, three short questions: what did you enjoy, what was hard, what
+   surprised you? About a minute, always skippable, answers private unless the player saves them.
+4. **Connect.** A "Then and now" card, outside the fiction, links what the player did to real
+   jobs: the same and different tasks, pay ranges, and routes in (apprenticeships first, then
+   college and degrees). Every figure shows its source and year and links to an official careers
+   service.
+5. **Talk.** The player can export a one-page taster report (what they did, which skills, what
+   they thought) to bring to a careers adviser, a parent or a mentor.
+6. **Meet.** Partner schools can attach real encounters to a taster: a video Q&A with a working
+   welder or farmer, or a workplace visit.
+7. **Repeat.** Tasters exist for every role. The next suggestion rotates through roles the player
+   hasn't tried.
+
+**Keeping it fun:**
+- **Tasters are play, not lessons.** No quizzes, no pop-ups during action, no tutorial voice. The
+  learning happens around the session, not inside it.
+- **No grades and no verdicts.** Taster performance is never scored, ranked or compared, and the
+  game never says "you should be a smith". It shows; the player decides.
+- **No rewards for completing careers.** No points, badges or items for finishing tasters or
+  answering questions: rewards turn reflection into box-ticking, and the evidence says thinking,
+  not enjoyment or rewards, drives learning.
+- **Optional, always.** A player who never opens a card loses nothing in the game.
+
+**Fair to everyone:**
+- **Suggestions never use gender or background.** The suggestion function has no access to them,
+  and rotates every player through every role. Career games don't fix stereotypes by default, so
+  the design has to.
+- **Every role shows a range of people,** and non-degree routes sit alongside degrees, not below.
+
+**Any setting, honestly:**
+- **Cards attach to the engine's role, not the skin's name** (M33), so one card works for the
+  fantasy smith and the sci-fi fabricator.
+- **History is the bridge in fantasy:** most fantasy roles are ancestors of real ones, and
+  apprenticeships began in medieval guilds, which M62's training contracts already mirror.
+- **No honest match, no card.** A role with no real skill behind it (a dragon tamer) gets none;
+  each card lists the shared activities that justify it, and a reviewer checks them.
+
+**Content and data:** cards are short, hand-written files in the repo, one per role and country,
+reviewed once a year, with links to official careers services for the details. Contributors can
+write cards for their own country without touching code. ESCO skill tags can fill each card's
+skills section automatically later; a full statistics pipeline is only worth building if a partner
+needs it.
+
+**Measured, not assumed:** a partner school runs a before-and-after evaluation with a follow-up
+months later, with ethics approval and outside the game. The docs include the protocol.
+
+**Accept when:**
+- a taster runs in the live or practice world with no notices during action and at most one per
+  session;
+- reflection can be skipped and stores nothing unless the player saves it;
+- every card figure shows a source and year, and every card lists the activities that justify it;
+- no reward, score or ranking depends on tasters or reflection;
+- the suggestion function takes no gender or background input, and every player is offered every
+  role;
+- the fantasy and sci-fi skins show the same card for the same role;
+- the evaluation protocol is in the docs.
 
 ## M46: docs and v0.5.0 (2 h)
 

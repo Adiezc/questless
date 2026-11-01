@@ -47,7 +47,7 @@ guarantees, propose it in the issue before building it.
     [M51](#m51-records-that-decay) · [M69](#m69-light-check-ins-by-voice-and-real-breaks) ·
     [M70](#m70-the-weekly-newspaper) ·
     [M71](#m71-play-for-everyone-accessibility-and-one-switch-play) · [M75](#m75-offline-basics) ·
-    [M79](#m79-guilds-on-prescription) · [M46](#m46-docs-and-v050)
+    [M79](#m79-guilds-on-prescription) · [M81](#m81-career-tasters) · [M46](#m46-docs-and-v050)
   - v0.6: [M67](#m67-real-weather-real-places) · [M68](#m68-clean-energy-simulation) ·
     [M72](#m72-cross-game-federation) · [M73](#m73-science-from-play) ·
     [M76](#m76-a-tabletop-ar-map) · [M77](#m77-worlds-never-die) ·
@@ -1433,6 +1433,35 @@ date; accessibility defaults on.
 **Pitfalls:** this is the milestone where a mistake can hurt someone. Don't launch without a care
 partner's safeguarding lead reviewing the facilitator tools, and don't measure outcomes inside the
 game.
+
+### M81: career tasters
+
+**Where:** new `src/questless/careers/` (`tasters.py`, `cards.py`, `report.py`), `data/careers/`
+(one card file per role and country), M45's passport, M75's practice worlds, the client (cards and
+the taster report), `docs/CAREERS_EVALUATION.md` (the partner protocol). Evidence:
+[RESEARCH.md](RESEARCH.md#m81-career-tasters).
+
+**Design in one paragraph:** a taster is a session flag on the player plus a role. While it's set,
+the client may show one skill notice at the end of a world day, chosen from the actions the player
+actually took. When the session ends, the client offers the reflection questions and the card for
+that engine role and the player's country. `report.py` renders the one-page taster report from the
+session's actions and any saved answers.
+
+| Task | Size | How |
+|---|---|---|
+| M81.1 Card format **(good first issue, can start now)** | S | A small TOML or Markdown format: role, country, real jobs, same and different tasks, pay range with source and year, routes, links, and the justifying activities. Write the five v0.1 roles for one country. |
+| M81.2 Card checks **(good first issue)** | S | A test that every card has sources, years and justifying activities, and warns when data is over two years old. |
+| M81.3 Taster sessions | M | Session flag, role, start in the live world or a practice copy; end-of-day skill notice from the action log, capped at one. |
+| M81.4 Reflection and passport | S | Three skippable questions; nothing stored unless saved; optional passport entry. |
+| M81.5 Taster report | S | One-page PDF or HTML for advisers and parents. |
+| M81.6 Suggestions | S | Rotate through untried roles; the function takes only the player's taster history. |
+| M81.7 Evaluation protocol | S | Before, after and follow-up measures for partner schools. |
+
+**Tests:** notice caps; nothing stored on skip; card checks; no reward path from tasters; the
+suggestion function's signature; the same card in both skins.
+
+**Pitfalls:** the urge to add a quiz, a badge or a "your ideal career" result will come up. Each
+one makes it feel like homework or tells players who they are; keep them out.
 
 ### M46: docs and v0.5.0
 

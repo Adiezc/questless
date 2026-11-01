@@ -19,6 +19,7 @@ with DOI links. Link to it from the milestone in [ROADMAP.md](ROADMAP.md).
 
 - [M58: fairness for late joiners](#m58-fairness-for-late-joiners) (searched 2026-10-23)
 - [M59: respectful play](#m59-respectful-play) (searched 2026-10-23)
+- [M81: career tasters](#m81-career-tasters) (searched 2026-11-01)
 
 ## M58: fairness for late joiners
 
@@ -491,3 +492,130 @@ industry. *Nature Human Behaviour, 7*(10), 1753–1766. https://doi.org/10.1038/
 Zhou, X., Liao, M., Gorowska, M., Chen, X., & Li, Y. (2024). Compliance and alternative behaviors
 of heavy gamers in adolescents to Chinese online gaming restriction policy. *Journal of
 Behavioral Addictions, 13*(2), 687–692. https://doi.org/10.1556/2006.2024.00021
+
+## M81: career tasters
+
+Evidence for [M81](ROADMAP.md#m81-career-tasters-10-h). Its aim: a player tries a role in the game
+and comes away knowing what the real jobs behind it are like, without the game turning into a
+lesson.
+
+The question for the research: do games help people explore careers, what makes them work, and
+does teenage career exploration matter later in life?
+
+### What the evidence changes in the design
+
+1. **The game is the experience; the learning comes after it.** Serious games beat conventional
+   teaching by a small margin, and by more when they are combined with other teaching, played over
+   several sessions and played in groups (Wouters et al., 2013). Support inside the game adds to
+   learning, most for skills (Wouters & van Oostendorp, 2013). So M81 wraps play in reflection,
+   conversation and real encounters, and offers tasters as a series, not a one-off.
+2. **Thinking, not fun or rewards, drives learning.** In a study of 809 Swiss teenagers, how much
+   the game stimulated thinking predicted what they learned about jobs; enjoyment and flow did not
+   (Keller et al., 2022). So M81 adds a short reflection and a single skill notice, and gives no
+   points or badges for completing them.
+3. **Career games widen horizons and build confidence.** *like2be* broadened the jobs teenagers
+   considered, mainly when it was part of careers lessons (Keller et al., 2023). In a randomised
+   trial, *Youth@Work* players grew faster on concern, control and confidence than a paper-based
+   group (Hummel et al., 2018). A game about nursing raised teenagers' self-efficacy and their view
+   of its job prospects (Mitchell et al., 2024).
+4. **Stereotypes have to be designed against.** *like2be* did little for gendered attitudes to
+   jobs (Keller et al., 2023); younger teenagers' aspirations are more gendered than older ones'
+   (Hoff et al., 2022); and boys were more likely than girls to see gaming skills as career
+   resources (Hoffelner et al., 2025). So M81's suggestions never use gender or background, and
+   every player is offered every role.
+5. **Real information matters because aspirations and jobs don't match.** About half of 3,367 US
+   teenagers aspired to investigative or artistic careers, which make up about 8% of the US labour
+   market (Hoff et al., 2022). The "Then and now" card puts real pay and routes next to play.
+6. **Someone to talk to makes skills transfer.** Teenagers turned gaming skills into career
+   thinking mainly when they also sought social support (Hoffelner et al., 2025). Hence the taster
+   report for advisers and parents.
+7. **Exploring work as a teenager pays off.** Across longitudinal data from eight countries,
+   teenagers who explore, experience and think about work have lower unemployment, higher wages
+   and more job satisfaction as adults (OECD, 2021). Aspirations at 16 predict careers in the
+   mid-30s (Schoon & Polek, 2011), and moderate work experience at school helps young people
+   commit to a direction (Thouin et al., 2023).
+
+### Findings by lever
+
+| Finding | Design consequence |
+|---|---|
+| Serious games: d = 0.29 over conventional teaching; larger with other instruction, multiple sessions and group play (Wouters et al., 2013). | Tasters as a repeated series, with group and adviser debriefs. |
+| Instructional support in games: d = 0.34, largest for skills and for support that helps select relevant information; some publication bias (Wouters & van Oostendorp, 2013). | One skill notice that points at what mattered, at a natural pause. |
+| Cognitive stimulation predicted learning about occupations; enjoyment and flow did not (Keller et al., 2022). | Short reflection questions; no rewards for completing them. |
+| Gamification works best with game fiction and with competition combined with collaboration (Sailer & Homner, 2020). | Keep tasters inside the real game and its fiction, not a separate lesson mode. |
+| *like2be* broadened career horizons, mainly when built into careers lessons; limited effect on reflection about one's own aptitude and on gendered attitudes (Keller et al., 2023). | Partner with schools; design actively against stereotypes. |
+| *Youth@Work* RCT (n = 93): faster growth in career adaptability (concern, control, confidence) than the paper version; short-term effects only (Hummel et al., 2018). | Expect short-term gains; measure follow-up. |
+| A nursing game raised teenagers' self-efficacy and perceived job prospects (Mitchell et al., 2024). | Show realistic prospects on the card. |
+| Teenage aspirations cluster in fields with few jobs (Hoff et al., 2022). | Real pay, demand and routes on every card. |
+| Gaming skills transfer to career planning mainly with social support; boys more likely to recognise them (Hoffelner et al., 2025). | Taster report for adults; rotate roles for everyone. |
+| Teenage exploration and experience predict better adult employment outcomes across eight countries (OECD, 2021). | Link tasters to real encounters through schools. |
+| Aspirations at 16 predict attainment in the mid-30s, beyond background and ability (Schoon & Polek, 2011). | Teenage exploration is worth supporting. |
+| Moderate teenage work builds identity commitment, which predicts a career-related job (Thouin et al., 2023). | Tasters can support, not replace, real experience. |
+
+### What the evidence does not settle
+
+- Whether career games change real choices years later: the trials measure attitudes and
+  knowledge soon after play (Hummel et al., 2018; Mitchell et al., 2024).
+- Most studies are small, short and use self-reports; game-based learning studies show signs of
+  publication bias (Wouters & van Oostendorp, 2013).
+- The longitudinal studies are correlational: teenagers who explore may differ in ways the
+  controls miss (OECD, 2021).
+
+### Gaps not yet searched
+
+- The effect of telling students about real earnings on their education choices.
+- Employer encounters (careers talks, workplace visits) and later outcomes, in the UK in
+  particular.
+- Career games for adults changing career, not only teenagers.
+- How children's views of jobs form before the teenage years.
+
+### References
+
+Hoff, K., Van Egdom, D., Napolitano, C., Hanna, A., & Rounds, J. (2022). Dream jobs and employment
+realities: How adolescents' career aspirations compare to labor demands and automation risks.
+*Journal of Career Assessment, 30*(1), 134–156. https://doi.org/10.1177/10690727211026183
+
+Hoffelner, C., Düggeli, A., & Nägele, C. (2025). Unlocking hidden resources: The role of gaming
+skills in fostering career adaptability for resilience in the career planning of young people.
+*Nordic Journal of Vocational Education and Training, 15*(5), 101–139.
+https://doi.org/10.3384/njvet.2242-458x.25155101
+
+Hummel, H. G. K., Boyle, E. A., Einarsdóttir, S., Pétursdóttir, A., & Graur, A. (2018). Game-based
+career learning support for youth: Effects of playing the Youth@Work game on career adaptability.
+*Interactive Learning Environments, 26*(6), 745–759.
+https://doi.org/10.1080/10494820.2017.1402062
+
+Keller, C., Döring, A. K., & Makarova, E. (2022). Factors influencing the effectiveness of serious
+gaming in the field of vocational orientation. *Education Sciences, 13*(1), Article 16.
+https://doi.org/10.3390/educsci13010016
+
+Keller, C., Makarova, E., & Döring, A. K. (2023). Career choice with the serious game like2be.
+*International Journal of Game-Based Learning, 13*(1), 1–18. https://doi.org/10.4018/ijgbl.327788
+
+Mitchell, G., Rainey, D., Healy, M., Anderson, T., Stark, P., Kalu, F. A., Monaghan, C., & Linden,
+M. A. (2024). Employing a serious game intervention to promote adolescent school children's
+perceptions of nursing and midwifery professions. *BMC Nursing, 23*(1), Article 372.
+https://doi.org/10.1186/s12912-024-02045-1
+
+OECD. (2021). *Indicators of teenage career readiness: An analysis of longitudinal data from eight
+countries* (OECD Education Working Papers). OECD Publishing. https://doi.org/10.1787/cec854f8-en
+
+Sailer, M., & Homner, L. (2020). The gamification of learning: A meta-analysis. *Educational
+Psychology Review, 32*(1), 77–112. https://doi.org/10.1007/s10648-019-09498-w
+
+Schoon, I., & Polek, E. (2011). Teenage career aspirations and adult career attainment: The role of
+gender, social background and general cognitive ability. *International Journal of Behavioral
+Development, 35*(3), 210–217. https://doi.org/10.1177/0165025411398183
+
+Thouin, É., Dupéré, V., & Denault, A.-S. (2023). Paid employment in adolescence and rapid
+integration into a career-related job in early adulthood among vulnerable youth: The identity
+connection. *Journal of Vocational Behavior, 142*, Article 103864.
+https://doi.org/10.1016/j.jvb.2023.103864
+
+Wouters, P., van Nimwegen, C., van Oostendorp, H., & van der Spek, E. D. (2013). A meta-analysis of
+the cognitive and motivational effects of serious games. *Journal of Educational Psychology,
+105*(2), 249–265. https://doi.org/10.1037/a0031311
+
+Wouters, P., & van Oostendorp, H. (2013). A meta-analytic review of the role of instructional
+support in game-based learning. *Computers & Education, 60*(1), 412–425.
+https://doi.org/10.1016/j.compedu.2012.07.018

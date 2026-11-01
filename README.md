@@ -227,8 +227,8 @@ integration.
   recycling and fair days.
 - **v0.5, people, privacy and learning:** privacy as code, a language bridge with English as the
   common language, steward NPCs, a skills passport and eleven skill tracks, voice check-ins and
-  real breaks, a weekly newspaper, accessibility with one-switch play, offline basics, and
-  guilds on prescription for lonely or isolated people.
+  real breaks, a weekly newspaper, accessibility with one-switch play, offline basics,
+  guilds on prescription for lonely or isolated people, and career tasters.
 - **v0.6, a world connected to the real one:** real weather, clean-energy simulation,
   cross-game federation, science from play, a tabletop AR map, worlds that never die,
   volunteer computing on clean power, and a policy lab for real towns.

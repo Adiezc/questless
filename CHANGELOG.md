@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
   never die (M77, both v0.6).
 - Roadmap and build guide: guilds on prescription (M79, v0.5), idle devices doing science on
   clean power (M78) and a policy lab for real towns (M80, both v0.6).
+- Roadmap, build guide and research evidence: career tasters (M81, v0.5), built on the evidence
+  that career games work when play is followed by reflection, conversation and real encounters.
 - Land and mine claims (M60), off by default: `[claims] enabled = true` gives every gatherer the
   claim they work. A tenant pays the owner `rent_share` of the day's output value. An owner short
   of coin sells a claim to the richest NPC and rents it back. `TickStats` gains `claims` (rent,
