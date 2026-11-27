@@ -5,7 +5,7 @@ from questless.cli import main
 
 
 def test_package_imports_with_version():
-    assert questless.__version__.startswith("0.2.0")
+    assert questless.__version__.startswith("0.3.0")
 
 
 def test_cli_runs(capsys):

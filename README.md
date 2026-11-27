@@ -16,7 +16,7 @@ Questless has two halves:
 
 | | What it is | Status |
 |---|---|---|
-| **The engine** | A small, tested Python engine (one settlement, 100 NPCs, 4 goods) with a dashboard, API and CLI. Coin and goods are conserved every simulated day, every quest is funded and explains itself, and every run replays exactly. | **Working today** (v0.2.0, 380+ tests) |
+| **The engine** | A small, tested Python engine (one settlement, 100 NPCs, 4 goods) with a dashboard, API and CLI. Coin and goods are conserved every simulated day, every quest is funded and explains itself, and every run replays exactly. | **Working today** (v0.3.0, 400+ tests) |
 | **The blueprint** | A public [roadmap](docs/ROADMAP.md) and [build guide](docs/BUILD_GUIDE.md) for the systems a 2030s megaserver MMO would need: futures and central banks, courts, elections, diplomacy, ecology, fair automation instead of bots, privacy by design, AI steward NPCs, and real-world skills taught through play. | **Planned and open for contributors** (v0.2 to v0.6, about 70 milestones) |
 
 It is **not a game**: there's no 3D client, no combat and no multiplayer server. It's the
@@ -91,8 +91,8 @@ uv run questless replay s.json                              # rebuild it and ver
 uv run questless repro bug.json                              # replay a bug report and check what it saw
 uv run questless diff --base origin/main                     # economy impact of your changes
 uv run questless export scenarios/iron_shortage.toml --seeds 20 --out data/  # CSV for research
-uv run pytest                                               # 380+ tests, ~75 s
-uv run pytest -m "not slow"                                  # skip the long runs, ~45 s
+uv run pytest                                               # 400+ tests, ~95 s
+uv run pytest -m "not slow"                                  # skip the long runs, ~60 s
 ```
 
 ## How it works

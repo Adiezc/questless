@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-27
+
 ### Changed
 - Shock aftermath is attributed. The causal walk dropped a shock 7 days after it ended, and
   60 days after it started it also lost the pre-shock baseline, so the long poverty trap after
