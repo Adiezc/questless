@@ -48,6 +48,11 @@ All notable changes to this project are documented here. The format follows
   closed contract's `closed_tick`, a guild contract's `guild_id`, a day's contract report, a
   missing evidence baseline. One was a real slip: the report read a guild's treasury with the
   string `"coin"` instead of `Asset.COIN`, which only worked because `Asset` is a `StrEnum`.
+- `docs/VALIDATION.md` D3: with no shock at all, 8 of 10 baseline seeds lock into a state with
+  tools at 32 to 55 (base 24), less ore, permanent hunger and a coin Gini near 0.6. Smiths go
+  broke, can never afford inputs again, and the survivors' capacity sets the price. Diagnosed
+  with a Claude Fable 5.2 subagent and tracked by a strict `xfail`
+  (`test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years`).
 
 ## [0.2.0] - 2026-11-27
 

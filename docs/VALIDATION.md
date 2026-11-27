@@ -25,6 +25,7 @@ can only reproduce patterns that don't depend on what it leaves out (see
 | 3 | A food shortage leaves people hungry | Yes | 0 hungry NPCs before the drought, 11 to 13 on average during it |
 | 4 | Wealth ranks persist but are not fixed | Yes | Rank correlation of NPC coin between day 30 and day 120: 0.19 to 0.72 (mean 0.36 baseline, 0.51 Iron Shortage) |
 | D2 | Wealth concentrates through returns on capital | **Right level, wrong cause** | Baseline coin Gini rises from 0.27 (day 120) to 0.49 (day 365, 20 seeds), with no capital to earn on |
+| D3 | A shock-free economy fluctuates around its base prices | **No** | On 8 of 10 seeds, tools settle at 32 to 55 (base 24) within 100 to 900 days and stay there |
 
 ## Facts
 
@@ -129,6 +130,50 @@ real-world one. Land and mine claims (M60) add a capital channel to measure agai
 **Tests:** `test_divergence_d2_early_on_coin_is_far_more_equal_than_real_wealth` checks the
 first 120 days stay below 0.4, and `test_divergence_d2_over_a_year_coin_concentrates` checks
 the Gini climbs over the year, so either change shows up here.
+
+### D3. The baseline locks into a high-price state after smiths go broke
+
+With no shock at all, an economy should fluctuate around its base prices. Over 1,500 days on
+seeds 0 to 9, the baseline does that on only two seeds (3 and 8). On the other eight, the mean
+tools price per 100 days jumps to between 32 and 55 (base 24) within 100 to 300 days (900 on
+seed 2) and never comes back. Weapons sit near 65 (base 40), ore output falls from about 16 to
+12.5 a day, about 4 NPCs stay hungry, and the coin Gini rises to about 0.6.
+
+**Mechanism** (diagnosed on seed 0, by a Claude Fable 5.2 subagent; the trigger is inferred, not
+traced):
+- **Smiths go broke and never craft again.** On day 1,200, five of the eight smiths hold 0 to 3
+  coin and no ore or tools, and three are hungry. The other three hold about 40% of all coin,
+  which explains the Gini. A broke smith has no income except crafting, and `budget()`
+  (`sim/market.py`) gives nothing for ore or tools once the wallet is below the food reserve,
+  so it never bids again. Nobody changes profession.
+- **The survivors run at their cap.** They craft 2 × skill a day, with no slack or idle days:
+  5.7 crafts a day on seed 0, against about 7.9 needed.
+- **The price rations by poverty, not scarcity.** It rises until buyers' budgets cut affordable
+  demand down to what the survivors make. On seed 0 that's about 4 tools a day affordable against
+  about 30 wanted but unaffordable; 11 or 12 of the 16 miners work with broken tools.
+- **Ore follows.** Miners pause once unsold ore exceeds their cap, so output falls to what the
+  surviving smiths use.
+
+The price is not pinned: it moves every day. What's flat is the level, and it tracks the
+surviving smith capacity across seeds: 4.6 crafts a day gives about 55, 5.5 to 5.7 about 46,
+6.1 about 41 and 6.4 about 32. At 6.8 or more (seeds 3 and 8), the price keeps cycling. Seed 2
+switches when its fourth smith goes broke, around day 900.
+
+**Why it matters:** D1's poverty trap after the mine disaster is the same mechanism, and here it
+needs no shock. "Normal" in a long run is whichever state the seed has fallen into, which weakens
+any baseline comparison made after the first few hundred days.
+
+**Fix ideas, not yet tried:**
+- Give a broke crafter a way back in: guild relief or a town loan covering one day's inputs,
+  repaid from sales.
+- Exempt crafting inputs from the food reserve when the crafter holds no stock.
+- Make crafting capacity respond to price, as gatherer effort already does.
+- Add a long-run check that at least four smiths stay active.
+
+**Test:** `test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years` (strict
+`xfail`, `slow`) checks that each of seeds 1 to 5 averages within 40% of the base tools price
+over its second year. Today seeds 1, 4 and 5 average 46.5 to 54.6, so it fails as expected. A
+fix makes it pass and prompts updating this page.
 
 ## References
 
