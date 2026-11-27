@@ -88,6 +88,9 @@ class World:
     legitimacy: float = 1.0  # the town's authority, 0-1; only moves when enabled (M48)
     claims: dict[str, claims.Claim] = field(default_factory=dict)  # M60; empty while off
     check_every_tick: bool = True  # conservation check per tick; cheap at prototype scale
+    # npcs_in_order() is called dozens of times a tick; the NPC set never changes after
+    # genesis, so sort once and re-sort only if an NPC is ever added or removed.
+    _npc_order: list[NPC] = field(default_factory=list, init=False, repr=False, compare=False)
 
     def step(self, days: int = 1) -> None:
         for _ in range(days):
@@ -206,7 +209,9 @@ class World:
         return max(1, round(self.prices[good]))
 
     def npcs_in_order(self) -> list[NPC]:
-        return [self.npcs[k] for k in sorted(self.npcs)]
+        if len(self._npc_order) != len(self.npcs):
+            self._npc_order = [self.npcs[k] for k in sorted(self.npcs)]
+        return list(self._npc_order)
 
     def npcs_by_profession(self, profession: Profession) -> list[NPC]:
         return [n for n in self.npcs_in_order() if n.profession is profession]

@@ -5,7 +5,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-27
+
 ### Added
+- `sell`: the player can sell goods they hold to NPCs who would buy them in the market, at
+  today's price, paying the market tax. Also `Simulation.sell()`.
+- `[needs] unsold_jitter_days` (default 0, off): spreads each NPC's `max_unsold_days` by up to
+  that many days either way, fixed per NPC and seed, so producers don't all pause on the same
+  day. Over a year of the baseline (5 seeds), a spread of 2 takes the days on which every miner
+  paused at once from about 2 to 0.
+- Golden state hashes: each shipped scenario must reach a pinned state after 60 days
+  (`tests/test_golden_hashes.py`), so accidental behaviour changes fail even across Python
+  versions.
+- Strict `xfail` tests for provenance forgeries `verify()` doesn't catch yet: an invented root
+  cause and edited decision records.
+- A `slow` test marker (`uv run pytest -m "not slow"`), Python 3.13 in CI and the classifiers, a
+  CI job that installs the `demo` extra so the dashboard tests run, `py.typed` and
+  `[project.urls]`.
 - Roadmap and build guide: six new v0.4 milestones, open for contributors. Spoilage and
   storage (M61), know-how that rusts and is taught (M62), players hiring NPCs (M63), tool rental
   (M64), scrap and recycling (M65), and market fair days (M66).
@@ -151,6 +167,12 @@ All notable changes to this project are documented here. The format follows
   makes being away costlier or rewards streaks, appointments or short windows.
 
 ### Changed
+- `World.npcs_in_order()` sorts once instead of on every call, and the contract board no longer
+  rebuilds the live list for each candidate. No change to results: every scenario reaches the
+  same state hash as before.
+- GitHub Actions are pinned to commit SHAs (Dependabot keeps them current).
+- README: the test count, run time and milestone count were out of date, and the provenance
+  guarantee now says what `verify()` does and doesn't check.
 - `docs/VALIDATION.md` D1 diagnosed: iron ore doesn't recover after the mine disaster because
   miners and smiths go broke during the shock, not because ore stays plentiful. On seeds 2-4 the
   market freezes: miners hold 80 unsold ore, smiths with about 4 coin each can't buy the 2 ore a
@@ -167,6 +189,11 @@ All notable changes to this project are documented here. The format follows
   pooled needs say which guild or town order covers them (M16.3, #22, thanks @RajGahoi).
 
 ### Fixed
+- Two shocks at the same site at once: each provenance line now reports its own factor (0.5 and
+  0.2) instead of their product (0.10 on both lines). A new `shock_factor` metric lets `verify()`
+  re-measure it.
+- Outside traders skip a good they can't afford and keep buying cheaper goods after it, instead
+  of stopping at the first one (`market._export`).
 - Research export: `npc_days.csv` counted the coin and goods of NPCs who work at the market
   (smiths) twice, because their work site is their own account. Wealth mobility on Iron Shortage
   is 0.36, not the 0.63 first reported.

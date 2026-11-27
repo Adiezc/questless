@@ -112,6 +112,7 @@ def test_guilds_disabled_never_touch_guild_accounts(baseline):
     assert all(s.guilds == {} for s in world.stats)
 
 
+@pytest.mark.slow
 def test_guild_relief_reduces_hunger_on_average(baseline):
     """A statistical claim, so it is tested over several seeds (one seed can go either way)."""
 

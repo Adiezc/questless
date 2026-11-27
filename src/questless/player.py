@@ -10,6 +10,8 @@ The player has no goods of their own: to deliver, they must *source* them.
 - ``caravan``: import goods from outside the map (the next town) at a markup; arrives after
   ``caravan_days``. Imports come out of the finite ``outside`` stock and the coin goes there, so
   nothing is created.
+- ``sell``: sell goods the player holds to NPCs who want them and can pay, at today's price.
+  Without it, goods bought or imported for a contract that then lapses are dead stock.
 """
 
 from __future__ import annotations
@@ -22,10 +24,10 @@ from typing import TYPE_CHECKING, Any
 from questless.config import ShockEffect
 from questless.contracts.engine import adjust_reputation
 from questless.contracts.model import Contract, ContractKind, Status
-from questless.sim.alloc import allocate
+from questless.sim.alloc import allocate, ration
 from questless.sim.entities import IN_TRANSIT, OUTSIDE, PLAYER, TOWN, Site
 from questless.sim.ledger import GOODS, Asset
-from questless.sim.market import stock_target
+from questless.sim.market import _worth_buying, budget, stock_target
 from questless.sim.shocks import Shock
 
 if TYPE_CHECKING:
@@ -84,6 +86,37 @@ def buy(world: World, good: str, qty: int) -> int:
             seller, TOWN, Asset.COIN, int(value * tax_rate), tick=world.tick, reason="market tax"
         )
     return sum(sold.values())
+
+
+def sell(world: World, good: str, qty: int) -> int:
+    """Sell up to ``qty`` of the player's ``good`` to NPCs below their stock target, at today's
+    price. Each buyer bids what it would bid in the market (same budget and food reserve), and a
+    short supply is shared out equally, as in the market. The player pays the market tax like any
+    seller. Returns units sold."""
+    asset = _good(good)
+    qty = _positive(qty)
+    held = world.ledger.balance(PLAYER, asset)
+    if held <= 0:
+        raise ActionError(f"you hold no {good}")
+    price = world.unit_price(asset)
+    bids = _bids(world, asset, price)
+    units = min(qty, held, sum(q for _, q in bids))
+    if units <= 0:
+        raise ActionError(f"nobody wants to buy {good} at {price}, or can afford to")
+    bought = ration(units, bids, world.rng.stream("player"))
+    tax_rate = world.config.town.market_tax
+    for buyer, n in sorted(bought.items()):
+        if not n:
+            continue
+        value = n * price
+        world.ledger.transfer(PLAYER, buyer, asset, n, tick=world.tick, reason="player sale")
+        world.ledger.transfer(
+            buyer, PLAYER, Asset.COIN, value, tick=world.tick, reason="pays player"
+        )
+        world.ledger.transfer(
+            PLAYER, TOWN, Asset.COIN, int(value * tax_rate), tick=world.tick, reason="market tax"
+        )
+    return sum(bought.values())
 
 
 def caravan(world: World, good: str, qty: int) -> int:
@@ -154,6 +187,7 @@ def shock(
 ACTIONS: dict[str, Callable[..., Any]] = {
     "accept": accept,
     "buy": buy,
+    "sell": sell,
     "caravan": caravan,
     "deliver": deliver,
     "abandon": abandon,
@@ -239,6 +273,20 @@ def _asks(world: World, asset: Asset) -> list[tuple[str, int]]:
         if surplus > 0:
             asks.append((npc.id, surplus))
     return asks
+
+
+def _bids(world: World, asset: Asset, price: int) -> list[tuple[str, int]]:
+    """NPCs below their stock target who would buy ``asset`` at ``price`` in today's market, with
+    how many units they can afford. Mirrors the market's bids, so the player can't sell anyone
+    something they wouldn't buy from another NPC."""
+    bids = []
+    for npc in world.npcs_in_order():
+        want = stock_target(world, npc, asset) - world.ledger.balance(npc.account, asset)
+        if want > 0 and _worth_buying(world, npc, asset):
+            bid = min(want, budget(world, npc, asset) // price)
+            if bid > 0:
+                bids.append((npc.id, bid))
+    return bids
 
 
 def _buy_allowance(world: World, asset: Asset, asks: list[tuple[str, int]]) -> int:

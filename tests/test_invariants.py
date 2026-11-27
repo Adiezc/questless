@@ -29,11 +29,11 @@ def _chaos_session(seed: int, days: int = 120) -> tuple[Simulation, dict[str, in
     for _ in range(days):
         for _ in range(rng.randint(0, 3)):
             ids = [c.id for c in sim.contracts()] or ["C-0001"]
-            choice = rng.choice(["accept", "deliver", "abandon", "buy", "caravan", "shock"])
+            choice = rng.choice(["accept", "deliver", "abandon", "buy", "sell", "caravan", "shock"])
             try:
                 if choice in ("accept", "deliver", "abandon"):
                     getattr(sim, choice)(rng.choice(ids))
-                elif choice in ("buy", "caravan"):
+                elif choice in ("buy", "sell", "caravan"):
                     getattr(sim, choice)(rng.choice(goods), rng.randint(-2, 40))
                 elif rng.random() < 0.15:  # shocks are rarer
                     site = rng.choice(["mine", "farms", None])

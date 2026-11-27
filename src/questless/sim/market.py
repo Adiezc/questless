@@ -106,7 +106,7 @@ def _export(world: World) -> dict[Asset, int]:
     for good in GOODS:
         price = world.unit_price(good)
         if budget < price:
-            break
+            continue  # a cheaper good later in the list may still be affordable
         asks = []
         for npc in world.npcs_in_order():
             surplus = world.ledger.balance(npc.account, good) - stock_target(world, npc, good)
