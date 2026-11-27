@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Set as AbstractSet
 from typing import TYPE_CHECKING
 
 from questless.contracts.model import ContractKind
@@ -20,7 +21,7 @@ class ContractInvariantError(AssertionError):
     pass
 
 
-def obtainable(world: World, good: Asset, exclude: set[str] = frozenset()) -> int:
+def obtainable(world: World, good: Asset, exclude: AbstractSet[str] = frozenset()) -> int:
     """Units a player could get hold of today: NPC stock above target (buyable at market) plus
     what can be imported from outside. Goods nobody has and nobody can import are infeasible."""
     surplus = 0

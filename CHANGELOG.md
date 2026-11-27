@@ -5,7 +5,49 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Shock aftermath is attributed. The causal walk dropped a shock 7 days after it ended, and
+  60 days after it started it also lost the pre-shock baseline, so the long poverty trap after
+  the mine disaster (broke miners can't buy tools, so ore stays low) produced quests that cited
+  no root cause. A severe site shock (factor below the 0.85 drop threshold) is now still cited
+  while its site's 7-day output has not been back to 85% of its pre-shock normal on any day
+  since it ended, through a new measured `shock_aftermath` step ("has not recovered: at best
+  X/day since the shock ended"; new metric `produced_peak`). Over 3 seeds × 120 days, Mine
+  Disaster contracts citing no shock fall from 177 of 330 to 1, and Iron Shortage from 70 of
+  145 to 23. Drought is unchanged, because farm output recovers; its later contracts are about
+  ore. Checks: mild shocks (factor 0.86-0.95) are never blamed (placebo, 0 items); every
+  contract still rebuilds from a replay; and of the aftermath-cited contracts with a conclusive
+  but-for verdict, 115 of 122 pass (the rest are needs the baseline posts anyway). The economy
+  and state hashes are unchanged, since provenance isn't part of the hashed state. Design
+  suggested by a Claude Fable 5.2 subagent.
+
 ### Added
+- Strict provenance checks (`questless.audit`). `audit(world)` replays the run from the scenario
+  and action log and compares every contract with the one the replay posts: its terms, every
+  step of its evidence chain, and the state hash taken when it was posted. An invented root
+  cause, an edited decision record (`need_persisted`, `funding_decision`) or changed contract
+  terms are now caught; re-measuring numbers alone missed them. A world changed outside the
+  action log raises `NotReplayable` rather than reporting forged contracts.
+  `Simulation.verify()` now runs both checks, sharing one replay per world state (about 0.15 s
+  for a 70-day run, then microseconds per contract), and `Simulation.audit()` checks every
+  contract at once. The dashboard's "Verified" line says what was checked.
+- But-for checks (`questless.audit.but_for`, `but_for_all`, `Simulation.but_for`). For each shock
+  a contract cites, the run is replayed without it to see whether the need was met anyway: a
+  contract for the same good serving any of the same NPCs (so guild pools count), posted within
+  7 days or still live. A contract citing several shocks also gets a joint test with all of them
+  removed, which separates "neither was necessary alone" from "they caused it together". Player
+  actions follow their contract by need and posting day, because ids shift once a shock is
+  gone. A verdict is marked inconclusive when the run ends before the window does, or when any
+  player action had to be dropped or was refused: a player reacts to the world, so a fixed
+  action log can't say what they'd have done without the shock. Over 4 shock scenarios × 5
+  seeds × 120 days with no player, all 486 contracts that cite a shock pass, conclusively. That
+  is weaker evidence than it sounds, because the shipped baseline posts almost nothing on its
+  own; the overdetermined two-shock test is the one that shows the check can fail.
+- Type checking: `mypy` runs in CI on every Python version (settings in `pyproject.toml`). It
+  found 17 issues, all fixed. Most were unguarded `None` cases that can't happen today: a
+  closed contract's `closed_tick`, a guild contract's `guild_id`, a day's contract report, a
+  missing evidence baseline. One was a real slip: the report read a guild's treasury with the
+  string `"coin"` instead of `Asset.COIN`, which only worked because `Asset` is a `StrEnum`.
 - `docs/VALIDATION.md` D3: with no shock at all, 8 of 10 baseline seeds lock into a state with
   tools at 32 to 55 (base 24), less ore, permanent hunger and a coin Gini near 0.6. Smiths go
   broke, can never afford inputs again, and the survivors' capacity sets the price. Diagnosed

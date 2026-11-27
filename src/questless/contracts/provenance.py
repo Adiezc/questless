@@ -32,7 +32,8 @@ Measure = tuple[tuple, int]  # (metric key, tick)
 @dataclass(frozen=True, slots=True)
 class Evidence:
     tick: int
-    # kind: "shock" | "production_drop" | "equipment_shortage" | "input_shortage" | "hunger"
+    # kind: "shock" | "shock_aftermath" | "production_drop" | "equipment_shortage"
+    #       | "input_shortage" | "hunger"
     #       | "price_spike" | "unfilled_demand" | "need_persisted" | "guild_emergency"
     #       | "town_emergency" | "transport_backlog" | "partial_funding" | "funding_decision"
     kind: str
@@ -77,6 +78,10 @@ class Provenance:
 TEMPLATES = {
     "shock": "{subject}: {metric} set to {value} by an external shock.",
     "production_drop": "{subject} output fell to {value}/day (normal {baseline}/day).",
+    "shock_aftermath": (
+        "{subject} has not recovered: at best {value}/day since the shock ended "
+        "(normal {baseline}/day)."
+    ),
     "equipment_shortage": (
         "{pct} of {subject} worked without usable equipment (normally {base_pct})."
     ),
@@ -117,6 +122,10 @@ METRICS: dict[str, Callable[..., float]] = {
     "unfilled": lambda w, t, good: w.stats[t].market[Asset(good)].unfilled,
     "price": lambda w, t, good: round(w.stats[t].prices[Asset(good)], 2),
     "produced": _produced,
+    # Best ``days``-day mean of output from ``since`` to the tick: whether a site ever recovered.
+    "produced_peak": lambda w, t, good, days, since: max(
+        (_produced(w, u, good, days) for u in range(int(since), t + 1)), default=0.0
+    ),
     "share": _share,
     "site_factor": lambda w, t, site: w.modifiers.site_output(Site(site), t),
     "transport_factor": lambda w, t: w.modifiers.transport_capacity(t),
@@ -151,7 +160,9 @@ def verify(world: World, contract: Contract) -> list[str]:
         for recorded, m in ((ev.value, ev.measure), (ev.baseline, ev.baseline_measure)):
             if m is not None:
                 actual = measure(world, *m)
-                if not math.isclose(actual, recorded, rel_tol=1e-9, abs_tol=1e-9):
+                if recorded is None or not math.isclose(
+                    actual, recorded, rel_tol=1e-9, abs_tol=1e-9
+                ):
                     problems.append(f"#{i} {ev.kind}: recorded {recorded}, measured {actual}")
     return problems
 

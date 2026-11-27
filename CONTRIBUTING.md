@@ -102,6 +102,7 @@ Run these before opening a pull request. CI runs the same checks and won't merge
 ```bash
 uv run ruff check .                # lint
 uv run ruff format --check .       # formatting (run `uv run ruff format .` to fix)
+uvx mypy==2.4.1                    # type check (settings in pyproject.toml)
 uv run pytest                      # 380+ tests, including the guarantee tests (~75 s)
 uv run pytest -m "not slow"         # the same without the long runs (~45 s)
 uvx bandit -r src app experiments -ll   # security lint: no medium or high findings
