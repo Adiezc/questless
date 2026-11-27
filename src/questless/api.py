@@ -26,6 +26,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from questless import audit as checks
 from questless import bugreport, persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts import causes
@@ -47,6 +48,7 @@ class UnknownIdError(KeyError):
 class Simulation:
     def __init__(self, world: World) -> None:
         self.world = world
+        self._twin: tuple[str, World] | None = None  # (state hash, replay) cache for verify()
 
     # --- construction ---------------------------------------------------------------------------
 
@@ -179,8 +181,40 @@ class Simulation:
         return quote_contract(self.world, self.contract(contract_id))
 
     def verify(self, contract_id: str) -> list[str]:
-        """Re-measure every recorded number in the contract's provenance; [] means it holds."""
-        return verify(self.world, self.contract(contract_id))
+        """Check a contract's provenance; [] means it holds. Re-measures every recorded number,
+        then compares the whole contract, chain included, with the one a replay of this run
+        posts, so an invented cause or edited decision record is caught too. The replay is made
+        once per world state and shared by later calls."""
+        contract = self.contract(contract_id)
+        problems = verify(self.world, contract)
+        try:
+            twin = self._replayed()
+        except checks.NotReplayable as exc:
+            return [*problems, str(exc)]
+        return problems + checks.verify_against(twin, contract)
+
+    def audit(self) -> dict[str, list[str]]:
+        """``verify`` for every contract: ``{contract_id: problems}``."""
+        try:
+            twin = self._replayed()
+        except checks.NotReplayable as exc:
+            return {cid: [str(exc)] for cid in sorted(self.world.contracts.contracts)}
+        return checks.audit(self.world, twin)
+
+    def but_for(self, contract_id: str, window: int = checks.BUT_FOR_WINDOW) -> list[checks.ButFor]:
+        """Counterfactual check of the shocks a contract cites: replay without each (and without
+        all of them together) and report whether the same need posts within ``window`` days.
+        Raises ``NotReplayable`` if this world can't be replayed."""
+        contract = self.contract(contract_id)
+        return checks.but_for(self.world, contract, window, twin=self._replayed())
+
+    def _replayed(self) -> World:
+        # Keyed by the state hash (well under a millisecond), not the tick: a world changed
+        # outside the action log must fail again rather than reuse a replay that matched before.
+        key = self.world.state_hash()
+        if self._twin is None or self._twin[0] != key:
+            self._twin = (key, checks.rebuild(self.world))
+        return self._twin[1]
 
     def evidence_series(self, contract_id: str, step: int) -> dict[int, float]:
         """Day-by-day values of one measured step in a contract's chain, for charting it."""

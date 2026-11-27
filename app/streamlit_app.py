@@ -44,6 +44,7 @@ KIND_LABEL = {
 }
 EVIDENCE_GROUP = {
     "shock": ("root", "Root cause"),
+    "shock_aftermath": ("cause", "Aftermath"),
     "production_drop": ("cause", "Effect"),
     "equipment_shortage": ("cause", "Effect"),
     "input_shortage": ("cause", "Effect"),
@@ -323,7 +324,8 @@ with why_col:
         else:
             st.markdown(
                 f'<div class="ql-verified"><b>Verified.</b> All {measured} measured facts '
-                "re-check against the simulation record.</div>",
+                "re-check against the simulation record, and a replay of this run posts exactly "
+                "this quest for exactly these reasons.</div>",
                 unsafe_allow_html=True,
             )
         if steps:
