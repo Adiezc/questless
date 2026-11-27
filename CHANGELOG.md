@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Shock aftermath is attributed. The causal walk dropped a shock 7 days after it ended, and
+  60 days after it started it also lost the pre-shock baseline, so the long poverty trap after
+  the mine disaster (broke miners can't buy tools, so ore stays low) produced quests that cited
+  no root cause. A severe site shock (factor below the 0.85 drop threshold) is now still cited
+  while its site's 7-day output has not been back to 85% of its pre-shock normal on any day
+  since it ended, through a new measured `shock_aftermath` step ("has not recovered: at best
+  X/day since the shock ended"; new metric `produced_peak`). Over 3 seeds × 120 days, Mine
+  Disaster contracts citing no shock fall from 177 of 330 to 1, and Iron Shortage from 70 of
+  145 to 23. Drought is unchanged, because farm output recovers; its later contracts are about
+  ore. Checks: mild shocks (factor 0.86-0.95) are never blamed (placebo, 0 items); every
+  contract still rebuilds from a replay; and of the aftermath-cited contracts with a conclusive
+  but-for verdict, 115 of 122 pass (the rest are needs the baseline posts anyway). The economy
+  and state hashes are unchanged, since provenance isn't part of the hashed state. Design
+  suggested by a Claude Fable 5.2 subagent.
+
 ### Added
 - Strict provenance checks (`questless.audit`). `audit(world)` replays the run from the scenario
   and action log and compares every contract with the one the replay posts: its terms, every
