@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `docs/VALIDATION.md` D3: with no shock at all, 8 of 10 baseline seeds lock into a state with
+  tools at 32 to 55 (base 24), less ore, permanent hunger and a coin Gini near 0.6. Smiths go
+  broke, can never afford inputs again, and the survivors' capacity sets the price. Diagnosed
+  with a Claude Fable 5.2 subagent and tracked by a strict `xfail`
+  (`test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years`).
+
 ## [0.2.0] - 2026-11-27
 
 ### Added

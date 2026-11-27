@@ -131,3 +131,19 @@ def test_divergence_d2_over_a_year_coin_concentrates():
         early.append(w.stats[119].coin_gini)
         late.append(w.stats[-1].coin_gini)
     assert st.fmean(late) > st.fmean(early) + 0.1, (early, late)
+
+
+@pytest.mark.slow
+@pytest.mark.xfail(
+    strict=True,
+    reason="divergence D3: with no shock at all, most seeds lock into a state with tools and "
+    "weapons far above base price, less ore and permanent hunger, and never leave it",
+)
+def test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years():
+    """A shock-free economy should fluctuate around its base prices, not settle far above them.
+    Each seed's mean tools price over its second year must stay within 40% of base."""
+    for seed in SEEDS:
+        world = _world("baseline", seed, days=730)
+        base = world.config.goods[Asset.TOOLS].base_price
+        late = _price(world, Asset.TOOLS, slice(365, None))
+        assert 0.6 * base < late < 1.4 * base, (seed, base, late)
