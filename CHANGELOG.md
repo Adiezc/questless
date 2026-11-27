@@ -43,6 +43,11 @@ All notable changes to this project are documented here. The format follows
   seeds × 120 days with no player, all 486 contracts that cite a shock pass, conclusively. That
   is weaker evidence than it sounds, because the shipped baseline posts almost nothing on its
   own; the overdetermined two-shock test is the one that shows the check can fail.
+- Type checking: `mypy` runs in CI on every Python version (settings in `pyproject.toml`). It
+  found 17 issues, all fixed. Most were unguarded `None` cases that can't happen today: a
+  closed contract's `closed_tick`, a guild contract's `guild_id`, a day's contract report, a
+  missing evidence baseline. One was a real slip: the report read a guild's treasury with the
+  string `"coin"` instead of `Asset.COIN`, which only worked because `Asset` is a `StrEnum`.
 
 ## [0.2.0] - 2026-11-27
 

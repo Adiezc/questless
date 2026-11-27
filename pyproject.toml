@@ -59,3 +59,9 @@ extend-exclude = ["docs", "*.md"]  # Markdown holds illustrative code, formatted
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/questless"]
+warn_unused_ignores = true
+warn_redundant_casts = true

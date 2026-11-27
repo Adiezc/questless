@@ -160,7 +160,9 @@ def verify(world: World, contract: Contract) -> list[str]:
         for recorded, m in ((ev.value, ev.measure), (ev.baseline, ev.baseline_measure)):
             if m is not None:
                 actual = measure(world, *m)
-                if not math.isclose(actual, recorded, rel_tol=1e-9, abs_tol=1e-9):
+                if recorded is None or not math.isclose(
+                    actual, recorded, rel_tol=1e-9, abs_tol=1e-9
+                ):
                     problems.append(f"#{i} {ev.kind}: recorded {recorded}, measured {actual}")
     return problems
 

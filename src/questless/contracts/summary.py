@@ -54,11 +54,13 @@ def summarise(world: World, contract: Contract) -> str:
 def _middle(e: Evidence) -> str:
     good = e.subject.partition(":")[2].replace("_", " ")
     if e.kind == "production_drop":
-        return f"{good.capitalize()} output fell to {_num(e.value)}/day from {_num(e.baseline)}."
+        return (
+            f"{good.capitalize()} output fell to {_num(e.value)}/day from {_num(e.baseline or 0)}."
+        )
     if e.kind == "transport_backlog":
         return f"{_num(e.value)} {good} sat waiting at the sites."
     if e.kind == "price_spike":
-        return f"The {good} price rose to {_num(e.value)} from {_num(e.baseline)}."
+        return f"The {good} price rose to {_num(e.value)} from {_num(e.baseline or 0)}."
     return f"{_num(e.value)} {good} went unsold to buyers who could pay."
 
 

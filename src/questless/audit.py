@@ -271,7 +271,7 @@ def _without_shocks(
 
 def _replay_lenient(
     real: World, config: ScenarioConfig, actions: list[dict[str, Any]], until: int
-) -> tuple[World, list[int]]:
+) -> tuple[World, list[int], list[int]]:
     """``persistence.replay`` for a counterfactual. Contract ids are sequential, so once a shock
     is gone the same id names a different contract: an action on a contract is redirected to the
     counterfactual contract with the same need posted on the same day. Returns the world and the
