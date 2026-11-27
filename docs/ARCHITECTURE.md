@@ -27,7 +27,7 @@ ends. The engine never imports the UI.
                   │   model.py      Contract, kinds, statuses                 │
                   │ player.py       logged actions (accept/buy/caravan/...)   │
                   │ persistence.py  save / load / replay + state hash check   │
-                  │ audit.py        rebuild contracts from a replay, compare  │
+                  │ audit.py        replay checks: rebuild contracts, but-for │
                   │ metrics.py      time series for UIs and experiments       │
                   │ api.py          Simulation facade (the public API)        │
                   │ cli.py          questless run | replay | demo             │
