@@ -435,10 +435,9 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         "town_emergency_threshold": 0.0,
     }
     _keys(c, "contracts", required=set(fields) | set(floats))
-    contracts = ContractsConfig(
-        **{k: f(c[k], f"contracts.{k}") for k, f in fields.items()},
-        **{k: _at_least(c[k], lo, f"contracts.{k}") for k, lo in floats.items()},
-    )
+    values: dict[str, Any] = {k: f(c[k], f"contracts.{k}") for k, f in fields.items()}
+    values.update({k: _at_least(c[k], lo, f"contracts.{k}") for k, lo in floats.items()})
+    contracts = ContractsConfig(**values)
     if contracts.town_max_share > 1:
         raise ConfigError("contracts.town_max_share: must be between 0 and 1")
 
@@ -577,7 +576,7 @@ def _keys(
         raise ConfigError(f"{where}: unknown keys {sorted(unknown)}")
 
 
-def _enum(enum: type, value: Any, where: str) -> Any:
+def _enum(enum: type[StrEnum], value: Any, where: str) -> Any:
     try:
         return enum(value)
     except ValueError:

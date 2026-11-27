@@ -121,7 +121,8 @@ uv run pytest -m "not slow"                                  # skip the long run
   - **feasible:** someone could actually obtain the goods.
 - **Provenance:** a bounded causal walk explains each shortage back to its root cause, using
   production drops against a pre-shock baseline, equipment and input shortages among producers,
-  price spikes and shocks. Measured facts carry their metric key, so `verify()` can recompute them.
+  price spikes and shocks. Measured facts carry their metric key, so `verify()` can recompute them,
+  and `questless.audit` rebuilds whole contracts from a replay.
 - **Players** source goods honestly: they buy from NPCs (which moves prices) or import by caravan
   (finite stock, takes 3 days), and can sell what they hold back to NPCs who want it.
 
@@ -134,9 +135,14 @@ Details: [Architecture](docs/ARCHITECTURE.md) · [Simulation spec](docs/SIMULATI
   one ledger, and no balance ever goes negative.
 - **Every contract is funded:** escrow always equals the rewards of live contracts.
 - **Every contract explains itself, verifiably:** the counterfactual test (same seed, no shock)
-  produces no such contract, and a forged measured value is detected. A forged chain structure
-  (an invented root cause, an edited decision record) is not detected yet; that gap is tracked
-  as strict `xfail` tests in `tests/test_provenance.py`.
+  produces no such contract. `verify()` re-measures every number in the chain, then replays the
+  run from the scenario and the player's actions and checks that it posts exactly the same
+  contract, so an invented root cause or an edited decision record is detected too.
+- **Cited shocks are tested, not just named:** `sim.but_for(cid)` replays the run without each
+  shock a quest cites and checks that the same need doesn't post anyway within a week. Every
+  shock-citing quest in the shipped scenarios passes (486 of 486 over 5 seeds, no player). With an
+  active player the verdict is often marked inconclusive, because what the player would have done
+  without the shock can't be replayed.
 - **Bounded:** there's at most one live contract per need, plus cooldowns, a global cap and a
   per-day cap. These hold under three simultaneous extreme shocks and against a random "chaos
   player".
@@ -195,7 +201,7 @@ from questless import Simulation
 sim = Simulation.from_scenario("scenarios/iron_shortage.toml")
 cid = sim.run_until_contract()           # day 30: the Blacksmiths Guild posts C-0001
 print("\n".join(sim.explain(cid)))       # the causal chain above
-assert sim.verify(cid) == []             # every measured fact re-checks
+assert sim.verify(cid) == []             # numbers re-check, and a replay posts the same quest
 
 c = sim.contract(cid)
 sim.accept(cid)

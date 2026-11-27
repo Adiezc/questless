@@ -9,6 +9,7 @@ through the ledger; this module only decides *what* happens.
 from __future__ import annotations
 
 import random
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from questless.sim.entities import NPC, DailyRecord, NPCState
@@ -169,7 +170,7 @@ def _craft(world: World, npc: NPC, rec: DailyRecord, crafts: int, caps: dict[Ass
             return
 
 
-def _margin_per_input(world: World, good: Asset, inputs: dict[Asset, int]) -> float:
+def _margin_per_input(world: World, good: Asset, inputs: Mapping[Asset, int]) -> float:
     cost = sum(world.prices[a] * q for a, q in inputs.items())
     return (world.prices[good] - cost) / max(sum(inputs.values()), 1)
 
