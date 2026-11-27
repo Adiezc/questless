@@ -28,7 +28,13 @@ from questless.sim.entities import (
     Site,
     Traits,
 )
-from questless.sim.guilds import GuildReport, collect_dues, provide_relief
+from questless.sim.guilds import (
+    GuildReport,
+    collect_dues,
+    collect_repayments,
+    lend_working_capital,
+    provide_relief,
+)
 from questless.sim.guilds import close_reports as close_guild_reports
 from questless.sim.guilds import reports as guild_reports
 from questless.sim.ledger import Asset, Ledger
@@ -127,6 +133,7 @@ class World:
         if self.config.legitimacy.enabled:
             legitimacy.update(self, stats)
         relief = provide_relief(self)  # before the market, so relief buys food today
+        loans = lend_working_capital(self)  # off unless a guild sets loan_limit
         stats.market = clear_market(self, stats.produced, stats.consumed)
         stats.prices = dict(self.prices)
         if self.config.claims.enabled:
@@ -136,8 +143,13 @@ class World:
         stats.coin_top10_share = top_share(wallets)
         if self.config.claims.enabled:
             stats.wealth_gini = gini(claims.wealth(self))
-        dues = collect_dues(self, start_coin, relief)
-        stats.guilds = guild_reports(self, dues, relief, guild_upkeep)
+        received = {gid: dict(paid) for gid, paid in relief.items()}  # relief plus loans
+        for gid, lent in loans.items():
+            for member, amount in lent.items():
+                received.setdefault(gid, {})[member] = received[gid].get(member, 0) + amount
+        repaid = collect_repayments(self, start_coin, received)
+        dues = collect_dues(self, start_coin, received)
+        stats.guilds = guild_reports(self, dues, relief, guild_upkeep, loans, repaid)
         self.stats.append(stats)
         self.needs.update(self)
         stats.contracts = self.contracts.step(self)
