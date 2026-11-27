@@ -40,6 +40,11 @@ SHARE_RISE = 0.15  # rise in a profession's idle/hungry/broken share that counts
 PRICE_SPIKE = 1.25
 MAX_DEPTH = 3
 SHOCK_MARGIN = 7  # days a shock's effect can outlast it (stocks run down after it ends)
+# A site's output counts as recovered from a shock once its 7-day mean is back above
+# ``DROP`` x its pre-shock normal on any day after the shock ended. Until then the shock is
+# still cited, however long ago it ended: the poverty trap after a mine disaster (broke miners
+# can't buy tools, so ore stays low) is the shock's doing.
+RECOVERY_DAYS = 7
 
 
 @dataclass
@@ -83,9 +88,44 @@ def build_chain(
 
 def _base_tick(world: World, since: int) -> int:
     """End of the 'normal' window: the day before the need began, or before the earliest shock in
-    the lookback window if that came first (so the baseline is not contaminated by the shock)."""
-    starts = [s.start for s in world.modifiers.shocks if world.tick - LOOKBACK <= s.start <= since]
+    the lookback window (or any older shock the economy hasn't recovered from) if that came first,
+    so the baseline is not contaminated by the shock or its aftermath."""
+    starts = [
+        s.start
+        for s in world.modifiers.shocks
+        if s.start <= since
+        and (world.tick - LOOKBACK <= s.start or _unrecovered(world, s, world.tick))
+    ]
     return min([since, *starts]) - 1
+
+
+def _unrecovered(world: World, shock, tick: int) -> bool:
+    """A site-output shock that has ended, was severe enough to count as a drop, and whose site's
+    output hasn't been back to ``DROP`` x its pre-shock normal on any day since."""
+    return _aftermath_good(world, shock, tick) is not None
+
+
+def _aftermath_good(world: World, shock, tick: int) -> Asset | None:
+    if (
+        shock.effect is not ShockEffect.SITE_OUTPUT
+        or shock.end > tick
+        or shock.factor >= DROP
+        or shock.start < 1
+    ):
+        return None
+    for _, pc in sorted(world.config.professions.items()):
+        if pc.site is not shock.site:
+            continue
+        for good in sorted(pc.output):
+            normal = measure(world, ("produced", str(good), BASELINE_DAYS), shock.start - 1)
+            peak = measure(world, _peak_key(good, shock), tick)
+            if normal > 0 and peak < DROP * normal:
+                return good
+    return None
+
+
+def _peak_key(good: Asset, shock) -> tuple:
+    return ("produced_peak", str(good), RECOVERY_DAYS, shock.end)
 
 
 def _explain_scarcity(walk: _Walk, good: Asset, depth: int) -> int | None:
@@ -180,8 +220,11 @@ def _cited_shocks(walk: _Walk, effect: ShockEffect, site: Site | None = None) ->
         if s.effect is effect
         and (site is None or s.site is site)
         and s.factor < 1
-        and tick - LOOKBACK <= s.start <= tick
-        and s.end + SHOCK_MARGIN > walk.since
+        and s.start <= tick
+        and (
+            (tick - LOOKBACK <= s.start and s.end + SHOCK_MARGIN > walk.since)
+            or _unrecovered(walk.world, s, tick)
+        )
     ]
     return sorted(found, key=lambda s: s.start, reverse=True)
 
@@ -191,9 +234,34 @@ def _site_shocks(walk: _Walk, prof: Profession) -> list[int]:
     out = []
     for shock in _cited_shocks(walk, ShockEffect.SITE_OUTPUT, site):
         if shock not in walk.shocks_seen:
-            walk.shocks_seen[shock] = walk.add(_shock_evidence(walk, shock))
+            idx = walk.add(_shock_evidence(walk, shock))
+            if shock.end + SHOCK_MARGIN <= walk.since:  # cited only because it never recovered
+                idx = walk.add(_aftermath_evidence(walk, shock, idx))
+            walk.shocks_seen[shock] = idx
         out.append(walk.shocks_seen[shock])
     return out
+
+
+def _aftermath_evidence(walk: _Walk, shock, shock_idx: int) -> Evidence:
+    """The site's best output since the shock ended, against its pre-shock normal: the
+    re-measurable claim that the economy has not recovered."""
+    world = walk.world
+    good = _aftermath_good(world, shock, world.tick)
+    assert good is not None  # only called for unrecovered shocks
+    peak, normal_key = _peak_key(good, shock), ("produced", str(good), BASELINE_DAYS)
+    normal = measure(world, normal_key, shock.start - 1)
+    return Evidence(
+        world.tick,
+        "shock_aftermath",
+        f"production:{good}",
+        "best_units_per_day_since",
+        measure(world, peak, world.tick),
+        threshold=round(DROP * normal, 2),
+        baseline=normal,
+        caused_by=(shock_idx,),
+        measure=(peak, world.tick),
+        baseline_measure=(normal_key, shock.start - 1),
+    )
 
 
 def _transport_shocks(walk: _Walk) -> list[int]:

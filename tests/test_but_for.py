@@ -102,8 +102,9 @@ def test_an_action_lands_on_the_counterpart_for_the_same_need(with_player):
 
 def test_a_window_cut_short_by_the_end_of_the_run_is_inconclusive(mine_disaster):
     world = mine_disaster.world
+    verdicts = but_for_all(world)
     contract = max(
-        (c for c in world.contracts.contracts.values() if but_for_all(world)[c.id]),
+        (c for c in world.contracts.contracts.values() if verdicts[c.id]),
         key=lambda c: c.created_tick,
     )
     for verdict in but_for(world, contract, window=1000):
@@ -146,3 +147,48 @@ def test_the_counterfactual_leaves_the_real_world_alone(mine_disaster):
     assert world.state_hash() == before
     assert world.config.shocks == shocks and len(world.modifiers.shocks) == len(shocks)
     assert dataclasses.is_dataclass(world.config)
+
+
+# --- aftermath attribution ------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("factor", [0.95, 0.9])
+@pytest.mark.parametrize("site", [Site.MINE, Site.FARMS])
+def test_a_mild_shock_is_never_blamed_for_the_aftermath(baseline, factor, site):
+    """Placebo: a shock too mild to count as a drop can't be cited once it has ended."""
+    mild = ShockConfig("Mild", ShockEffect.SITE_OUTPUT, 15, 25, factor, site)
+    world = build_world(with_shocks(baseline, mild))
+    world.step(200)
+    chains = [c.provenance.chain for c in world.contracts.contracts.values()]
+    assert not any(e.kind == "shock_aftermath" for chain in chains for e in chain)
+
+
+@pytest.fixture(scope="module")
+def mine_disaster_aftermath():
+    sim = Simulation.from_scenario(SCENARIOS / "mine_disaster.toml")
+    sim.step(120)  # the disaster runs to day 55; its aftermath comes after
+    return sim
+
+
+def test_the_mine_disaster_aftermath_is_attributed_and_checks_out(mine_disaster_aftermath):
+    """Weeks after the disaster ends, ore output still hasn't recovered (broke miners can't buy
+    tools), so later contracts cite the disaster through a measured aftermath step. Most of them
+    pass the but-for test; the few that don't are needs the baseline would have posted anyway."""
+    sim = mine_disaster_aftermath
+    world = sim.world
+    late = [
+        c
+        for c in world.contracts.contracts.values()
+        if any(e.kind == "shock_aftermath" for e in c.provenance.chain)
+    ]
+    assert late
+    shock = world.modifiers.shocks[0]
+    for c in late:
+        after = next(e for e in c.provenance.chain if e.kind == "shock_aftermath")
+        assert c.created_tick >= shock.end + 7
+        assert after.value < after.threshold < after.baseline
+        assert c.provenance.chain[after.caused_by[0]].kind == "shock"
+    assert all(not p for p in sim.audit().values())
+    verdicts = but_for_all(world)
+    conclusive = [v[0] for c in late if (v := verdicts[c.id]) and v[0].conclusive]
+    assert conclusive and sum(v.holds for v in conclusive) >= 0.85 * len(conclusive)

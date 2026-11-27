@@ -44,6 +44,7 @@ KIND_LABEL = {
 }
 EVIDENCE_GROUP = {
     "shock": ("root", "Root cause"),
+    "shock_aftermath": ("cause", "Aftermath"),
     "production_drop": ("cause", "Effect"),
     "equipment_shortage": ("cause", "Effect"),
     "input_shortage": ("cause", "Effect"),
