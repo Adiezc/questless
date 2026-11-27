@@ -14,7 +14,7 @@ from questless.contracts.engine import ContractBoard, ContractTickReport
 from questless.contracts.needs import NeedTracker
 from questless.contracts.validation import check_board
 from questless.metrics import gini, top_share
-from questless.sim import claims, legitimacy
+from questless.sim import claims, legitimacy, mobility
 from questless.sim.entities import (
     ESCROW,
     IN_TRANSIT,
@@ -74,6 +74,7 @@ class TickStats:
     coin_gini: float = 0.0  # over NPC wallets after the market clears (M58)
     coin_top10_share: float = 0.0  # share of NPC coin held by the richest 10%
     wealth_gini: float | None = None  # NPC coin plus claims at their price (M60); None while off
+    moves: list = field(default_factory=list)  # job switches today (mobility.Move); empty if off
 
 
 @dataclass
@@ -107,6 +108,8 @@ class World:
         from questless.sim.behaviour import run_npc_day
 
         stats = TickStats(tick=self.tick)
+        if self.config.mobility.enabled:  # before anyone works, so today's stats see the move
+            stats.moves = mobility.step(self)
         start_coin = {
             n.id: self.ledger.balance(n.account, Asset.COIN) for n in self.npcs_in_order()
         }
@@ -251,6 +254,12 @@ class World:
                     "state": str(n.state),
                     "carry": dict(sorted(n.carry.items())),
                     "unmet_streak": {str(a): d for a, d in sorted(n.unmet_streak.items())},
+                    # Only when on, so worlds without the feature keep their hashes.
+                    **(
+                        {"profession": str(n.profession), "site": str(n.site)}
+                        if self.config.mobility.enabled
+                        else {}
+                    ),
                 }
                 for n in self.npcs_in_order()
             },

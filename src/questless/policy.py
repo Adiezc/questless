@@ -32,6 +32,7 @@ RULES = (
     "contracts.",
     "legitimacy.",
     "claims.",
+    "mobility.",  # who may change trade, an institution like claims
     "transport.fee_rate",
     "player.caravan_markup",  # an import tariff
     "player.max_buy_share",

@@ -25,7 +25,7 @@ can only reproduce patterns that don't depend on what it leaves out (see
 | 3 | A food shortage leaves people hungry | Yes | 0 hungry NPCs before the drought, 11 to 13 on average during it |
 | 4 | Wealth ranks persist but are not fixed | Yes | Rank correlation of NPC coin between day 30 and day 120: 0.19 to 0.72 (mean 0.36 baseline, 0.51 Iron Shortage) |
 | D2 | Wealth concentrates through returns on capital | **Right level, wrong cause** | Baseline coin Gini rises from 0.27 (day 120) to 0.49 (day 365, 20 seeds), with no capital to earn on |
-| D3 | A shock-free economy fluctuates around its base prices | **No** by default; **yes** with guild loans | On 8 of 10 seeds, tools settle at 32 to 55 (base 24) within 100 to 900 days and stay there; with `guild_loans.toml`, 10 of 10 stay within 40% of base through day 1,500 |
+| D3 | A shock-free economy fluctuates around its base prices | **No** by default; **yes** with guild loans and job switching | On 8 of 10 seeds, tools settle at 32 to 55 (base 24) within 100 to 900 days and stay there; with `job_switching_and_loans.toml`, 10 of 10 stay within 40% of base through day 1,500 and hunger all but disappears |
 
 ## Facts
 
@@ -175,33 +175,58 @@ guild. It repays half of each day's gain before dues. Loans are sized so the bor
 actually bid after `budget()` holds back its food reserve; a loan sized like relief went on
 food. They stop at the member's limit and never take the treasury below half its reserve.
 
+**Fix, opt-in: job switching** (`[mobility]`, `experiments/stress/policies/job_switching.toml`).
+An NPC that has produced nothing for 20 days moves to the farming, mining or smithing trade
+whose members earn the most: the median of what they actually earned over 30 days, scaled to
+its skill. It moves only if that beats its own realised income by 1.5 times and by at least
+5 coin a day. At most one NPC moves a day, then waits 60 days. In practice the stranded smiths
+become farmers, about 4 moves a run.
+
+Two earlier designs failed and are worth knowing about:
+- **Comparing prices let farmers chase tools.** Expected income at current prices let any
+  worker chase a better trade. In the locked state tools look very profitable, so farmers
+  poured into smithing, couldn't afford ore, and poured back out: about 400 moves a run, and
+  hunger rose from 3.7 to 21.8.
+- **Comparing earnings drained mining and smithing.** Using what members actually earn, but
+  still letting working NPCs move, let miners' short unsold-stock pauses push them into
+  farming. Ore collapsed to about 1 a day.
+
+Only letting NPCs who can't work move is what made it stable.
+
 Over 10 seeds × 1,500 days, averaged from day 365:
 
-| | Off | Loans |
-|---|---|---|
-| Tools price (base 24) | 38.8 | about 20 |
-| Seeds within 40% of base, second year / days 1,200-1,500 | 2 / 2 | 10 / 10 |
-| Ore output a day | 13.4 | 16.6 |
-| NPCs hungry | 3.7 | 3.2 |
-| Coin Gini | 0.50 | 0.27 |
+| | Off | Loans | Switching | Both |
+|---|---|---|---|---|
+| Tools price (base 24) | 37.1 | 19.7 | 29.0 | 20.5 |
+| Seeds within 40% of base, second year / days 1,200-1,500 | 4 / 3 | 10 / 10 | 8 / 8 | 10 / 10 |
+| Ore output a day | 13.4 | 16.6 | 15.8 | 17.5 |
+| NPCs hungry | 3.7 | 3.2 | 0.1 | 0.1 |
+| Coin Gini | 0.50 | 0.27 | 0.33 | 0.22 |
+| D1: ore price at day 120 vs before the disaster (5 seeds) | 0.25 to 3.6 | 1.7 to 2.8 | 0.25 to 3.6 | 1.7 to 2.8 |
 
-It stays **off by default**, for three reasons:
+Both stay **off by default**, for three reasons:
 - **D1 changes but isn't fixed.** After the mine disaster, ore ends 1.7 to 2.8 times its
   pre-shock price instead of a third of it: a shortage instead of a glut.
 - **It changes every shipped scenario.** Turning it on would mean recalibrating them and their
   tests.
-- **About half the smiths still end broke or in debt.** At normal prices the market supports
-  four or five full-time smiths out of eight, and the rest have no exit. Loans to them become a
-  standing subsidy. The fuller fix is work-sharing (crafters slacking like gatherers) or job
-  switching.
+- **Neither fixes D1.** Switching needs 20 idle days, which is slow against a 120-day scenario,
+  and it leaves the ore glut after the mine disaster unchanged.
+- **Switching can't be combined with land claims yet.** Claims belong to the gatherers who
+  worked them at the start, so the config refuses both at once.
 
-The loan design was reviewed by a Claude Fable 5.2 subagent. It found that the first version
-was sized below the food reserve and capped in a way that grew with prices, and recommended
-shipping it opt-in.
+With loans alone, about half the smiths end broke or in debt: at normal prices the market
+supports four or five full-time smiths out of eight. Switching gives the surplus an exit, which
+is why the two together work best.
+
+Both designs were reviewed by Claude Fable 5.2 subagents. For the loans, it found that the
+first version was sized below the food reserve and capped in a way that grew with prices. For
+switching, it found that the first trigger could only ever drain smiths, that it compared
+crafting and gathering on biased terms, and the places where a mid-run profession change would
+break the guild, contract and land-claim bookkeeping.
 
 **Other ideas, not tried:** exempt crafting inputs from the food reserve when a crafter holds no
-stock; make crafting capacity respond to price as gatherer effort does; add a long-run check
-that at least four smiths stay active.
+stock; make crafting capacity respond to price as gatherer effort does; let switching work with
+land claims.
 
 **Test:** `test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years` (strict
 `xfail`, `slow`) checks that each of seeds 1 to 5 averages within 40% of the base tools price
