@@ -15,6 +15,18 @@ All notable changes to this project are documented here. The format follows
   `Simulation.verify()` now runs both checks, sharing one replay per world state (about 0.15 s
   for a 70-day run, then microseconds per contract), and `Simulation.audit()` checks every
   contract at once. The dashboard's "Verified" line says what was checked.
+- But-for checks (`questless.audit.but_for`, `but_for_all`, `Simulation.but_for`). For each shock
+  a contract cites, the run is replayed without it to see whether the need was met anyway: a
+  contract for the same good serving any of the same NPCs (so guild pools count), posted within
+  7 days or still live. A contract citing several shocks also gets a joint test with all of them
+  removed, which separates "neither was necessary alone" from "they caused it together". Player
+  actions follow their contract by need and posting day, because ids shift once a shock is
+  gone. A verdict is marked inconclusive when the run ends before the window does, or when any
+  player action had to be dropped or was refused: a player reacts to the world, so a fixed
+  action log can't say what they'd have done without the shock. Over 4 shock scenarios × 5
+  seeds × 120 days with no player, all 486 contracts that cite a shock pass, conclusively. That
+  is weaker evidence than it sounds, because the shipped baseline posts almost nothing on its
+  own; the overdetermined two-shock test is the one that shows the check can fail.
 
 ## [0.2.0] - 2026-11-27
 

@@ -138,6 +138,11 @@ Details: [Architecture](docs/ARCHITECTURE.md) · [Simulation spec](docs/SIMULATI
   produces no such contract. `verify()` re-measures every number in the chain, then replays the
   run from the scenario and the player's actions and checks that it posts exactly the same
   contract, so an invented root cause or an edited decision record is detected too.
+- **Cited shocks are tested, not just named:** `sim.but_for(cid)` replays the run without each
+  shock a quest cites and checks that the same need doesn't post anyway within a week. Every
+  shock-citing quest in the shipped scenarios passes (486 of 486 over 5 seeds, no player). With an
+  active player the verdict is often marked inconclusive, because what the player would have done
+  without the shock can't be replayed.
 - **Bounded:** there's at most one live contract per need, plus cooldowns, a global cap and a
   per-day cap. These hold under three simultaneous extreme shocks and against a random "chaos
   player".

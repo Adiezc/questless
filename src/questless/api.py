@@ -26,7 +26,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from questless import audit, bugreport, persistence
+from questless import audit as checks
+from questless import bugreport, persistence
 from questless.config import ScenarioConfig, load_scenario
 from questless.contracts import causes
 from questless.contracts.model import Contract, Status
@@ -186,24 +187,31 @@ class Simulation:
         problems = verify(self.world, contract)
         try:
             twin = self._replayed()
-        except audit.NotReplayable as exc:
+        except checks.NotReplayable as exc:
             return [*problems, str(exc)]
-        return problems + audit.verify_against(twin, contract)
+        return problems + checks.verify_against(twin, contract)
 
     def audit(self) -> dict[str, list[str]]:
         """``verify`` for every contract: ``{contract_id: problems}``."""
         try:
             twin = self._replayed()
-        except audit.NotReplayable as exc:
+        except checks.NotReplayable as exc:
             return {cid: [str(exc)] for cid in sorted(self.world.contracts.contracts)}
-        return audit.audit(self.world, twin)
+        return checks.audit(self.world, twin)
+
+    def but_for(self, contract_id: str, window: int = checks.BUT_FOR_WINDOW) -> list[checks.ButFor]:
+        """Counterfactual check of the shocks a contract cites: replay without each (and without
+        all of them together) and report whether the same need posts within ``window`` days.
+        Raises ``NotReplayable`` if this world can't be replayed."""
+        contract = self.contract(contract_id)
+        return checks.but_for(self.world, contract, window, twin=self._replayed())
 
     def _replayed(self) -> World:
         # Keyed by the state hash (well under a millisecond), not the tick: a world changed
         # outside the action log must fail again rather than reuse a replay that matched before.
         key = self.world.state_hash()
         if self._twin is None or self._twin[0] != key:
-            self._twin = (key, audit.rebuild(self.world))
+            self._twin = (key, checks.rebuild(self.world))
         return self._twin[1]
 
     def evidence_series(self, contract_id: str, step: int) -> dict[int, float]:
