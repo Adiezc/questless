@@ -39,6 +39,11 @@ class Modifiers:
     def active(self, tick: int) -> list[Shock]:
         return [s for s in self.shocks if s.active(tick)]
 
+    def factor_of(self, index: int, tick: int) -> float:
+        """The factor of the ``index``-th shock on ``tick``, or 1.0 when it is not active."""
+        shock = self.shocks[index]
+        return shock.factor if shock.active(tick) else 1.0
+
     def site_output(self, site: Site, tick: int) -> float:
         factor = 1.0
         for s in self.active(tick):

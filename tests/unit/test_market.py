@@ -110,3 +110,21 @@ def test_effort_follows_price_within_configured_range(world):
     assert effort(world, Asset.FOOD) == lo
     world.prices[Asset.FOOD] = base * 1.0
     assert effort(world, Asset.FOOD) == pytest.approx(1.0)
+
+
+def test_export_skips_an_unaffordable_good_and_buys_cheaper_ones_after_it(world):
+    """One good the outside budget can't afford must not stop exports of later, cheaper goods."""
+    from questless.sim.entities import TOWN
+    from questless.sim.market import _export
+
+    world.ledger.transfer(TOWN, OUTSIDE, Asset.COIN, 100, tick=world.tick, reason="test")
+    budget_coin = int(100 * world.config.market.export_share)
+    world.prices[Asset.FOOD] = budget_coin * 10.0  # first in GOODS, far beyond the budget
+    world.prices[Asset.TOOLS] = 5.0
+    assert any(
+        world.ledger.balance(n.account, Asset.TOOLS) > stock_target(world, n, Asset.TOOLS)
+        for n in world.npcs_in_order()
+    ), "the test needs someone with surplus tools"
+    exported = _export(world)
+    assert Asset.FOOD not in exported
+    assert exported.get(Asset.TOOLS, 0) > 0

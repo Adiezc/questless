@@ -1,13 +1,13 @@
 [project]
 name = "questless"
-version = "0.1.0"
+version = "0.2.0"
 description = "Emergent quests from living worlds: a deterministic quest-economy engine for MMO-style worlds."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Adrian Diez Cuadrado" }]
 requires-python = ">=3.11"
-# The engine is standard-library only. UI dependencies live in the "demo" extra (added in M10).
+# The engine is standard-library only. UI dependencies live in the "demo" extra.
 dependencies = []
 keywords = ["game-ai", "procedural-generation", "agent-based-modeling", "game-economy", "quest-generation", "simulation"]
 classifiers = [
@@ -17,11 +17,17 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
     "Topic :: Games/Entertainment :: Role-Playing",
     "Topic :: Scientific/Engineering :: Artificial Life",
 ]
 
-# [project.urls] is added once the GitHub repository URL is known.
+[project.urls]
+Homepage = "https://github.com/Adiezc/questless"
+Repository = "https://github.com/Adiezc/questless"
+Issues = "https://github.com/Adiezc/questless/issues"
+Changelog = "https://github.com/Adiezc/questless/blob/main/CHANGELOG.md"
 
 [project.scripts]
 questless = "questless.cli:main"
@@ -44,7 +50,7 @@ build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+markers = ["slow: takes more than a few seconds (deselect with -m 'not slow')"]
 
 [tool.ruff]
 line-length = 100

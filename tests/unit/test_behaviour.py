@@ -176,3 +176,22 @@ def test_levy_brackets_conserve_coin_and_collect_more(baseline):
     steep_world.step(60)
     steep_world.check_invariants()
     assert sum(s.upkeep for s in steep_world.stats) > sum(s.upkeep for s in flat_world.stats)
+
+
+def test_unsold_jitter_spreads_pause_thresholds_without_touching_world_streams(baseline):
+    from questless.sim.behaviour import max_unsold_days
+
+    base = baseline.needs.max_unsold_days
+    plain = build_world(baseline)
+    assert {max_unsold_days(plain, n) for n in plain.npcs_in_order()} == {base}
+
+    cfg = dataclasses.replace(
+        baseline, needs=dataclasses.replace(baseline.needs, unsold_jitter_days=2)
+    )
+    jittered = build_world(cfg)
+    days = [max_unsold_days(jittered, n) for n in jittered.npcs_in_order()]
+    assert len(set(days)) > 1
+    assert all(base - 2 <= d <= base + 2 for d in days)
+    assert days == [max_unsold_days(jittered, n) for n in build_world(cfg).npcs_in_order()]
+    # The offsets come from throwaway generators, not the world's named streams.
+    assert jittered.rng.getstate().keys() == plain.rng.getstate().keys()

@@ -44,6 +44,7 @@ def _broken(raw: dict, mutate) -> dict:
         (lambda d: d.pop("traits"), "missing"),
         (lambda d: d["professions"]["guard"].update(equipment="coin"), "coin is not a good"),
         (lambda d: d["professions"]["blacksmith"].update(recipes={}), "no recipes"),
+        (lambda d: d["needs"].update(unsold_jitter_days=99), "below needs.max_unsold_days"),
         (
             lambda d: d.update(
                 shocks=[

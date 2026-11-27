@@ -109,6 +109,30 @@ def test_buying_takes_real_supply_and_conserves_everything(sim):
     sim.world.check_invariants()
 
 
+def test_selling_moves_goods_to_npcs_who_want_them_and_conserves_everything(sim):
+    sim.caravan("iron_ore", 20)
+    sim.step(30)  # the caravan lands, and the shortage has smiths wanting ore
+    ledger = sim.world.ledger
+    totals = ledger.totals()
+    coin = ledger.balance(PLAYER, Asset.COIN)
+    sold = sim.sell("iron_ore", 20)
+    assert 0 < sold <= 20
+    assert ledger.balance(PLAYER, Asset.IRON_ORE) == 20 - sold
+    assert ledger.balance(PLAYER, Asset.COIN) > coin
+    assert ledger.totals() == totals
+    sim.world.check_invariants()
+
+
+def test_sales_replay_exactly(sim, tmp_path):
+    sim.caravan("iron_ore", 20)
+    sim.step(30)
+    sim.sell("iron_ore", 20)
+    sim.step(5)
+    path = tmp_path / "s.json"
+    save(sim.world, path)
+    assert load(path).state_hash() == sim.world.state_hash()
+
+
 def test_caravan_draws_on_finite_outside_stock(sim):
     outside = sim.world.ledger.balance(OUTSIDE, Asset.IRON_ORE)
     sim.caravan("iron_ore", 5)
@@ -124,6 +148,8 @@ def test_caravan_draws_on_finite_outside_stock(sim):
         ("buy", {"good": "coin", "qty": 1}),
         ("buy", {"good": "food", "qty": 0}),
         ("caravan", {"good": "food", "qty": 10**9}),
+        ("sell", {"good": "tools", "qty": 1}),  # the player holds none
+        ("sell", {"good": "food", "qty": -1}),
         ("shock", {"effect": "site_output", "factor": 0.5, "duration": 5, "name": "x"}),
     ],
 )

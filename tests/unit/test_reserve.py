@@ -5,6 +5,8 @@ longer drains it to zero and leaves guards unpaid."""
 
 import dataclasses
 
+import pytest
+
 from questless.config import load_scenario
 from questless.sim.entities import OUTSIDE, TOWN, Profession
 from questless.sim.ledger import Asset
@@ -40,6 +42,7 @@ def test_surcharge_applies_only_below_the_reserve(baseline):
     assert _upkeep_today(on, target + 1000) == _upkeep_today(off, target + 1000)
 
 
+@pytest.mark.slow
 def test_long_baseline_run_keeps_guards_paid(baseline):
     """Seed 3 drained the town to 0 by day 632 and left guards unpaid on 341 days (#72)."""
     seed3 = dataclasses.replace(baseline, seed=3)

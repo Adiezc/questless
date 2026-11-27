@@ -191,9 +191,7 @@ def _site_shocks(walk: _Walk, prof: Profession) -> list[int]:
     out = []
     for shock in _cited_shocks(walk, ShockEffect.SITE_OUTPUT, site):
         if shock not in walk.shocks_seen:
-            walk.shocks_seen[shock] = walk.add(
-                _shock_evidence(walk, shock, ("site_factor", str(site)))
-            )
+            walk.shocks_seen[shock] = walk.add(_shock_evidence(walk, shock))
         out.append(walk.shocks_seen[shock])
     return out
 
@@ -202,21 +200,26 @@ def _transport_shocks(walk: _Walk) -> list[int]:
     out = []
     for shock in _cited_shocks(walk, ShockEffect.TRANSPORT_CAPACITY):
         if shock not in walk.shocks_seen:  # one evidence item per shock, however reached
-            walk.shocks_seen[shock] = walk.add(_shock_evidence(walk, shock, ("transport_factor",)))
+            walk.shocks_seen[shock] = walk.add(_shock_evidence(walk, shock))
         out.append(walk.shocks_seen[shock])
     return out
 
 
-def _shock_evidence(walk: _Walk, shock, key: tuple) -> Evidence:
+def _shock_evidence(walk: _Walk, shock) -> Evidence:
+    # Report this shock's own factor. The site or transport factor would multiply in
+    # any other shock active on the same day, so two overlapping shocks of 0.5 and 0.2 would
+    # both read 0.10.
     subject = f"site:{shock.site}" if shock.site else "road:transport"
+    index = next(i for i, s in enumerate(walk.world.modifiers.shocks) if s is shock)
+    own = ("shock_factor", str(index))
     return Evidence(
         shock.start,
         "shock",
         subject,
         f"{shock.name.lower().replace(' ', '_')}_factor",
-        measure(walk.world, key, shock.start),
+        measure(walk.world, own, shock.start),
         baseline=1.0,
-        measure=(key, shock.start),
+        measure=(own, shock.start),
     )
 
 

@@ -10,7 +10,7 @@ import pytest
 
 from questless.config import ShockConfig, ShockEffect
 from questless.contracts.model import ContractKind
-from questless.contracts.provenance import _num, measure, series, verify
+from questless.contracts.provenance import Evidence, _num, measure, series, verify
 from questless.contracts.summary import summarise
 from questless.sim.entities import Site
 from questless.sim.ledger import Asset
@@ -107,6 +107,68 @@ def test_tampered_evidence_is_detected(worlds):
         c, provenance=dataclasses.replace(c.provenance, chain=tuple(chain))
     )
     assert verify(world, forged)
+
+
+def _forge(contract, chain):
+    return dataclasses.replace(
+        contract, provenance=dataclasses.replace(contract.provenance, chain=tuple(chain))
+    )
+
+
+# verify() re-measures the numbers that carry a ``measure``; it doesn't yet check that the chain
+# is the one the causal walk would build. These forgeries pass today. They are strict xfails, so
+# making verify() rebuild the chain (for example from a replay) turns them into failures that
+# prompt removing the marker.
+UNVERIFIED_CHAIN = "verify() re-measures values but does not rebuild the chain's structure"
+
+
+@pytest.mark.xfail(strict=True, reason=UNVERIFIED_CHAIN)
+def test_invented_root_cause_is_detected(worlds):
+    world = worlds["drought"]
+    c = next(iter(world.contracts.contracts.values()))
+    dragon = Evidence(
+        c.provenance.chain[0].tick, "shock", "site:farms", "dragon_attack_factor", 0.0
+    )
+    rewired = [
+        dataclasses.replace(e, caused_by=tuple(i + 1 for i in e.caused_by) or (0,))
+        for e in c.provenance.chain
+    ]
+    assert verify(world, _forge(c, [dragon, *rewired]))
+
+
+@pytest.mark.xfail(strict=True, reason=UNVERIFIED_CHAIN)
+@pytest.mark.parametrize("kind", ["need_persisted", "funding_decision"])
+def test_edited_decision_record_is_detected(worlds, kind):
+    world = worlds["mine_collapse"]
+    c = next(
+        c
+        for c in world.contracts.contracts.values()
+        if any(e.kind == kind for e in c.provenance.chain)
+    )
+    chain = [
+        dataclasses.replace(e, value=e.value * 10) if e.kind == kind else e
+        for e in c.provenance.chain
+    ]
+    assert verify(world, _forge(c, chain))
+
+
+def test_overlapping_shocks_each_report_their_own_factor(baseline):
+    """Two shocks at the mine at once: each evidence line shows its own factor, not the product
+    of both (0.5 and 0.2, not 0.10 twice), and the values still re-measure."""
+    shocks = (
+        mine_collapse(factor=0.5),
+        ShockConfig("Flooded shaft", ShockEffect.SITE_OUTPUT, 20, 30, 0.2, Site.MINE),
+    )
+    world = build_world(with_shocks(baseline, *shocks))
+    world.step(60)
+    c = next(
+        c
+        for c in world.contracts.contracts.values()
+        if sum(e.kind == "shock" for e in c.provenance.chain) == 2
+    )
+    factors = {e.metric: e.value for e in c.provenance.chain if e.kind == "shock"}
+    assert factors == {"mine_collapse_factor": 0.5, "flooded_shaft_factor": 0.2}
+    assert verify(world, c) == []
 
 
 def test_rendered_explanation_uses_names_and_numbers(worlds):

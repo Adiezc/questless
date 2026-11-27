@@ -8,6 +8,7 @@ through the ledger; this module only decides *what* happens.
 
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING
 
 from questless.sim.entities import NPC, DailyRecord, NPCState
@@ -99,11 +100,30 @@ SALES_WINDOW = 7
 
 
 def unsold_cap(world: World, npc: NPC, good: Asset, base_rate: float) -> float:
-    """``max_unsold_days`` worth of recent daily sales, with a floor of half the base production
-    rate so a producer with no sales history can still put goods on the market."""
+    """``max_unsold_days`` (spread per NPC by ``unsold_jitter_days``) worth of recent daily
+    sales, with a floor of half the base production rate so a producer with no sales history can
+    still put goods on the market."""
     recent = list(npc.history)[-SALES_WINDOW:]
     avg_sales = sum(r.sold.get(good, 0) for r in recent) / SALES_WINDOW
-    return world.config.needs.max_unsold_days * max(avg_sales, 0.5 * base_rate)
+    return max_unsold_days(world, npc) * max(avg_sales, 0.5 * base_rate)
+
+
+_JITTER: dict[tuple[int, str, int], int] = {}
+
+
+def max_unsold_days(world: World, npc: NPC) -> int:
+    """This NPC's pause threshold. The offset comes from a throwaway generator seeded by the run
+    seed and NPC id, so it is fixed for the run and draws nothing from the world's streams."""
+    needs = world.config.needs
+    spread = needs.unsold_jitter_days
+    if not spread:
+        return needs.max_unsold_days
+    key = (world.config.seed, npc.id, spread)
+    offset = _JITTER.get(key)
+    if offset is None:
+        rng = random.Random(f"questless:{world.config.seed}:unsold_jitter:{npc.id}")
+        offset = _JITTER[key] = rng.randint(-spread, spread)
+    return needs.max_unsold_days + offset
 
 
 def effort(world: World, good: Asset) -> float:

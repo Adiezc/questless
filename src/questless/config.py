@@ -57,6 +57,9 @@ class NeedsConfig:
     hungry_after: int  # days without food before productivity drops
     hungry_productivity: float
     max_unsold_days: int  # producers pause once this many days of output sit unsold
+    # Spread max_unsold_days by up to this many days either way, fixed per NPC and seed, so
+    # producers of a good don't all pause on the same day. 0 (the default) keeps them in step.
+    unsold_jitter_days: int = 0
 
 
 class ShockEffect(StrEnum):
@@ -374,6 +377,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "hungry_productivity",
             "max_unsold_days",
         },
+        optional={"unsold_jitter_days"},
     )
     needs = NeedsConfig(
         food_per_day=_nonneg_int(n["food_per_day"], "needs.food_per_day"),
@@ -381,7 +385,10 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         hungry_after=_nonneg_int(n["hungry_after"], "needs.hungry_after"),
         hungry_productivity=_fraction(n["hungry_productivity"], "needs.hungry_productivity"),
         max_unsold_days=_pos_int(n["max_unsold_days"], "needs.max_unsold_days"),
+        unsold_jitter_days=_nonneg_int(n.get("unsold_jitter_days", 0), "needs.unsold_jitter_days"),
     )
+    if needs.unsold_jitter_days >= needs.max_unsold_days:
+        raise ConfigError("needs.unsold_jitter_days: must be below needs.max_unsold_days")
 
     m = data["market"]
     _keys(

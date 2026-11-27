@@ -102,7 +102,8 @@ Run these before opening a pull request. CI runs the same checks and won't merge
 ```bash
 uv run ruff check .                # lint
 uv run ruff format --check .       # formatting (run `uv run ruff format .` to fix)
-uv run pytest                      # 150+ tests, including the guarantee tests (~15 s)
+uv run pytest                      # 380+ tests, including the guarantee tests (~75 s)
+uv run pytest -m "not slow"         # the same without the long runs (~45 s)
 uvx bandit -r src app experiments -ll   # security lint: no medium or high findings
 uv export --format requirements-txt --all-extras --no-hashes --no-emit-project > /tmp/req.txt
 uvx pip-audit -r /tmp/req.txt      # known vulnerabilities in dependencies

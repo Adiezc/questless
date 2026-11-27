@@ -102,6 +102,7 @@ def test_a_year_of_trading_conserves_coin_and_claims(baseline):
     assert sum(s.claims.sold for s in world.stats) > 0
 
 
+@pytest.mark.slow
 def test_claims_concentrate_wealth_over_a_year(baseline):
     """With trading, the Gini of coin plus claims ends above a world where claims never trade."""
     diffs = []

@@ -120,6 +120,9 @@ METRICS: dict[str, Callable[..., float]] = {
     "share": _share,
     "site_factor": lambda w, t, site: w.modifiers.site_output(Site(site), t),
     "transport_factor": lambda w, t: w.modifiers.transport_capacity(t),
+    # One shock's own factor on a day (1.0 when it is not active). Unlike site_factor, this
+    # does not multiply in other shocks that overlap it.
+    "shock_factor": lambda w, t, index: w.modifiers.factor_of(int(index), t),
 }
 
 

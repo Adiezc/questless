@@ -103,7 +103,8 @@ class ContractBoard:
         return [c for c in self.contracts.values() if c.live]
 
     def live_for(self, key: tuple[str, str, str]) -> Contract | None:
-        return next((c for c in self.live() if c.dedup_key == key), None)
+        # Scan without building the live list first: this runs for every candidate every day.
+        return next((c for c in self.contracts.values() if c.live and c.dedup_key == key), None)
 
     def ancestors(self, contract_id: str) -> list[str]:
         """Quest lineage upwards: parent, grandparent, ... (oldest last)."""
@@ -215,6 +216,7 @@ class ContractBoard:
 
     def generate(self, world: World, report: ContractTickReport) -> None:
         cfg = world.config.contracts
+        live = len(self.live())  # counted once; only posting below changes it
         for cand in _candidates(world, self):
             if cand.covered_by and self._pool_gives_units(cand):
                 report.suppressed["covered_by_pool"] += 1
@@ -225,7 +227,7 @@ class ContractBoard:
             if self.cooldowns.get(cand.key, -1) > world.tick:
                 report.suppressed["cooldown"] += 1
                 continue
-            if len(self.live()) >= cfg.max_open:
+            if live >= cfg.max_open:
                 report.suppressed["cap_reached"] += 1
                 continue
             if len(report.created) >= cfg.max_new_per_tick:
@@ -234,6 +236,7 @@ class ContractBoard:
             contract = self._try_post(world, cand, report)
             if contract:
                 report.created.append(contract.id)
+                live += 1
 
     def _pool_gives_units(self, cand: Candidate) -> bool:
         """A member's own need is covered only by a live pool that gives them units (#46): a

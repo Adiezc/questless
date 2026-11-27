@@ -122,6 +122,7 @@ def test_divergence_d2_early_on_coin_is_far_more_equal_than_real_wealth():
         assert max(s.coin_gini for s in w.stats) < 0.4, seed
 
 
+@pytest.mark.slow
 def test_divergence_d2_over_a_year_coin_concentrates():
     """...but over a full year the baseline's coin Gini climbs well above its day-120 level."""
     early, late = [], []

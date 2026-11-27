@@ -126,6 +126,9 @@ class Simulation:
     def buy(self, good: str, qty: int) -> int:
         return apply_action(self.world, "buy", good=good, qty=qty)
 
+    def sell(self, good: str, qty: int) -> int:
+        return apply_action(self.world, "sell", good=good, qty=qty)
+
     def caravan(self, good: str, qty: int) -> int:
         return apply_action(self.world, "caravan", good=good, qty=qty)
 

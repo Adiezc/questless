@@ -26,6 +26,7 @@ def test_baseline_year_is_stable(baseline):
     world.check_invariants()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", [42, 7])
 def test_long_baseline_keeps_paying_guards(baseline, seed):
     """#48: over 2,000 days guild treasuries don't hoard the town's coin."""
