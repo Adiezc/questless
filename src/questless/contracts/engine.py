@@ -56,6 +56,7 @@ def _outcome_snapshot(world: World, c: Contract) -> dict:
 
 def adjust_reputation(world: World, c: Contract, delta: int) -> None:
     """Reputation with the guild behind the contract (the requester's guild), clamped to +-100."""
+    gid: str | None
     if c.requester.startswith("guild:"):
         gid = c.requester.removeprefix("guild:")
     elif c.requester in world.npcs:
@@ -208,6 +209,7 @@ class ContractBoard:
             if (
                 c.status is Status.FULFILLED
                 and c.outcome.get("after") is None
+                and c.closed_tick is not None
                 and world.tick - c.closed_tick + 1 >= OUTCOME_DAYS  # days simulated since
             ):
                 c.outcome["after"] = _outcome_snapshot(world, c)
@@ -535,7 +537,7 @@ def _evidence(
 
 def _reason(world: World, cand: Candidate, qty: int) -> str:
     good = str(cand.good).replace("_", " ")
-    if cand.kind is ContractKind.GUILD_SUPPLY:
+    if cand.kind is ContractKind.GUILD_SUPPLY and cand.guild_id is not None:
         guild = world.guilds[cand.guild_id]
         users = len(_users(world, guild.members, cand.good))
         return (

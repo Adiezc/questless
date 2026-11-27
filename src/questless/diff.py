@@ -26,6 +26,7 @@ import math
 import statistics as st
 import sys
 import tomllib
+from collections.abc import Sequence
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -104,7 +105,7 @@ def run_one(scenario: str, seed: int, days: int | None) -> dict[str, Any]:
 
 
 def run_grid(
-    scenarios: list[str | Path], seeds: list[int], days: int | None, workers: int | None = 1
+    scenarios: Sequence[str | Path], seeds: list[int], days: int | None, workers: int | None = 1
 ) -> list[dict[str, Any]]:
     """Every scenario × seed, sorted by (scenario, seed). ``workers`` > 1 (or ``None`` for one per
     CPU) runs them in separate processes; results are identical either way."""
@@ -324,14 +325,14 @@ def invariant_problems(rows: list[dict[str, Any]]) -> list[str]:
 def scenario_files(path: str | Path) -> list[Path]:
     """A scenario file and every file it ``extends``, nearest first."""
     out: list[Path] = []
-    path = Path(path).resolve()
-    while path not in out:
-        out.append(path)
-        with path.open("rb") as fh:
+    current = Path(path).resolve()
+    while current not in out:
+        out.append(current)
+        with current.open("rb") as fh:
             parent = tomllib.load(fh).get("scenario", {}).get("extends")
         if parent is None:
             break
-        path = (path.parent / parent).resolve()
+        current = (current.parent / parent).resolve()
     return out
 
 

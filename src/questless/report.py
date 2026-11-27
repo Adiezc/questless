@@ -11,6 +11,8 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING, Any
 
+from questless.sim.ledger import Asset
+
 if TYPE_CHECKING:
     from questless.sim.world import World
 
@@ -47,7 +49,7 @@ def build_report(world: World) -> dict[str, Any]:
             "name": guild.name,
             "treasury_history": [s.guilds[gid].treasury if gid in s.guilds else 0 for s in stats],
             "escrowed_history": [s.guilds[gid].escrowed if gid in s.guilds else 0 for s in stats],
-            "current_treasury": world.ledger.balance(guild.account, "coin"),
+            "current_treasury": world.ledger.balance(guild.account, Asset.COIN),
         }
 
     scenario_name = getattr(world.config, "name", "Simulation")

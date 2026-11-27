@@ -54,12 +54,13 @@ def ship(world: World) -> TransportReport:
     for key, qty in shipments.items():
         if not qty:
             continue
-        npc_id, good = key.split("|")
+        npc_id, good_name = key.split("|")
+        shipped = Asset(good_name)
         npc = world.npcs[npc_id]
         world.ledger.transfer(
-            npc.site_account, npc.account, Asset(good), qty, tick=world.tick, reason="haul"
+            npc.site_account, npc.account, shipped, qty, tick=world.tick, reason="haul"
         )
-        shipped_value[npc_id] = shipped_value.get(npc_id, 0) + qty * world.unit_price(Asset(good))
+        shipped_value[npc_id] = shipped_value.get(npc_id, 0) + qty * world.unit_price(shipped)
 
     # Producers pay into a pool that is split across merchants once per day, so small fees are
     # not lost to rounding or always rounded up to the same merchant.

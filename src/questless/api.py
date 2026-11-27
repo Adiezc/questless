@@ -108,7 +108,9 @@ class Simulation:
 
         for _ in range(days):
             self.world.step()
-            created += self.world.stats[-1].contracts.created
+            report = self.world.stats[-1].contracts
+            if report is not None:
+                created += report.created
         return created
 
     def run_until_contract(self, max_days: int = 60) -> str | None:
