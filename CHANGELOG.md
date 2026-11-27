@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Strict provenance checks (`questless.audit`). `audit(world)` replays the run from the scenario
+  and action log and compares every contract with the one the replay posts: its terms, every
+  step of its evidence chain, and the state hash taken when it was posted. An invented root
+  cause, an edited decision record (`need_persisted`, `funding_decision`) or changed contract
+  terms are now caught; re-measuring numbers alone missed them. A world changed outside the
+  action log raises `NotReplayable` rather than reporting forged contracts.
+  `Simulation.verify()` now runs both checks, sharing one replay per world state (about 0.15 s
+  for a 70-day run, then microseconds per contract), and `Simulation.audit()` checks every
+  contract at once. The dashboard's "Verified" line says what was checked.
+
 ## [0.2.0] - 2026-11-27
 
 ### Added

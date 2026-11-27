@@ -27,6 +27,7 @@ ends. The engine never imports the UI.
                   │   model.py      Contract, kinds, statuses                 │
                   │ player.py       logged actions (accept/buy/caravan/...)   │
                   │ persistence.py  save / load / replay + state hash check   │
+                  │ audit.py        rebuild contracts from a replay, compare  │
                   │ metrics.py      time series for UIs and experiments       │
                   │ api.py          Simulation facade (the public API)        │
                   │ cli.py          questless run | replay | demo             │
@@ -72,6 +73,7 @@ log. Replay re-applies the log at the same ticks, which is what makes save files
 | Scarcity (could pay, no supply) separate from poverty | Contracts must answer real shortages, not just "someone is broke" |
 | Escrow before posting | An unfunded contract cannot exist, by construction |
 | Evidence carries its metric key and tick | `verify()` re-measures it later; the UI can only claim what the data shows |
+| Contracts are checked against a replay, not a stored signature | The simulation is deterministic, so the strongest proof that a quest is genuine is that re-running the same scenario and actions posts it again, chain and all (`audit.py`) |
 | Stdlib-only engine; UI and charts as optional extras | Easy to embed, audit, or port to C#/C++ |
 
 ## Extending

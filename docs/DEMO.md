@@ -18,7 +18,8 @@ package).
    - 88% of smiths are short;
    - the guild escrowed 363 coin.
 
-   The green **Verified** line means every measured number was re-checked.
+   The green **Verified** line means every measured number was re-checked, and replaying the run
+   from the scenario and your actions posted exactly this quest, with the same chain.
 2. **Accept** the contract. Choose **Caravan 31** (310 coin, 3 days). Press **+1 day** three
    times, then **Deliver**. Your coin goes 600 → 290 → 653.
 3. Press **+7 days**. The fulfilled contract (Quest board, *History*) shows what changed for the
