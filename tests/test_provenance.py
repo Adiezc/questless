@@ -8,6 +8,7 @@ import re
 
 import pytest
 
+from questless.audit import NotReplayable, audit, rebuild, verify_against
 from questless.config import ShockConfig, ShockEffect
 from questless.contracts.model import ContractKind
 from questless.contracts.provenance import Evidence, _num, measure, series, verify
@@ -44,7 +45,7 @@ def test_every_contract_has_verifiable_provenance(worlds, name):
     assert world.contracts.contracts
     for c in world.contracts.contracts.values():
         assert len(c.provenance.chain) >= 3, c.id
-        assert verify(world, c) == [], c.id
+    assert audit(world) == {cid: [] for cid in world.contracts.contracts}
 
 
 @pytest.mark.parametrize("name", SCENARIOS)
@@ -115,14 +116,10 @@ def _forge(contract, chain):
     )
 
 
-# verify() re-measures the numbers that carry a ``measure``; it doesn't yet check that the chain
-# is the one the causal walk would build. These forgeries pass today. They are strict xfails, so
-# making verify() rebuild the chain (for example from a replay) turns them into failures that
-# prompt removing the marker.
-UNVERIFIED_CHAIN = "verify() re-measures values but does not rebuild the chain's structure"
+# verify() alone only re-measures numbers, so these forgeries pass it. Rebuilding the contract
+# from a replay (questless.audit) catches them.
 
 
-@pytest.mark.xfail(strict=True, reason=UNVERIFIED_CHAIN)
 def test_invented_root_cause_is_detected(worlds):
     world = worlds["drought"]
     c = next(iter(world.contracts.contracts.values()))
@@ -133,10 +130,12 @@ def test_invented_root_cause_is_detected(worlds):
         dataclasses.replace(e, caused_by=tuple(i + 1 for i in e.caused_by) or (0,))
         for e in c.provenance.chain
     ]
-    assert verify(world, _forge(c, [dragon, *rewired]))
+    forged = _forge(c, [dragon, *rewired])
+    assert verify(world, forged) == []  # every number in it still re-measures
+    problems = verify_against(rebuild(world), forged)
+    assert problems and "chain step #0" in problems[0], problems
 
 
-@pytest.mark.xfail(strict=True, reason=UNVERIFIED_CHAIN)
 @pytest.mark.parametrize("kind", ["need_persisted", "funding_decision"])
 def test_edited_decision_record_is_detected(worlds, kind):
     world = worlds["mine_collapse"]
@@ -149,7 +148,30 @@ def test_edited_decision_record_is_detected(worlds, kind):
         dataclasses.replace(e, value=e.value * 10) if e.kind == kind else e
         for e in c.provenance.chain
     ]
-    assert verify(world, _forge(c, chain))
+    forged = _forge(c, chain)
+    assert verify(world, forged) == []
+    assert any(kind in p for p in verify_against(rebuild(world), forged))
+
+
+def test_edited_contract_terms_are_detected(worlds):
+    world = worlds["drought"]
+    c = next(iter(world.contracts.contracts.values()))
+    twin = rebuild(world)
+    richer = dataclasses.replace(c, reward=c.reward * 2, rep_reward=c.rep_reward + 1)
+    problems = verify_against(twin, richer)
+    assert any(p.startswith("reward:") for p in problems)
+    assert any(p.startswith("rep_reward:") for p in problems)
+    assert verify_against(twin, dataclasses.replace(c, id="C-9999")) == [
+        "C-9999 was never posted in a replay of this run"
+    ]
+
+
+def test_a_world_changed_outside_the_action_log_cannot_be_audited(baseline):
+    world = build_world(with_shocks(baseline, drought()))
+    world.step(40)
+    world.ledger.transfer("town", "outside", Asset.COIN, 1, tick=world.tick, reason="test")
+    with pytest.raises(NotReplayable):
+        audit(world)
 
 
 def test_overlapping_shocks_each_report_their_own_factor(baseline):
@@ -266,7 +288,7 @@ def test_only_shocks_that_cut_output_and_overlap_are_cited(earlier):
         assert all(e.tick != earlier.start for e in shocks), (c.id, shocks)
         if c.kind is ContractKind.TRANSPORT:
             assert shocks and shocks[0].tick == 50, c.id
-        assert verify(world, c) == [], c.id
+    assert all(not p for p in audit(world).values())
     summaries = [summarise(world, c) for c in later if c.kind is ContractKind.TRANSPORT]
     assert summaries and not any(earlier.name in s for s in summaries)
 
@@ -289,3 +311,20 @@ def test_chain_graph_round_trips_through_json(worlds, name):
             assert edge["from"] < edge["to"], (c.id, edge)  # causes come earlier in the chain
         assert g["roots"] == [i for i, e in enumerate(chain) if not e.caused_by]
         assert g["parent"] == c.parent_id
+
+
+def test_simulation_verify_rebuilds_once_and_notices_later_tampering():
+    from questless.api import Simulation
+    from tests.conftest import SCENARIOS as DIR
+
+    sim = Simulation.from_scenario(DIR / "iron_shortage.toml")
+    sim.step(30)
+    cid = sim.contracts()[0].id
+    sim.accept(cid)
+    sim.step(10)
+    assert sim.audit() == {c.id: [] for c in sim.contracts()}
+    twin = sim._replayed()
+    assert all(sim.verify(c.id) == [] for c in sim.contracts())
+    assert sim._replayed() is twin  # one replay serves every check of the same state
+    sim.world.ledger.transfer("town", "outside", Asset.COIN, 1, tick=sim.world.tick, reason="x")
+    assert sim.verify(cid) and "does not replay" in sim.verify(cid)[-1]

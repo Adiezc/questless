@@ -14,7 +14,6 @@ import pytest
 
 from questless.api import Simulation
 from questless.contracts.model import Status
-from questless.contracts.provenance import verify
 from questless.persistence import replay
 from questless.player import ActionError
 from questless.sim.ledger import GOODS
@@ -56,9 +55,10 @@ def test_invariants_survive_a_chaos_player(seed):
     for c in sim.contracts():
         assert c.reward >= cfg.min_reward
         assert c.deadline_tick > c.created_tick
-        assert verify(sim.world, c) == [], c.id
         if c.status is Status.FULFILLED:
             assert c.accepted_by == "player"
+    # Every contract re-measures and matches a replay of the session, chain and all.
+    assert all(not problems for problems in sim.audit().values())
     for s in sim.world.stats:
         assert len(s.contracts.created) <= cfg.max_new_per_tick
         assert s.contracts.live <= cfg.max_open
