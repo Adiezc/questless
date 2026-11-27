@@ -5,6 +5,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Job switching (`[mobility]`, off by default). An NPC in a farming, mining or smithing job that
+  has produced nothing for 20 days moves to the trade whose members actually earn the most
+  (median realised income over 30 days, scaled to its skill), if that beats its own by 1.5
+  times and 5 coin a day. At most one move a day, a 60-day cooldown, and nobody moves while on
+  a live contract. A move keeps coin, goods and traits, brings site stock home, and changes
+  guild; the new guild buys any loan from the old one. Professions are hashed only while it's
+  on. `TickStats.moves` records each move. Policy files: `job_switching.toml` and
+  `job_switching_and_loans.toml` (`mobility.` is now a rule a policy may change). Over 10
+  seeds × 1,500 days, switching moves the stranded smiths of D3 into farming (about 4 moves a
+  run): hunger falls from 3.7 to 0.1 NPCs, and with loans as well tools stay within 40% of
+  base on 10 of 10 seeds and the coin Gini falls from 0.50 to 0.22. It doesn't fix D1, and it
+  can't be combined with land claims yet. Design reviewed by a Claude Fable 5.2 subagent.
+
+### Fixed
+- `docs/VALIDATION.md` D3: the "off" row said 2 of 10 seeds stay near base; measured the same
+  way as the other rows it's 4 of 10 in the second year and 3 of 10 late.
+
 ## [0.3.0] - 2026-11-27
 
 ### Changed

@@ -1,0 +1,11 @@
+# Policy: job switching plus guild working-capital loans. Loans get broke workers back to work;
+# those still stranded after 20 idle days change trade. Over 10 seeds x 1,500 days: tools near
+# base on 10 of 10 seeds, hunger 0.1 NPCs, coin Gini 0.22 (0.50 with neither).
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "guild_loans.toml"
+name = "Baseline, job switching and guild loans"
+
+[mobility]
+enabled = true

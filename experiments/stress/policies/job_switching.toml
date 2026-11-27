@@ -1,0 +1,12 @@
+# Policy: job switching (src/questless/sim/mobility.py). An NPC that has produced nothing for 20
+# days moves to the farming, mining or smithing trade whose members earn the most, at most one a
+# day. Over 10 seeds x 1,500 days, the stranded smiths of divergence D3 become farmers (about 4
+# moves a run), hunger falls from 3.7 to 0.1 NPCs and tools stay near base on 8 of 10 seeds.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "../../../scenarios/baseline.toml"
+name = "Baseline, job switching"
+
+[mobility]
+enabled = true

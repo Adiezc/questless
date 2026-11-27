@@ -122,6 +122,20 @@ class LegitimacyConfig:
 
 
 @dataclass(frozen=True)
+class MobilityConfig:
+    """Job switching (src/questless/sim/mobility.py). Off unless ``enabled``."""
+
+    enabled: bool = False
+    professions: tuple[str, ...] = ("farmer", "miner", "blacksmith")  # who may switch, and to what
+    window: int = 30  # days of realised income compared
+    idle_days: int = 20  # only an NPC that has produced nothing for this long may switch
+    margin: float = 1.5  # the alternative must pay this many times realised income...
+    min_gain: float = 5.0  # ...and at least this much more coin a day
+    max_per_day: int = 1
+    cooldown: int = 60  # days before the same NPC may switch again
+
+
+@dataclass(frozen=True)
 class ClaimsConfig:
     """M60: land and mine claims, so wealth can earn rent. Off unless ``enabled``. Every gatherer
     works one claim; at genesis they own it. A worker who doesn't own their claim pays the owner
@@ -227,6 +241,7 @@ class ScenarioConfig:
     shocks: tuple[ShockConfig, ...] = ()
     legitimacy: LegitimacyConfig = LegitimacyConfig()
     claims: ClaimsConfig = ClaimsConfig()
+    mobility: MobilityConfig = MobilityConfig()
     # [founding.bounds]: knobs a colony may change from its parent, as (knob, low, high) (M54)
     founding_bounds: tuple[tuple[str, float, float], ...] = ()
     # Most of a good's sellable stock the player may buy in one day (#93). 1 means no cap.
@@ -297,7 +312,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
             "town",
             "player",
         },
-        optional={"outside", "shocks", "founding", "legitimacy", "claims"},
+        optional={"outside", "shocks", "founding", "legitimacy", "claims", "mobility"},
     )
 
     sc = data["scenario"]
@@ -552,7 +567,12 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
         founding_bounds=_founding_bounds(data.get("founding", {}), set(guilds)),
         legitimacy=_legitimacy(data.get("legitimacy", {})),
         claims=_claims(data.get("claims", {})),
+        mobility=_mobility(data.get("mobility", {})),
     )
+    if cfg.mobility.enabled and cfg.claims.enabled:
+        raise ConfigError(
+            "mobility and claims can't both be enabled yet (claims are tied to genesis gatherers)"
+        )
     if cfg.population <= 0:
         raise ConfigError("population is zero")
     if cfg.population > 1000:
@@ -638,6 +658,42 @@ def _founding_bounds(founding: Any, guild_ids: set[str]) -> tuple[tuple[str, flo
             raise ConfigError(f"{where}: low must not exceed high")
         out.append((knob, low, high))
     return tuple(out)
+
+
+def _mobility(table: Any) -> MobilityConfig:
+    fields = {
+        "enabled",
+        "professions",
+        "window",
+        "idle_days",
+        "margin",
+        "min_gain",
+        "max_per_day",
+        "cooldown",
+    }
+    _keys(table, "mobility", required=set(), optional=fields)
+    default = MobilityConfig()
+    enabled = table.get("enabled", default.enabled)
+    if not isinstance(enabled, bool):
+        raise ConfigError(f"mobility.enabled: expected true or false, got {enabled!r}")
+    profs = table.get("professions", list(default.professions))
+    known = {str(p) for p in Profession}
+    if not isinstance(profs, list) or any(p not in known for p in profs):
+        raise ConfigError(f"mobility.professions: expected a list of {sorted(known)}")
+    if "guard" in profs or "merchant" in profs:
+        raise ConfigError(
+            "mobility.professions: only producing trades can switch (not guard or merchant)"
+        )
+    return MobilityConfig(
+        enabled=enabled,
+        professions=tuple(str(p) for p in profs),
+        window=_pos_int(table.get("window", default.window), "mobility.window"),
+        idle_days=_pos_int(table.get("idle_days", default.idle_days), "mobility.idle_days"),
+        margin=_at_least(table.get("margin", default.margin), 1.0, "mobility.margin"),
+        min_gain=_at_least(table.get("min_gain", default.min_gain), 0.0, "mobility.min_gain"),
+        max_per_day=_pos_int(table.get("max_per_day", default.max_per_day), "mobility.max_per_day"),
+        cooldown=_nonneg_int(table.get("cooldown", default.cooldown), "mobility.cooldown"),
+    )
 
 
 def _claims(table: Any) -> ClaimsConfig:
@@ -879,6 +935,7 @@ def to_dict(cfg: ScenarioConfig) -> dict[str, Any]:
         "contracts": asdict(cfg.contracts),
         "legitimacy": asdict(cfg.legitimacy),
         "claims": asdict(cfg.claims),
+        "mobility": {**asdict(cfg.mobility), "professions": list(cfg.mobility.professions)},
         "guilds": {
             gid: {
                 "name": gc.name,
