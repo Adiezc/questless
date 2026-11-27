@@ -25,7 +25,7 @@ can only reproduce patterns that don't depend on what it leaves out (see
 | 3 | A food shortage leaves people hungry | Yes | 0 hungry NPCs before the drought, 11 to 13 on average during it |
 | 4 | Wealth ranks persist but are not fixed | Yes | Rank correlation of NPC coin between day 30 and day 120: 0.19 to 0.72 (mean 0.36 baseline, 0.51 Iron Shortage) |
 | D2 | Wealth concentrates through returns on capital | **Right level, wrong cause** | Baseline coin Gini rises from 0.27 (day 120) to 0.49 (day 365, 20 seeds), with no capital to earn on |
-| D3 | A shock-free economy fluctuates around its base prices | **No** | On 8 of 10 seeds, tools settle at 32 to 55 (base 24) within 100 to 900 days and stay there |
+| D3 | A shock-free economy fluctuates around its base prices | **No** by default; **yes** with guild loans | On 8 of 10 seeds, tools settle at 32 to 55 (base 24) within 100 to 900 days and stay there; with `guild_loans.toml`, 10 of 10 stay within 40% of base through day 1,500 |
 
 ## Facts
 
@@ -163,17 +163,52 @@ switches when its fourth smith goes broke, around day 900.
 needs no shock. "Normal" in a long run is whichever state the seed has fallen into, which weakens
 any baseline comparison made after the first few hundred days.
 
-**Fix ideas, not yet tried:**
-- Give a broke crafter a way back in: guild relief or a town loan covering one day's inputs,
-  repaid from sales.
-- Exempt crafting inputs from the food reserve when the crafter holds no stock.
-- Make crafting capacity respond to price, as gatherer effort already does.
-- Add a long-run check that at least four smiths stay active.
+**Why relief doesn't help:** the Blacksmiths Guild treasury sits at its 500-coin reserve (505 on
+day 1,200 of seed 0), and relief may only spend above it, so five broke smiths share about
+3 coin a day, which goes on food. The three survivors hold over 4,600 coin, but dues are charged
+only on daily gains.
+
+**Fix, opt-in: guild working-capital loans.** With `loan_limit` set in a guild's policy (see
+`experiments/stress/policies/guild_loans.toml`, 300 coin for each guild), a member who can't
+afford a replacement for broken equipment, or a smith who can't afford ore, borrows from its
+guild. It repays half of each day's gain before dues. Loans are sized so the borrower can
+actually bid after `budget()` holds back its food reserve; a loan sized like relief went on
+food. They stop at the member's limit and never take the treasury below half its reserve.
+
+Over 10 seeds × 1,500 days, averaged from day 365:
+
+| | Off | Loans |
+|---|---|---|
+| Tools price (base 24) | 38.8 | about 20 |
+| Seeds within 40% of base, second year / days 1,200-1,500 | 2 / 2 | 10 / 10 |
+| Ore output a day | 13.4 | 16.6 |
+| NPCs hungry | 3.7 | 3.2 |
+| Coin Gini | 0.50 | 0.27 |
+
+It stays **off by default**, for three reasons:
+- **D1 changes but isn't fixed.** After the mine disaster, ore ends 1.7 to 2.8 times its
+  pre-shock price instead of a third of it: a shortage instead of a glut.
+- **It changes every shipped scenario.** Turning it on would mean recalibrating them and their
+  tests.
+- **About half the smiths still end broke or in debt.** At normal prices the market supports
+  four or five full-time smiths out of eight, and the rest have no exit. Loans to them become a
+  standing subsidy. The fuller fix is work-sharing (crafters slacking like gatherers) or job
+  switching.
+
+The loan design was reviewed by a Claude Fable 5.2 subagent. It found that the first version
+was sized below the food reserve and capped in a way that grew with prices, and recommended
+shipping it opt-in.
+
+**Other ideas, not tried:** exempt crafting inputs from the food reserve when a crafter holds no
+stock; make crafting capacity respond to price as gatherer effort does; add a long-run check
+that at least four smiths stay active.
 
 **Test:** `test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years` (strict
 `xfail`, `slow`) checks that each of seeds 1 to 5 averages within 40% of the base tools price
 over its second year. Today seeds 1, 4 and 5 average 46.5 to 54.6, so it fails as expected. A
 fix makes it pass and prompts updating this page.
+`test_divergence_d3_guild_loans_keep_the_baseline_near_its_base_prices` runs the same check with
+the loans policy, and passes.
 
 ## References
 

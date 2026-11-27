@@ -106,6 +106,11 @@ class GuildPolicy:
     max_daily_relief_share: float  # cap on total relief per day, as a share of treasury
     reserve: int  # coin relief may never touch; kept for emergencies and contracts
     max_treasury: int | None = None  # coin above this pays the town upkeep levy (None: exempt)
+    # Working-capital loans for broke crafters (VALIDATION.md D3). A member's debt may reach
+    # ``loan_limit`` coin (0, the default, disables loans); it repays ``loan_repay_share`` of each
+    # day's gain.
+    loan_limit: int = 0
+    loan_repay_share: float = 0.5
 
 
 @dataclass(slots=True)

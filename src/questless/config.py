@@ -481,7 +481,7 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
                 "max_daily_relief_share",
                 "reserve",
             },
-            optional={"max_treasury"},
+            optional={"max_treasury", "loan_limit", "loan_repay_share"},
         )
         guilds[gid] = GuildConfig(
             name=str(g["name"]),
@@ -501,6 +501,10 @@ def _parse(data: Mapping[str, Any]) -> ScenarioConfig:
                     _nonneg_int(pol["max_treasury"], f"{where}.policy.max_treasury")
                     if "max_treasury" in pol
                     else None
+                ),
+                loan_limit=_nonneg_int(pol.get("loan_limit", 0), f"{where}.policy.loan_limit"),
+                loan_repay_share=_fraction(
+                    pol.get("loan_repay_share", 0.5), f"{where}.policy.loan_repay_share"
                 ),
             ),
         )
@@ -605,6 +609,8 @@ MUTABLE_KNOBS = frozenset(
         "guilds.*.policy.relief_days",
         "guilds.*.policy.max_daily_relief_share",
         "guilds.*.policy.reward_premium",
+        "guilds.*.policy.loan_limit",
+        "guilds.*.policy.loan_repay_share",
     }
 )
 

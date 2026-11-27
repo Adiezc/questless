@@ -147,3 +147,18 @@ def test_divergence_d3_the_baseline_stays_near_its_base_prices_for_two_years():
         base = world.config.goods[Asset.TOOLS].base_price
         late = _price(world, Asset.TOOLS, slice(365, None))
         assert 0.6 * base < late < 1.4 * base, (seed, base, late)
+
+
+@pytest.mark.slow
+def test_divergence_d3_guild_loans_keep_the_baseline_near_its_base_prices():
+    """The same check as above, with the guild-loans policy: broke smiths can borrow their way
+    back to work, so the second year stays within 40% of base on every seed."""
+    from questless.policy import load
+
+    _, cfg = load(SCENARIOS.parent / "experiments" / "stress" / "policies" / "guild_loans.toml")
+    for seed in SEEDS:
+        sim = Simulation.from_scenario(cfg, seed=seed)
+        sim.step(730)
+        base = cfg.goods[Asset.TOOLS].base_price
+        late = _price(sim.world, Asset.TOOLS, slice(365, None))
+        assert 0.6 * base < late < 1.4 * base, (seed, base, late)

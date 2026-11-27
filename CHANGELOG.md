@@ -48,6 +48,15 @@ All notable changes to this project are documented here. The format follows
   closed contract's `closed_tick`, a guild contract's `guild_id`, a day's contract report, a
   missing evidence baseline. One was a real slip: the report read a guild's treasury with the
   string `"coin"` instead of `Asset.COIN`, which only worked because `Asset` is a `StrEnum`.
+- Guild working-capital loans (off by default): `loan_limit` and `loan_repay_share` in a guild's
+  policy. A member who can't afford a replacement for broken equipment, or a smith who can't
+  afford ore, borrows enough to bid after its food reserve and repays half of each day's gain
+  before dues, up to the limit and never below half the guild's reserve. Debt is kept in
+  `NPC.carry["guild_loan"]`; `GuildReport` gains `loans` and `repaid`. With
+  `experiments/stress/policies/guild_loans.toml`, D3 goes away: tools stay within 40% of base
+  on 10 of 10 seeds through day 1,500 (2 of 10 without), ore rises from 13.4 to 16.6 a day, and
+  the coin Gini falls from 0.50 to 0.27. It doesn't fix D1, so it isn't the default yet; see
+  `docs/VALIDATION.md` D3. Design reviewed by a Claude Fable 5.2 subagent.
 - `docs/VALIDATION.md` D3: with no shock at all, 8 of 10 baseline seeds lock into a state with
   tools at 32 to 55 (base 24), less ore, permanent hunger and a coin Gini near 0.6. Smiths go
   broke, can never afford inputs again, and the survivors' capacity sets the price. Diagnosed

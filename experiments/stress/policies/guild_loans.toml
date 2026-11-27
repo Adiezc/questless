@@ -1,0 +1,19 @@
+# Policy: working-capital loans (docs/VALIDATION.md D3). A guild member who can't afford a
+# replacement for broken equipment, or a smith who can't afford ore, borrows from its guild, up to
+# 300 coin of debt, and repays half of each day's gain. Over 10 seeds x 1,500 days this keeps
+# tools near their base price (about 20 against 39 without) and halves the coin Gini (0.27
+# against 0.50). It does not fix D1: after the mine disaster ore ends scarce instead of in glut.
+# SPDX-License-Identifier: MIT
+
+[scenario]
+extends = "../../../scenarios/baseline.toml"
+name = "Baseline, guild working-capital loans"
+
+[guilds.miners.policy]
+loan_limit = 300
+
+[guilds.merchants.policy]
+loan_limit = 300
+
+[guilds.blacksmiths.policy]
+loan_limit = 300
